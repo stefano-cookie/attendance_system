@@ -1,0 +1,177 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-container {
+  background-color: #fff;
+  border-radius: 8px;
+  width: 100%;
+  // max-width: 500px;
+  max-width: 90%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #eee;
+  background-color: #f8f9fa;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+}
+
+// Stili specifici per modal di eliminazione
+.delete-modal {
+  max-width: 550px;
+}
+
+.delete-header {
+  background-color: #fff3f3;
+  border-bottom: 1px solid #ffdddd;
+  
+  h2 {
+    color: #d63031;
+  }
+}
+
+.delete-content {
+  padding: 1.5rem;
+}
+
+.delete-warning {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+
+.warning-icon-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 50px;
+  height: 50px;
+  background-color: #fee;
+  border-radius: 50%;
+  flex-shrink: 0;
+  
+  i {
+    font-size: 1.5rem;
+    color: #e74c3c;
+  }
+}
+
+.warning-message {
+  flex-grow: 1;
+}
+
+.warning-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  color: #666;
+}
+
+.item-to-delete {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  color: #333;
+  padding: 0.5rem 0.75rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border-left: 3px solid #e74c3c;
+}
+
+.warning-description {
+  margin: 0;
+  color: #666;
+  line-height: 1.5;
+  
+  strong {
+    color: #e74c3c;
+  }
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background-color: #f8f9fa;
+  border-top: 1px solid #eee;
+}
+
+.btn {
+  padding: 0.6rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  border: none;
+  font-size: 0.95rem;
+  
+  &.secondary {
+    background-color: #f1f2f3;
+    color: #666;
+    
+    &:hover {
+      background-color: #e4e5e6;
+    }
+  }
+  
+  &.danger {
+    background-color: #e74c3c;
+    color: white;
+    
+    &:hover {
+      background-color: #c0392b;
+    }
+  }
+  
+  &:active {
+    transform: translateY(1px);
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "auth": {
+    "login": {
+      "success": "Autentificare reușită",
+      "invalidCredentials": "Credențiale invalide",
+      "userNotFound": "Utilizatorul nu a fost găsit",
+      "errorDuringLogin": "Eroare în timpul autentificării"
+    },
+    "logout": {
+      "success": "Deconectare reușită",
+      "errorDuringLogout": "Eroare în timpul deconectării"
+    },
+    "token": {
+      "missing": "Token lipsă sau invalid",
+      "invalid": "Token invalid",
+      "expired": "Token expirat"
+    },
+    "permissions": {
+      "authRequired": "Autentificare necesară",
+      "insufficientPermissions": "Nu aveți permisiunile necesare pentru a accesa această resursă"
+    }
+  },
+  "errors": {
+    "serverError": "Eroare de server",
+    "databaseConnectionError": "Eroare de server - baza de date indisponibilă",
+    "validationError": "Eroare de validare",
+    "notFound": "Resursa nu a fost găsită",
+    "conflict": "Conflict în date",
+    "badRequest": "Cerere invalidă"
+  },
+  "validation": {
+    "emailRequired": "Email-ul este obligatoriu",
+    "emailInvalid": "Format email invalid",
+    "passwordRequired": "Parola este obligatorie",
+    "nameRequired": "Numele este obligatoriu",
+    "surnameRequired": "Prenumele este obligatoriu"
+  },
+  "students": {
+    "created": "Student creat cu succes",
+    "updated": "Student actualizat cu succes",
+    "deleted": "Student șters cu succes",
+    "notFound": "Studentul nu a fost găsit",
+    "emailAlreadyExists": "Email-ul este deja înregistrat în sistem"
+  }
+}

@@ -1,0 +1,142 @@
+// frontend/src/scss/pages/_login.scss
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: $bg-light;
+    padding: $spacer-3;
+    
+    .login-card {
+      width: 100%;
+      max-width: 420px;
+      background-color: $white;
+      border-radius: $card-border-radius;
+      @include box-shadow($box-shadow);
+      overflow: hidden;
+      
+      .card-header {
+        padding: $spacer-4;
+        text-align: center;
+        background-color: $white;
+        border-bottom: 1px solid rgba($text-muted, 0.1);
+        
+        h1 {
+          margin-bottom: $spacer-2;
+          font-size: 1.5rem;
+          font-weight: $font-weight-medium;
+          color: $text-dark;
+        }
+        
+        p {
+          color: $text-muted;
+          margin-bottom: 0;
+        }
+      }
+      
+      .login-form {
+        padding: $spacer-4;
+        
+        .form-group {
+          margin-bottom: $spacer-3;
+          
+          label {
+            display: block;
+            margin-bottom: $spacer-1;
+            font-weight: $font-weight-medium;
+            color: $text-dark;
+          }
+          
+          .input-with-icon {
+            position: relative;
+            
+            span[class^="icon-"] {
+              position: absolute;
+              left: 15px;
+              top: 50%;
+              transform: translateY(-50%);
+              color: $text-muted;
+            }
+            
+            input {
+              width: 100%;
+              padding: 10px 15px 10px 40px;
+              border: 1px solid rgba($text-muted, 0.2);
+              border-radius: $border-radius;
+              font-size: $font-size-base;
+              @include transition();
+              
+              &:focus {
+                outline: none;
+                border-color: $primary;
+                box-shadow: 0 0 0 0.2rem rgba($primary, 0.25);
+              }
+              
+              &.error {
+                border-color: $danger;
+              }
+            }
+          }
+          
+          .error-message {
+            margin-top: 5px;
+            color: $danger;
+            font-size: $font-size-sm;
+          }
+        }
+        
+        .alert {
+          margin-bottom: $spacer-3;
+          padding: 10px 15px;
+          border-radius: $border-radius;
+          display: flex;
+          align-items: center;
+          
+          &.error {
+            background-color: rgba($danger, 0.1);
+            border: 1px solid rgba($danger, 0.2);
+            color: $danger;
+            
+            span[class^="icon-"] {
+              margin-right: 10px;
+            }
+            
+            p {
+              margin: 0;
+            }
+          }
+        }
+        
+        .full-width {
+          width: 100%;
+        }
+      }
+    }
+  }
+  
+  // Responsive
+  @include media-breakpoint-down(sm) {
+    .login-container {
+      padding: $spacer-2;
+      
+      .login-card {
+        max-width: 100%;
+      }
+    }
+  }
+  
+  // Animazione
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .login-card {
+    animation: fadeIn 0.4s ease-out;
+  }

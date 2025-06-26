@@ -1,0 +1,269 @@
+// frontend/src/scss/_base.scss
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  html, body {
+    height: 100%;
+    font-family: $font-family-base;
+    font-size: $font-size-base;
+    line-height: $line-height-base;
+    color: $text-color;
+    background-color: $bg-light;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  #root {
+    height: 100%;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    margin-top: 0;
+    margin-bottom: $spacer-2;
+    font-weight: $font-weight-medium;
+    line-height: 1.2;
+  }
+  
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.75rem;
+  }
+  
+  h3 {
+    font-size: 1.5rem;
+  }
+  
+  h4 {
+    font-size: 1.25rem;
+  }
+  
+  h5 {
+    font-size: 1rem;
+  }
+  
+  h6 {
+    font-size: 0.875rem;
+  }
+  
+  p {
+    margin-top: 0;
+    margin-bottom: $spacer;
+  }
+  
+  a {
+    color: $primary;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    
+    &:hover {
+      color: darken($primary, 10%);
+      text-decoration: none;
+    }
+  }
+  
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  // Utility classes
+  .text-center {
+    text-align: center;
+  }
+  
+  .text-right {
+    text-align: right;
+  }
+  
+  .text-left {
+    text-align: left;
+  }
+  
+  .text-muted {
+    color: $text-muted;
+  }
+  
+  .text-primary {
+    color: $primary;
+  }
+  
+  .text-success {
+    color: $success;
+  }
+  
+  .text-danger {
+    color: $danger;
+  }
+  
+  .text-warning {
+    color: $warning;
+  }
+  
+  .text-info {
+    color: $info;
+  }
+  
+  .bg-primary {
+    background-color: $primary;
+  }
+  
+  .bg-success {
+    background-color: $success;
+  }
+  
+  .bg-danger {
+    background-color: $danger;
+  }
+  
+  .bg-warning {
+    background-color: $warning;
+  }
+  
+  .bg-info {
+    background-color: $info;
+  }
+  
+  .mb-0 {
+    margin-bottom: 0;
+  }
+  
+  .mb-1 {
+    margin-bottom: $spacer-1;
+  }
+  
+  .mb-2 {
+    margin-bottom: $spacer-2;
+  }
+  
+  .mb-3 {
+    margin-bottom: $spacer-3;
+  }
+  
+  .mb-4 {
+    margin-bottom: $spacer-4;
+  }
+  
+  .mb-5 {
+    margin-bottom: $spacer-5;
+  }
+  
+  .mt-0 {
+    margin-top: 0;
+  }
+  
+  .mt-1 {
+    margin-top: $spacer-1;
+  }
+  
+  .mt-2 {
+    margin-top: $spacer-2;
+  }
+  
+  .mt-3 {
+    margin-top: $spacer-3;
+  }
+  
+  .mt-4 {
+    margin-top: $spacer-4;
+  }
+  
+  .mt-5 {
+    margin-top: $spacer-5;
+  }
+  
+  .ml-auto {
+    margin-left: auto;
+  }
+  
+  .mr-auto {
+    margin-right: auto;
+  }
+  
+  .d-flex {
+    display: flex;
+  }
+  
+  .flex-column {
+    flex-direction: column;
+  }
+  
+  .justify-content-between {
+    justify-content: space-between;
+  }
+  
+  .align-items-center {
+    align-items: center;
+  }
+  
+  .container {
+    width: 100%;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: -15px;
+    margin-right: -15px;
+  }
+  
+  .col {
+    flex: 1 0 0%;
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  @for $i from 1 through 12 {
+    .col-#{$i} {
+      flex: 0 0 percentage($i / 12);
+      max-width: percentage($i / 12);
+      padding-left: 15px;
+      padding-right: 15px;
+    }
+  }
+  
+  @media (min-width: $breakpoint-sm) {
+    @for $i from 1 through 12 {
+      .col-sm-#{$i} {
+        flex: 0 0 percentage($i / 12);
+        max-width: percentage($i / 12);
+      }
+    }
+  }
+  
+  @media (min-width: $breakpoint-md) {
+    @for $i from 1 through 12 {
+      .col-md-#{$i} {
+        flex: 0 0 percentage($i / 12);
+        max-width: percentage($i / 12);
+      }
+    }
+  }
+  
+  @media (min-width: $breakpoint-lg) {
+    @for $i from 1 through 12 {
+      .col-lg-#{$i} {
+        flex: 0 0 percentage($i / 12);
+        max-width: percentage($i / 12);
+      }
+    }
+  }
+  
+  @media (min-width: $breakpoint-xl) {
+    @for $i from 1 through 12 {
+      .col-xl-#{$i} {
+        flex: 0 0 percentage($i / 12);
+        max-width: percentage($i / 12);
+      }
+    }
+  }

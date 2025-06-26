@@ -1,0 +1,211 @@
+// frontend/src/scss/components/_forms.scss
+// Gruppi di input
+.form-group {
+    margin-bottom: $spacer-3;
+    
+    label {
+      display: block;
+      margin-bottom: $spacer-1;
+      font-weight: $font-weight-medium;
+      color: $text-dark;
+    }
+    
+    .form-helper {
+      margin-top: 5px;
+      font-size: $font-size-sm;
+      color: $text-muted;
+    }
+    
+    .error-message {
+      margin-top: 5px;
+      color: $danger;
+      font-size: $font-size-sm;
+    }
+  }
+  
+  // Input e select
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="date"],
+  input[type="number"],
+  select,
+  textarea {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid rgba($text-muted, 0.2);
+    border-radius: $border-radius;
+    font-size: $font-size-base;
+    background-color: $white;
+    @include transition();
+    
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      box-shadow: 0 0 0 0.2rem rgba($primary, 0.25);
+    }
+    
+    &.error {
+      border-color: $danger;
+    }
+    
+    &:disabled {
+      background-color: rgba($text-muted, 0.1);
+      cursor: not-allowed;
+    }
+    
+    &::placeholder {
+      color: rgba($text-muted, 0.5);
+    }
+  }
+  
+  // Select
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236c757d' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    padding-right: 40px;
+  }
+  
+  // Textarea
+  textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+  
+  // Checkbox e radio
+  .form-check {
+    display: flex;
+    align-items: center;
+    margin-bottom: $spacer-2;
+    
+    input[type="checkbox"],
+    input[type="radio"] {
+      margin-right: 10px;
+    }
+    
+    label {
+      margin-bottom: 0;
+      font-weight: $font-weight-normal;
+    }
+  }
+  
+  // Input con icona
+  .input-with-icon {
+    position: relative;
+    
+    span[class^="icon-"] {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: $text-muted;
+    }
+    
+    input {
+      padding-left: 40px;
+    }
+  }
+  
+  // Form inline
+  .form-inline {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    
+    .form-group {
+      margin-right: $spacer-3;
+      margin-bottom: 0;
+    }
+  }
+  
+  // Form azioni (pulsanti)
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: $spacer-4;
+    
+    button + button,
+    .btn + .btn {
+      margin-left: $spacer-2;
+    }
+  }
+  
+  // Form errore generico
+  .form-error {
+    margin-bottom: $spacer-3;
+    padding: 10px 15px;
+    border-radius: $border-radius;
+    background-color: rgba($danger, 0.1);
+    border: 1px solid rgba($danger, 0.2);
+    color: $danger;
+    display: flex;
+    align-items: center;
+    
+    span[class^="icon-"] {
+      margin-right: 10px;
+    }
+    
+    p {
+      margin: 0;
+    }
+  }
+  
+  // Color picker
+  .color-picker {
+    display: flex;
+    flex-wrap: wrap;
+    margin: -5px;
+    
+    .color-option {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      margin: 5px;
+      cursor: pointer;
+      @include transition();
+      
+      &.selected {
+        border-color: $text-dark;
+        transform: scale(1.1);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+    }
+  }
+  
+  // Form in modal
+  .modal-form {
+    .form-actions {
+      margin-top: $spacer-3;
+    }
+  }
+  
+  // Responsive
+  @include media-breakpoint-down(sm) {
+    .form-inline {
+      flex-direction: column;
+      align-items: stretch;
+      
+      .form-group {
+        margin-right: 0;
+        margin-bottom: $spacer-2;
+      }
+    }
+    
+    .form-actions {
+      flex-direction: column;
+      
+      button,
+      .btn {
+        width: 100%;
+        margin-bottom: $spacer-2;
+        
+        & + button,
+        & + .btn {
+          margin-left: 0;
+        }
+      }
+    }
+  }

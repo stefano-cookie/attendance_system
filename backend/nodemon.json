@@ -1,0 +1,19 @@
+{
+  "ignore": [
+    "temp/*",
+    "temp/**/*",
+    "../data/*",
+    "../data/**/*",
+    "*.log",
+    "*.tmp"
+  ],
+  "watch": [
+    "src/**/*",
+    "routes/**/*",
+    "models/**/*",
+    "services/**/*",
+    "middleware/**/*"
+  ],
+  "ext": "js,json",
+  "delay": "2500"
+}

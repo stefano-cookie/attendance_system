@@ -1,0 +1,456 @@
+// frontend/src/scss/pages/_dashboard.scss
+.dashboard-container {
+    .dashboard-header {
+      margin-bottom: $spacer-4;
+      
+      .dashboard-title {
+        margin-bottom: $spacer-1;
+        font-weight: $font-weight-medium;
+      }
+      
+      .dashboard-subtitle {
+        color: $text-muted;
+        margin-bottom: 0;
+      }
+    }
+    
+    // Griglia delle statistiche
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: $spacer-3;
+      margin-bottom: $spacer-4;
+      
+      .stat-card {
+        position: relative;
+        background-color: $white;
+        border-radius: $card-border-radius;
+        @include box-shadow($box-shadow-sm);
+        padding: $spacer-3;
+        @include transition();
+        
+        &:hover {
+          @include box-shadow($box-shadow);
+          transform: translateY(-3px);
+        }
+        
+        .stat-icon {
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.25rem;
+          margin-bottom: $spacer-2;
+          
+          span[class^="icon-"] {
+            font-size: 1.25rem;
+          }
+        }
+        
+        .stat-content {
+          .stat-value {
+            font-size: 1.75rem;
+            font-weight: $font-weight-bold;
+            margin-bottom: $spacer-1;
+            line-height: 1;
+          }
+          
+          .stat-label {
+            font-size: $font-size-sm;
+            color: $text-muted;
+            margin: 0;
+          }
+        }
+        
+        .stat-link {
+          position: absolute;
+          top: $spacer-3;
+          right: $spacer-3;
+          color: $text-muted;
+          @include transition();
+          
+          &:hover {
+            color: $primary;
+          }
+        }
+        
+        &.student-card .stat-icon {
+          background-color: rgba($primary, 0.1);
+          color: $primary;
+        }
+        
+        &.course-card .stat-icon {
+          background-color: rgba($success, 0.1);
+          color: $success;
+        }
+        
+        &.classroom-card .stat-icon {
+          background-color: rgba($warning, 0.1);
+          color: $warning;
+        }
+        
+        &.lesson-card .stat-icon {
+          background-color: rgba($info, 0.1);
+          color: $info;
+        }
+      }
+    }
+    
+    // Griglia del dashboard
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: $spacer-3;
+      
+      @media (min-width: 1200px) {
+        grid-template-columns: 2fr 1fr 1fr;
+        grid-template-rows: auto auto;
+        
+        .recent-lessons {
+          grid-column: 1;
+          grid-row: 1 / 3;
+        }
+        
+        .attendance-stats {
+          grid-column: 2;
+          grid-row: 1;
+        }
+        
+        .course-distribution {
+          grid-column: 3;
+          grid-row: 1;
+        }
+        
+        .quick-actions {
+          grid-column: 2 / 4;
+          grid-row: 2;
+        }
+      }
+      
+      .dashboard-card {
+        background-color: $white;
+        border-radius: $card-border-radius;
+        @include box-shadow($box-shadow-sm);
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        
+        .card-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: $spacer-3;
+          border-bottom: 1px solid rgba($text-muted, 0.1);
+          
+          .card-title {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: $font-weight-medium;
+          }
+          
+          .view-all {
+            font-size: $font-size-sm;
+            color: $primary;
+            display: flex;
+            align-items: center;
+            
+            span {
+              margin-left: 5px;
+              font-size: 0.75rem;
+            }
+            
+            &:hover {
+              text-decoration: underline;
+            }
+          }
+        }
+        
+        .card-content {
+          padding: $spacer-3;
+          flex: 1;
+          
+          // Stato vuoto
+          .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            padding: $spacer-3;
+            text-align: center;
+            
+            span[class^="icon-"] {
+              font-size: 2.5rem;
+              color: rgba($text-muted, 0.3);
+              margin-bottom: $spacer-2;
+            }
+            
+            p {
+              color: $text-muted;
+              margin: 0;
+            }
+          }
+        }
+      }
+      
+      // Lezioni recenti
+      .recent-lessons {
+        .lessons-list {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          
+          .lesson-item {
+            display: flex;
+            align-items: center;
+            padding: $spacer-2 0;
+            border-bottom: 1px solid rgba($text-muted, 0.1);
+            
+            &:last-child {
+              border-bottom: none;
+            }
+            
+            .lesson-date {
+              width: 110px;
+              display: flex;
+              align-items: center;
+              color: $text-muted;
+              font-size: $font-size-sm;
+              
+              span[class^="icon-"] {
+                margin-right: 5px;
+              }
+            }
+            
+            .lesson-details {
+              flex: 1;
+              
+              .lesson-name {
+                margin: 0 0 3px;
+                font-weight: $font-weight-medium;
+              }
+              
+              .lesson-location {
+                display: flex;
+                align-items: center;
+                color: $text-muted;
+                font-size: $font-size-sm;
+                
+                span[class^="icon-"] {
+                  margin-right: 5px;
+                }
+              }
+            }
+            
+            .lesson-link {
+              color: $text-muted;
+              @include transition();
+              
+              &:hover {
+                color: $primary;
+              }
+            }
+          }
+        }
+      }
+      
+      // Presenze
+      .attendance-stats {
+        .attendance-summary {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          
+          .attendance-circle {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin-bottom: $spacer-3;
+            
+            .attendance-chart {
+              width: 100%;
+              height: 100%;
+              transform: rotate(-90deg);
+              
+              .circle-bg {
+                fill: none;
+                stroke: rgba($text-muted, 0.1);
+                stroke-width: 3;
+              }
+              
+              .circle-fill {
+                fill: none;
+                stroke: $success;
+                stroke-width: 3;
+                stroke-linecap: round;
+              }
+              
+              .percentage {
+                font-size: 1.25rem;
+                font-weight: $font-weight-bold;
+                fill: $text-dark;
+                text-anchor: middle;
+                dominant-baseline: middle;
+                transform: rotate(90deg);
+              }
+            }
+          }
+          
+          .attendance-details {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            
+            .attendance-stat {
+              text-align: center;
+              padding: 0 $spacer-2;
+              
+              .stat-label {
+                color: $text-muted;
+                font-size: $font-size-sm;
+                margin-bottom: 5px;
+              }
+              
+              .stat-value {
+                font-weight: $font-weight-bold;
+                font-size: 1.125rem;
+              }
+              
+              &.present .stat-value {
+                color: $success;
+              }
+              
+              &.absent .stat-value {
+                color: $danger;
+              }
+            }
+          }
+        }
+      }
+      
+      // Distribuzione corsi
+      .course-distribution {
+        .distribution-list {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          
+          .distribution-item {
+            margin-bottom: $spacer-2;
+            
+            &:last-child {
+              margin-bottom: 0;
+            }
+            
+            .course-info {
+              display: flex;
+              align-items: center;
+              margin-bottom: 5px;
+              
+              .course-color {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                margin-right: 8px;
+              }
+              
+              .course-name {
+                font-size: $font-size-sm;
+                font-weight: $font-weight-medium;
+              }
+            }
+            
+            .course-stats {
+              display: flex;
+              align-items: center;
+              
+              .progress-bar {
+                flex: 1;
+                height: 8px;
+                background-color: rgba($text-muted, 0.1);
+                border-radius: 4px;
+                overflow: hidden;
+                margin-right: 10px;
+                
+                .progress-fill {
+                  height: 100%;
+                  border-radius: 4px;
+                }
+              }
+              
+              .student-count {
+                font-size: $font-size-sm;
+                color: $text-muted;
+              }
+            }
+          }
+        }
+      }
+      
+      // Azioni rapide
+      .quick-actions {
+        .actions-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: $spacer-2;
+          
+          .action-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: $spacer-3;
+            background-color: rgba($primary, 0.05);
+            border-radius: $border-radius;
+            @include transition();
+            
+            span[class^="icon-"] {
+              font-size: 1.5rem;
+              color: $primary;
+              margin-bottom: $spacer-1;
+              @include transition();
+            }
+            
+            span:not([class^="icon-"]) {
+              color: $text-dark;
+              font-weight: $font-weight-medium;
+              @include transition();
+            }
+            
+            &:hover {
+              background-color: $primary;
+              
+              span[class^="icon-"],
+              span:not([class^="icon-"]) {
+                color: $white;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  // Responsive
+  @include media-breakpoint-down(lg) {
+    .dashboard-container {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+  
+  @include media-breakpoint-down(sm) {
+    .dashboard-container {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  }

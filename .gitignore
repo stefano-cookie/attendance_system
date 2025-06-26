@@ -1,0 +1,78 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Python
+venv*/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Build/Compiled
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Testing
+coverage/
+.nyc_output/
+htmlcov/
+.coverage
+.coverage.*
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Project specific
+data/user_photos/*
+data/classroom_images/*
+data/debug_faces/*
+data/reports/*
+!data/**/.gitkeep
+temp/
+backend/temp/
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Backups
+*.backup
+*.bak
+*~

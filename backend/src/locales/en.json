@@ -1,0 +1,45 @@
+{
+  "auth": {
+    "login": {
+      "success": "Login successful",
+      "invalidCredentials": "Invalid credentials",
+      "userNotFound": "User not found",
+      "errorDuringLogin": "Error during login"
+    },
+    "logout": {
+      "success": "Logout successful",
+      "errorDuringLogout": "Error during logout"
+    },
+    "token": {
+      "missing": "Missing or invalid token",
+      "invalid": "Invalid token",
+      "expired": "Token expired"
+    },
+    "permissions": {
+      "authRequired": "Authentication required",
+      "insufficientPermissions": "You don't have permissions to access this resource"
+    }
+  },
+  "errors": {
+    "serverError": "Server error",
+    "databaseConnectionError": "Server error - database unavailable",
+    "validationError": "Validation error",
+    "notFound": "Resource not found",
+    "conflict": "Data conflict",
+    "badRequest": "Invalid request"
+  },
+  "validation": {
+    "emailRequired": "Email is required",
+    "emailInvalid": "Invalid email format",
+    "passwordRequired": "Password is required",
+    "nameRequired": "Name is required",
+    "surnameRequired": "Surname is required"
+  },
+  "students": {
+    "created": "Student created successfully",
+    "updated": "Student updated successfully",
+    "deleted": "Student deleted successfully",
+    "notFound": "Student not found",
+    "emailAlreadyExists": "Email already registered in the system"
+  }
+}

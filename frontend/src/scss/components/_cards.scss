@@ -1,0 +1,225 @@
+// frontend/src/scss/components/_cards.scss
+.card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-color: $white;
+    background-clip: border-box;
+    border-radius: $card-border-radius;
+    @include box-shadow($box-shadow-sm);
+    margin-bottom: $spacer;
+    
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: $spacer $spacer;
+      border-bottom: 1px solid rgba($text-muted, 0.1);
+      
+      .card-header-title {
+        .card-title {
+          margin-bottom: 0;
+          font-size: $font-size-lg;
+          font-weight: $font-weight-medium;
+          color: $text-dark;
+        }
+        
+        .card-subtitle {
+          margin-top: $spacer-1;
+          margin-bottom: 0;
+          color: $text-muted;
+          font-size: $font-size-sm;
+        }
+      }
+      
+      .card-header-action {
+        margin-left: $spacer;
+        display: flex;
+        align-items: center;
+      }
+    }
+    
+    .card-body {
+      flex: 1 1 auto;
+      padding: $spacer;
+    }
+    
+    .card-footer {
+      padding: $spacer;
+      border-top: 1px solid rgba($text-muted, 0.1);
+    }
+    
+    // Varianti
+    &.card-primary {
+      border-top: 3px solid $primary;
+    }
+    
+    &.card-success {
+      border-top: 3px solid $success;
+    }
+    
+    &.card-danger {
+      border-top: 3px solid $danger;
+    }
+    
+    &.card-warning {
+      border-top: 3px solid $warning;
+    }
+    
+    &.card-info {
+      border-top: 3px solid $info;
+    }
+  }
+  
+  // Card groups
+  .card-group {
+    display: flex;
+    flex-wrap: wrap;
+    margin: -$spacer-2;
+    
+    .card {
+      flex: 1 0 calc(50% - #{$spacer});
+      margin: $spacer-2;
+      
+      @include media-breakpoint-up(md) {
+        flex: 1 0 calc(33.333% - #{$spacer});
+      }
+      
+      @include media-breakpoint-up(lg) {
+        flex: 1 0 calc(25% - #{$spacer});
+      }
+    }
+  }
+  
+  // Dashboard cards
+  .stat-card {
+    display: flex;
+    align-items: center;
+    padding: $spacer-3;
+    border-radius: $card-border-radius;
+    background-color: $white;
+    @include box-shadow($box-shadow-sm);
+    @include transition();
+    
+    &:hover {
+      @include box-shadow($box-shadow);
+      transform: translateY(-3px);
+    }
+    
+    .stat-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      margin-right: $spacer-3;
+      
+      &.primary-bg {
+        background-color: rgba($primary, 0.1);
+        color: $primary;
+      }
+      
+      &.success-bg {
+        background-color: rgba($success, 0.1);
+        color: $success;
+      }
+      
+      &.warning-bg {
+        background-color: rgba($warning, 0.1);
+        color: $warning;
+      }
+      
+      &.danger-bg {
+        background-color: rgba($danger, 0.1);
+        color: $danger;
+      }
+      
+      &.info-bg {
+        background-color: rgba($info, 0.1);
+        color: $info;
+      }
+    }
+    
+    .stat-content {
+      flex: 1;
+      
+      .stat-value {
+        font-size: 1.75rem;
+        font-weight: $font-weight-bold;
+        margin-bottom: $spacer-1;
+        line-height: 1;
+      }
+      
+      .stat-label {
+        font-size: $font-size-sm;
+        color: $text-muted;
+        margin: 0;
+      }
+    }
+    
+    .stat-link {
+      color: $text-muted;
+      font-size: 1.25rem;
+      margin-left: $spacer;
+      @include transition();
+      
+      &:hover {
+        color: $primary;
+      }
+    }
+    
+    &.student-card .stat-icon {
+      background-color: rgba($primary, 0.1);
+      color: $primary;
+    }
+    
+    &.course-card .stat-icon {
+      background-color: rgba($success, 0.1);
+      color: $success;
+    }
+    
+    &.classroom-card .stat-icon {
+      background-color: rgba($warning, 0.1);
+      color: $warning;
+    }
+    
+    &.lesson-card .stat-icon {
+      background-color: rgba($info, 0.1);
+      color: $info;
+    }
+  }
+  
+  // Skeleton loader
+  .card-skeleton {
+    .skeleton-header {
+      height: 25px;
+      width: 60%;
+      background: #f0f0f0;
+      border-radius: $border-radius;
+      margin-bottom: $spacer-2;
+      animation: pulse 1.5s infinite;
+    }
+    
+    .skeleton-body {
+      height: 100px;
+      background: #f0f0f0;
+      border-radius: $border-radius;
+      animation: pulse 1.5s infinite;
+    }
+  }
+  
+  @keyframes pulse {
+    0% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0.6;
+    }
+  }

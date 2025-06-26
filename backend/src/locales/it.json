@@ -1,0 +1,45 @@
+{
+  "auth": {
+    "login": {
+      "success": "Login effettuato con successo",
+      "invalidCredentials": "Credenziali non valide",
+      "userNotFound": "Utente non trovato",
+      "errorDuringLogin": "Errore durante il login"
+    },
+    "logout": {
+      "success": "Logout effettuato con successo",
+      "errorDuringLogout": "Errore durante il logout"
+    },
+    "token": {
+      "missing": "Token mancante o non valido",
+      "invalid": "Token non valido",
+      "expired": "Token scaduto"
+    },
+    "permissions": {
+      "authRequired": "Autenticazione richiesta",
+      "insufficientPermissions": "Non hai i permessi per accedere a questa risorsa"
+    }
+  },
+  "errors": {
+    "serverError": "Errore del server",
+    "databaseConnectionError": "Errore del server - database non disponibile",
+    "validationError": "Errore di validazione",
+    "notFound": "Risorsa non trovata",
+    "conflict": "Conflitto nei dati",
+    "badRequest": "Richiesta non valida"
+  },
+  "validation": {
+    "emailRequired": "L'email è obbligatoria",
+    "emailInvalid": "Formato email non valido",
+    "passwordRequired": "La password è obbligatoria",
+    "nameRequired": "Il nome è obbligatorio",
+    "surnameRequired": "Il cognome è obbligatorio"
+  },
+  "students": {
+    "created": "Studente creato con successo",
+    "updated": "Studente aggiornato con successo",
+    "deleted": "Studente eliminato con successo",
+    "notFound": "Studente non trovato",
+    "emailAlreadyExists": "Email già registrata nel sistema"
+  }
+}

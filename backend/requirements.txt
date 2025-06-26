@@ -1,0 +1,5 @@
+deepface>=0.0.79
+tensorflow-macos>=2.13.0  # Versione specifica per macOS con Apple Silicon
+opencv-python>=4.7.0
+numpy>=1.24.3
+pillow>=9.5.0

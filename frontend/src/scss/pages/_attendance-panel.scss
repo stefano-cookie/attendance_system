@@ -1,0 +1,23 @@
+// frontend/src/scss/pages/_attendance-panel.scss
+.attendance-panel {
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      
+      .filter-item {
+        display: flex;
+        align-items: center;
+        
+        label {
+          margin-right: 10px;
+          color: $text-muted;
+          white-space: nowrap;
+        }
+        
+        select {
+          min-width: 150px;
+        }
+      }
+    }
+  }

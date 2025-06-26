@@ -1,0 +1,112 @@
+// Aggiungi questo al file _courses-panel.scss o al tuo main.scss
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.course-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.course-content {
+  padding: 1.5rem;
+  flex-grow: 1;
+}
+
+.course-name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.course-actions {
+  display: flex;
+  border-top: 1px solid #eee;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  background: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+
+  &.edit {
+    color: #2980b9;
+    
+    &:hover {
+      background-color: rgba(41, 128, 185, 0.1);
+    }
+  }
+  
+  &.delete {
+    color: #e74c3c;
+    
+    &:hover {
+      background-color: rgba(231, 76, 60, 0.1);
+    }
+  }
+}
+
+// Miglioramenti per il modal
+.modal-form {
+  padding: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  
+  &:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+  }
+}
+
+.color-picker-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.color-picker {
+  width: 50px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.color-value {
+  font-family: monospace;
+  color: #666;
+}
