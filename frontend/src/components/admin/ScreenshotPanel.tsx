@@ -1,6 +1,7 @@
 // frontend/src/components/admin/ScreenshotPanel.tsx - UI REDESIGN
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 
 interface Screenshot {
@@ -42,6 +43,7 @@ interface Filters {
 
 const ScreenshotPanel: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [screenshots, setScreenshots] = useState<Screenshot[]>([]);
   const [filteredScreenshots, setFilteredScreenshots] = useState<Screenshot[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -85,7 +87,7 @@ const ScreenshotPanel: React.FC = () => {
       ]);
     } catch (err) {
       console.error('Errore caricamento dati iniziali:', err);
-      setError('Errore nel caricamento dei dati iniziali');
+      setError(t('admin.screenshots.errors.loading'));
     } finally {
       setLoading(false);
     }
@@ -167,7 +169,7 @@ const ScreenshotPanel: React.FC = () => {
     try {
       await fetchScreenshots();
     } catch (err) {
-      setError('Errore durante l\'aggiornamento');
+      setError(t('admin.screenshots.errors.refreshing'));
     } finally {
       setRefreshing(false);
     }
@@ -295,8 +297,8 @@ const ScreenshotPanel: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex justify-center items-center">
         <div className="text-center bg-white p-8 rounded-2xl shadow-xl">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-          <h3 className="text-xl font-semibold text-gray-700">Caricamento Screenshots</h3>
-          <p className="text-gray-500 mt-2">Preparazione delle immagini...</p>
+          <h3 className="text-xl font-semibold text-gray-700">{t('admin.screenshots.loading.title')}</h3>
+          <p className="text-gray-500 mt-2">{t('admin.screenshots.loading.subtitle')}</p>
         </div>
       </div>
     );
@@ -315,14 +317,14 @@ const ScreenshotPanel: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-800">Screenshots Analisi</h1>
-                <p className="text-gray-600">Visualizza le immagini delle analisi di riconoscimento facciale</p>
+                <h1 className="text-3xl font-bold text-gray-800">{t('admin.screenshots.title')}</h1>
+                <p className="text-gray-600">{t('admin.screenshots.subtitle')}</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-3">
               <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                {filteredScreenshots.length} screenshot
+                {filteredScreenshots.length} {t('admin.screenshots.stats.totalScreenshots')}
               </span>
               
               <button
@@ -333,7 +335,7 @@ const ScreenshotPanel: React.FC = () => {
                 <svg className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                <span>{refreshing ? 'Aggiornando...' : 'Aggiorna'}</span>
+                <span>{refreshing ? t('admin.screenshots.stats.refreshing') : t('admin.screenshots.stats.refresh')}</span>
               </button>
             </div>
           </div>
@@ -362,7 +364,7 @@ const ScreenshotPanel: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800">Filtri di Ricerca</h3>
+                <h3 className="text-xl font-semibold text-gray-800">{t('admin.screenshots.filters.title')}</h3>
               </div>
               
               <div className="flex items-center space-x-4">
@@ -370,7 +372,7 @@ const ScreenshotPanel: React.FC = () => {
                   onClick={resetFilters}
                   className="text-sm text-gray-600 hover:text-gray-800 transition-colors"
                 >
-                  Resetta filtri
+                  {t('admin.screenshots.filters.reset')}
                 </button>
                 
                 {/* Modalità visualizzazione */}
@@ -387,7 +389,7 @@ const ScreenshotPanel: React.FC = () => {
                     <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                     </svg>
-                    Griglia
+                    {t('admin.screenshots.viewModes.grid')}
                   </button>
                   <button
                     type="button"
@@ -401,7 +403,7 @@ const ScreenshotPanel: React.FC = () => {
                     <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                     </svg>
-                    Lista
+                    {t('admin.screenshots.viewModes.list')}
                   </button>
                 </div>
               </div>
@@ -412,7 +414,7 @@ const ScreenshotPanel: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
               {/* Periodo */}
               <div className="lg:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Periodo</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin.screenshots.filters.period')}</label>
                 <div className="flex flex-col md:flex-row">
                   <input
                     type="date"
@@ -432,13 +434,13 @@ const ScreenshotPanel: React.FC = () => {
               
               {/* Aula */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Aula</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin.screenshots.filters.classroom')}</label>
                 <select
                   value={filters.classroomId || ''}
                   onChange={(e) => handleFilterChange('classroomId', e.target.value ? parseInt(e.target.value) : null)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="">Tutte le aule</option>
+                  <option value="">{t('admin.screenshots.filters.allClassrooms')}</option>
                   {classrooms.map(classroom => (
                     <option key={classroom.id} value={classroom.id}>{classroom.name}</option>
                   ))}
@@ -447,13 +449,13 @@ const ScreenshotPanel: React.FC = () => {
               
               {/* Lezione */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Lezione</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin.screenshots.filters.lesson')}</label>
                 <select
                   value={filters.lessonId || ''}
                   onChange={(e) => handleFilterChange('lessonId', e.target.value ? parseInt(e.target.value) : null)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="">Tutte le lezioni</option>
+                  <option value="">{t('admin.screenshots.filters.allLessons')}</option>
                   {lessons
                     .map(lesson => (
                       <option key={lesson.id} value={lesson.id}>
@@ -465,7 +467,7 @@ const ScreenshotPanel: React.FC = () => {
               
               {/* Volti minimi */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Min. Volti</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin.screenshots.filters.minFaces')}</label>
                 <input
                   type="number"
                   min="0"
@@ -481,14 +483,14 @@ const ScreenshotPanel: React.FC = () => {
             {/* Ordinamento */}
             <div className="mt-4 flex justify-end">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Ordinamento</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin.screenshots.filters.sorting')}</label>
                 <select
                   value={filters.sortOrder}
                   onChange={(e) => handleFilterChange('sortOrder', e.target.value as 'latest' | 'oldest')}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="latest">Più recenti prima</option>
-                  <option value="oldest">Più vecchi prima</option>
+                  <option value="latest">{t('admin.screenshots.filters.latestFirst')}</option>
+                  <option value="oldest">{t('admin.screenshots.filters.oldestFirst')}</option>
                 </select>
               </div>
             </div>
@@ -512,7 +514,7 @@ const ScreenshotPanel: React.FC = () => {
                       className="w-full h-48 object-cover"
                       onError={(e) => {
                         console.error('Errore caricamento immagine:', screenshot);
-                        e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbW1hZ2luZSBub24gZGlzcG9uaWJpbGU8L3RleHQ+PC9zdmc+';
+                        e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBOL0E8L3RleHQ+PC9zdmc+';
                       }}
                     />
                     
@@ -530,7 +532,7 @@ const ScreenshotPanel: React.FC = () => {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
-                            <span className="text-sm font-medium">Visualizza</span>
+                            <span className="text-sm font-medium">{t('admin.screenshots.actions.view')}</span>
                           </div>
                           
                           <div className="flex items-center space-x-2">
@@ -540,7 +542,7 @@ const ScreenshotPanel: React.FC = () => {
                                 handleDownload(screenshot);
                               }}
                               className="bg-green-600 hover:bg-green-700 p-2 rounded-lg transition-colors shadow-lg"
-                              title="Scarica immagine"
+                              title={t('admin.screenshots.actions.download')}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -553,7 +555,7 @@ const ScreenshotPanel: React.FC = () => {
                                 window.open(screenshot.url || screenshot.path, '_blank');
                               }}
                               className="bg-blue-600 hover:bg-blue-700 p-2 rounded-lg transition-colors shadow-lg"
-                              title="Apri in nuova finestra"
+                              title={t('admin.screenshots.actions.openNewWindow')}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -572,7 +574,7 @@ const ScreenshotPanel: React.FC = () => {
                           {formatDateTime(screenshot.timestamp)}
                         </p>
                         <p className="font-medium text-gray-800 truncate">
-                          {screenshot.classroom?.name || screenshot.lesson?.name || 'Aula non specificata'}
+                          {screenshot.classroom?.name || screenshot.lesson?.name || t('admin.screenshots.messages.classroomNotSpecified')}
                         </p>
                       </div>
                       
@@ -583,7 +585,7 @@ const ScreenshotPanel: React.FC = () => {
                             handleDownload(screenshot);
                           }}
                           className="text-green-600 hover:text-green-800 transition-colors p-1"
-                          title="Scarica immagine"
+                          title={t('admin.screenshots.actions.download')}
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -596,7 +598,7 @@ const ScreenshotPanel: React.FC = () => {
                             window.open(screenshot.url || screenshot.path, '_blank');
                           }}
                           className="text-blue-600 hover:text-blue-800 transition-colors p-1"
-                          title="Apri in nuova finestra"
+                          title={t('admin.screenshots.actions.openNewWindow')}
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -606,7 +608,7 @@ const ScreenshotPanel: React.FC = () => {
                     </div>
                     
                     <div className="text-xs text-gray-500">
-                      {screenshot.lesson?.name || `Lezione ${screenshot.lessonId || 'N/A'}`}
+                      {screenshot.lesson?.name || `${t('admin.screenshots.filters.lesson')} ${screenshot.lessonId || t('admin.screenshots.messages.lessonNA')}`}
                     </div>
                   </div>
                 </div>
@@ -616,15 +618,15 @@ const ScreenshotPanel: React.FC = () => {
                 <svg className="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <h3 className="text-xl font-medium text-gray-900 mb-2">Nessuno screenshot trovato</h3>
+                <h3 className="text-xl font-medium text-gray-900 mb-2">{t('admin.screenshots.emptyState.noScreenshots')}</h3>
                 <p className="text-gray-500 mb-4">
-                  Non ci sono screenshot che corrispondono ai filtri selezionati
+                  {t('admin.screenshots.emptyState.noScreenshotsDesc')}
                 </p>
                 <button
                   onClick={resetFilters}
                   className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  Resetta filtri
+                  {t('admin.screenshots.emptyState.resetFilters')}
                 </button>
               </div>
             )}
@@ -637,22 +639,22 @@ const ScreenshotPanel: React.FC = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Anteprima
+                      {t('admin.screenshots.table.preview')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Data e Ora
+                      {t('admin.screenshots.table.dateTime')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Aula
+                      {t('admin.screenshots.table.classroom')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Lezione
+                      {t('admin.screenshots.table.lesson')}
                     </th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Volti
+                      {t('admin.screenshots.table.faces')}
                     </th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Azioni
+                      {t('admin.screenshots.table.actions')}
                     </th>
                   </tr>
                 </thead>
@@ -669,7 +671,7 @@ const ScreenshotPanel: React.FC = () => {
                           alt={`Screenshot ${screenshot.id}`}
                           className="h-16 w-16 object-cover rounded-lg shadow"
                           onError={(e) => {
-                            e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2RkZCI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIvPjx0ZXh0IHg9IjEyIiB5PSIxMiIgZm9udC1zaXplPSI4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tk88L3RleHQ+PC9zdmc+';
+                            e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2RkZCI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIvPjx0ZXh0IHg9IjEyIiB5PSIxMiIgZm9udC1zaXplPSI2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tk88L3RleHQ+PC9zdmc+';
                           }}
                         />
                       </td>
@@ -685,7 +687,7 @@ const ScreenshotPanel: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {screenshot.lesson?.name || `Lezione ${screenshot.lessonId || 'N/A'}`}
+                          {screenshot.lesson?.name || `${t('admin.screenshots.filters.lesson')} ${screenshot.lessonId || t('admin.screenshots.messages.lessonNA')}`}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -701,7 +703,7 @@ const ScreenshotPanel: React.FC = () => {
                               handleDownload(screenshot);
                             }}
                             className="text-green-600 hover:text-green-900 transition-colors p-1"
-                            title="Scarica immagine"
+                            title={t('admin.screenshots.actions.download')}
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -714,7 +716,7 @@ const ScreenshotPanel: React.FC = () => {
                               window.open(screenshot.url || screenshot.path, '_blank');
                             }}
                             className="text-blue-600 hover:text-blue-900 transition-colors p-1"
-                            title="Apri in nuova finestra"
+                            title={t('admin.screenshots.actions.openNewWindow')}
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -738,7 +740,7 @@ const ScreenshotPanel: React.FC = () => {
                 <button
                   onClick={() => handleDownload(selectedImage)}
                   className="bg-green-600 bg-opacity-90 backdrop-blur-sm rounded-full p-3 text-white hover:bg-green-700 transition-colors shadow-lg"
-                  title="Scarica immagine"
+                  title={t('admin.screenshots.actions.download')}
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -748,7 +750,7 @@ const ScreenshotPanel: React.FC = () => {
                 <button
                   onClick={() => window.open(selectedImage.url || selectedImage.path, '_blank')}
                   className="bg-blue-600 bg-opacity-90 backdrop-blur-sm rounded-full p-3 text-white hover:bg-blue-700 transition-colors shadow-lg"
-                  title="Apri in nuova finestra"
+                  title={t('admin.screenshots.actions.openNewWindow')}
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -758,7 +760,7 @@ const ScreenshotPanel: React.FC = () => {
                 <button
                   onClick={() => setShowFullscreen(false)}
                   className="bg-white bg-opacity-20 backdrop-blur-sm rounded-full p-3 text-white hover:bg-opacity-30 transition-colors"
-                  aria-label="Chiudi"
+                  aria-label={t('admin.screenshots.modal.close')}
                 >
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -781,7 +783,7 @@ const ScreenshotPanel: React.FC = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
-                      <p className="text-sm font-medium text-gray-600">Data e Ora</p>
+                      <p className="text-sm font-medium text-gray-600">{t('admin.screenshots.modal.dateTime')}</p>
                       <p className="text-lg font-bold text-gray-800">{formatDateTime(selectedImage.timestamp)}</p>
                     </div>
                     
@@ -791,7 +793,7 @@ const ScreenshotPanel: React.FC = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
                       </div>
-                      <p className="text-sm font-medium text-gray-600">Aula</p>
+                      <p className="text-sm font-medium text-gray-600">{t('admin.screenshots.modal.classroom')}</p>
                       <p className="text-lg font-bold text-gray-800">{selectedImage.classroom?.name || 'N/A'}</p>
                     </div>
                     
@@ -801,16 +803,16 @@ const ScreenshotPanel: React.FC = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                         </svg>
                       </div>
-                      <p className="text-sm font-medium text-gray-600">Lezione</p>
-                      <p className="text-lg font-bold text-gray-800">{selectedImage.lesson?.name || `Lezione ${selectedImage.lessonId || 'N/A'}`}</p>
+                      <p className="text-sm font-medium text-gray-600">{t('admin.screenshots.modal.lesson')}</p>
+                      <p className="text-lg font-bold text-gray-800">{selectedImage.lesson?.name || `${t('admin.screenshots.filters.lesson')} ${selectedImage.lessonId || t('admin.screenshots.messages.lessonNA')}`}</p>
                     </div>
                     
                     <div className="text-center">
                       <div className={`rounded-full p-3 w-16 h-16 flex items-center justify-center mx-auto mb-2 text-white ${getFacesColor(selectedImage.detectedFaces || 0).replace('bg-', 'bg-')}`}>
                         <span className="text-2xl font-bold">{selectedImage.detectedFaces || 0}</span>
                       </div>
-                      <p className="text-sm font-medium text-gray-600">Volti Rilevati</p>
-                      <p className="text-sm text-gray-500">nel frame analizzato</p>
+                      <p className="text-sm font-medium text-gray-600">{t('admin.screenshots.modal.facesDetected')}</p>
+                      <p className="text-sm text-gray-500">{t('admin.screenshots.modal.inAnalyzedFrame')}</p>
                     </div>
                   </div>
                 </div>

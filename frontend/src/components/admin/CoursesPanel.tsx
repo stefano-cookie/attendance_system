@@ -1,5 +1,6 @@
 // frontend/src/components/admin/CoursesPanel.tsx
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   getCourses, 
   createCourse, 
@@ -13,6 +14,8 @@ import {
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
 
 const CoursesPanel: React.FC = () => {
+  const { t } = useTranslation();
+  
   // Stati per i dati
   const [courses, setCourses] = useState<Course[]>([]);
   const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
@@ -64,7 +67,7 @@ const CoursesPanel: React.FC = () => {
       setAllSubjects(subjectsData || []);
     } catch (err: any) {
       console.error('❌ Errore durante il caricamento dei dati:', err);
-      setError('Impossibile caricare i dati. Riprova più tardi.');
+      setError(t('admin.courses.errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -139,7 +142,7 @@ const CoursesPanel: React.FC = () => {
       setShowModal(true);
     } catch (err: any) {
       console.error('❌ Errore apertura modal edit:', err);
-      setError('Errore nell\'apertura del modal di modifica.');
+      setError(t('admin.courses.errorOpeningModal'));
     }
   };
   
@@ -165,7 +168,7 @@ const CoursesPanel: React.FC = () => {
     e.preventDefault();
     
     if (!formName.trim()) {
-      setError('Il nome del corso è obbligatorio');
+      setError(t('admin.courses.nameRequired'));
       return;
     }
     
@@ -226,7 +229,7 @@ const CoursesPanel: React.FC = () => {
       
     } catch (err: any) {
       console.error('❌ Errore salvataggio corso:', err);
-      setError(err.response?.data?.message || 'Errore durante il salvataggio del corso.');
+      setError(err.response?.data?.message || t('admin.courses.errorSaving'));
     } finally {
       setSubmitting(false);
     }
@@ -259,7 +262,7 @@ const CoursesPanel: React.FC = () => {
       
     } catch (err: any) {
       console.error('❌ Errore eliminazione corso:', err);
-      setError(err.response?.data?.message || 'Errore durante l\'eliminazione del corso.');
+      setError(err.response?.data?.message || t('admin.courses.errorDeleting'));
     } finally {
       setSubmitting(false);
     }
@@ -290,8 +293,8 @@ const CoursesPanel: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex justify-center items-center">
         <div className="text-center bg-white p-8 rounded-2xl shadow-xl">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-          <h3 className="text-xl font-semibold text-gray-700">Caricamento Corsi</h3>
-          <p className="text-gray-500 mt-2">Preparazione dei dati in corso...</p>
+          <h3 className="text-xl font-semibold text-gray-700">{t('admin.courses.loading')}</h3>
+          <p className="text-gray-500 mt-2">{t('admin.courses.loadingSubtext')}</p>
         </div>
       </div>
     );
@@ -310,8 +313,8 @@ const CoursesPanel: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-800">Gestione Corsi</h1>
-                <p className="text-gray-600">Organizzazione e Catalogazione Didattica</p>
+                <h1 className="text-3xl font-bold text-gray-800">{t('admin.courses.title')}</h1>
+                <p className="text-gray-600">{t('admin.courses.subtitle')}</p>
               </div>
             </div>
             
@@ -324,7 +327,7 @@ const CoursesPanel: React.FC = () => {
                 <svg className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                <span>{refreshing ? 'Aggiornando...' : 'Aggiorna'}</span>
+                <span>{refreshing ? t('admin.courses.refreshing') : t('common.refresh')}</span>
               </button>
 
               <button
@@ -334,7 +337,7 @@ const CoursesPanel: React.FC = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
                 </svg>
-                <span className="font-semibold">Nuovo Corso</span>
+                <span className="font-semibold">{t('admin.courses.newCourse')}</span>
               </button>
             </div>
           </div>
@@ -347,7 +350,7 @@ const CoursesPanel: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Corsi Totali</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.courses.totalCourses')}</p>
                 <p className="text-3xl font-bold text-gray-800">{courses.length}</p>
               </div>
               <div className="bg-blue-100 p-3 rounded-xl">
@@ -361,7 +364,7 @@ const CoursesPanel: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Risultati Ricerca</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.courses.searchResults')}</p>
                 <p className="text-3xl font-bold text-gray-800">{filteredCourses.length}</p>
               </div>
               <div className="bg-green-100 p-3 rounded-xl">
@@ -375,7 +378,7 @@ const CoursesPanel: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Materie Associate</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.courses.associatedSubjects')}</p>
                 <p className="text-3xl font-bold text-gray-800">{totalSubjectsAssigned}</p>
               </div>
               <div className="bg-purple-100 p-3 rounded-xl">
@@ -389,7 +392,7 @@ const CoursesPanel: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Materie Disponibili</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.courses.availableSubjects')}</p>
                 <p className="text-3xl font-bold text-gray-800">{subjectsWithoutCourse}</p>
               </div>
               <div className="bg-orange-100 p-3 rounded-xl">
@@ -410,11 +413,11 @@ const CoursesPanel: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-800">Ricerca Corsi</h3>
+              <h3 className="text-xl font-semibold text-gray-800">{t('admin.courses.searchCourses')}</h3>
             </div>
             
             <div className="max-w-md">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Cerca corso</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">{t('admin.courses.searchCourse')}</label>
               <div className="relative">
                 <div className="absolute inset-y-0 right-3 flex items-center pl-4 pointer-events-none">
                   <svg className="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
@@ -423,7 +426,7 @@ const CoursesPanel: React.FC = () => {
                 </div>
                 <input
                   type="text"
-                  placeholder="Cerca per nome o descrizione..."
+                  placeholder={t('admin.courses.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
@@ -464,10 +467,10 @@ const CoursesPanel: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800">Catalogo Corsi</h3>
+                <h3 className="text-xl font-semibold text-gray-800">{t('admin.courses.courseCatalog')}</h3>
               </div>
               <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-medium">
-                {filteredCourses.length} {filteredCourses.length === 1 ? 'corso' : 'corsi'}
+                {t('admin.courses.courseCount', { count: filteredCourses.length })}
               </span>
             </div>
           </div>
@@ -494,7 +497,7 @@ const CoursesPanel: React.FC = () => {
                               <button
                                 onClick={() => handleEditCourse(course)}
                                 className="p-2 bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200 transition-colors"
-                                title="Modifica corso"
+                                title={t('admin.courses.editCourse')}
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                   <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -503,7 +506,7 @@ const CoursesPanel: React.FC = () => {
                               <button
                                 onClick={() => handleDeleteConfirmation(course)}
                                 className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-                                title="Elimina corso"
+                                title={t('admin.courses.deleteCourse')}
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                   <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -534,7 +537,7 @@ const CoursesPanel: React.FC = () => {
                         {/* Content */}
                         <div className="p-6 flex-grow">
                           <div className="flex items-center justify-between mb-3">
-                            <span className="text-sm font-medium text-gray-600">Materie Associate</span>
+                            <span className="text-sm font-medium text-gray-600">{t('admin.courses.associatedSubjects')}</span>
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                               courseSubjects.length > 0 
                                 ? 'bg-green-100 text-green-800' 
@@ -561,12 +564,12 @@ const CoursesPanel: React.FC = () => {
                               <svg className="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                               </svg>
-                              <p className="text-xs text-gray-400 mb-2">Nessuna materia associata</p>
+                              <p className="text-xs text-gray-400 mb-2">{t('admin.courses.noSubjectsAssociated')}</p>
                               <button
                                 onClick={() => handleEditCourse(course)}
                                 className="text-xs text-blue-600 hover:text-blue-800 font-medium"
                               >
-                                Aggiungi materie
+                                {t('admin.courses.addSubjects')}
                               </button>
                             </div>
                           )}
@@ -583,11 +586,11 @@ const CoursesPanel: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Nessun corso trovato</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('admin.courses.noCoursesFound')}</h3>
                 <p className="text-gray-500 mb-8">
                   {searchTerm 
-                    ? "Nessun risultato corrisponde alla ricerca" 
-                    : "Non ci sono corsi registrati nel sistema"
+                    ? t('admin.courses.noSearchResults') 
+                    : t('admin.courses.noCoursesInSystem')
                   }
                 </p>
                 <div className="flex justify-center space-x-4">
@@ -596,7 +599,7 @@ const CoursesPanel: React.FC = () => {
                       onClick={() => setSearchTerm('')}
                       className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                     >
-                      Pulisci ricerca
+                      {t('admin.courses.clearSearch')}
                     </button>
                   )}
                   <button
@@ -606,7 +609,7 @@ const CoursesPanel: React.FC = () => {
                     <svg className="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                     </svg>
-                    {courses.length === 0 ? 'Aggiungi il primo corso' : 'Aggiungi nuovo corso'}
+                    {courses.length === 0 ? t('admin.courses.addFirstCourse') : t('admin.courses.addNewCourse')}
                   </button>
                 </div>
               </div>
@@ -633,7 +636,7 @@ const CoursesPanel: React.FC = () => {
                       </svg>
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900">
-                      {isEditing ? 'Modifica Corso' : 'Nuovo Corso'}
+                      {isEditing ? t('admin.courses.editCourse') : t('admin.courses.newCourse')}
                     </h3>
                   </div>
                   <button
@@ -649,7 +652,7 @@ const CoursesPanel: React.FC = () => {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
                     <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
-                      Nome Corso *
+                      {t('admin.courses.courseName')} *
                     </label>
                     <input
                       type="text"
@@ -658,14 +661,14 @@ const CoursesPanel: React.FC = () => {
                       value={formName}
                       onChange={handleInputChange}
                       required
-                      placeholder="Es. Informatica, Medicina, Ingegneria..."
+                      placeholder={t('admin.courses.courseNamePlaceholder')}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     />
                   </div>
                   
                   <div>
                     <label htmlFor="description" className="block text-sm font-semibold text-gray-700 mb-2">
-                      Descrizione (opzionale)
+                      {t('admin.courses.description')} ({t('admin.courses.optional')})
                     </label>
                     <textarea
                       id="description"
@@ -673,7 +676,7 @@ const CoursesPanel: React.FC = () => {
                       value={formDescription}
                       onChange={handleInputChange}
                       rows={3}
-                      placeholder="Breve descrizione del corso..."
+                      placeholder={t('admin.courses.descriptionPlaceholder')}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     />
                   </div>
@@ -681,7 +684,7 @@ const CoursesPanel: React.FC = () => {
                   {/* ✅ NUOVO CAMPO COLORE */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-3">
-                      Colore del Corso
+                      {t('admin.courses.courseColor')}
                     </label>
                     <div className="space-y-4">
                       {/* Color Picker */}
@@ -708,7 +711,7 @@ const CoursesPanel: React.FC = () => {
                       
                       {/* Predefined Colors */}
                       <div>
-                        <p className="text-xs text-gray-500 mb-2">Colori predefiniti:</p>
+                        <p className="text-xs text-gray-500 mb-2">{t('admin.courses.predefinedColors')}:</p>
                         <div className="grid grid-cols-5 gap-2">
                           {predefinedColors.map((color) => (
                             <button
@@ -735,7 +738,7 @@ const CoursesPanel: React.FC = () => {
                           className="px-3 py-1 rounded-full text-xs font-medium text-white"
                           style={{ backgroundColor: formColor }}
                         >
-                          Anteprima corso
+                          {t('admin.courses.coursePreview')}
                         </span>
                       </div>
                     </div>
@@ -743,7 +746,7 @@ const CoursesPanel: React.FC = () => {
                   
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Materie da associare ({selectedSubjects.length} selezionate)
+                      {t('admin.courses.subjectsToAssociate')} ({selectedSubjects.length} {t('admin.courses.selected')})
                     </label>
                     {availableSubjects.length > 0 ? (
                       <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3 bg-gray-50">
@@ -766,8 +769,8 @@ const CoursesPanel: React.FC = () => {
                         <svg className="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        <p className="text-sm text-gray-500 mb-1">Nessuna materia disponibile</p>
-                        <p className="text-xs text-gray-400">Crea prima delle materie nella sezione apposita</p>
+                        <p className="text-sm text-gray-500 mb-1">{t('admin.courses.noSubjectsAvailable')}</p>
+                        <p className="text-xs text-gray-400">{t('admin.courses.createSubjectsFirst')}</p>
                       </div>
                     )}
                   </div>
@@ -789,7 +792,7 @@ const CoursesPanel: React.FC = () => {
                       onClick={handleCloseForm}
                       className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
                     >
-                      Annulla
+                      {t('common.cancel')}
                     </button>
                     <button
                       type="submit"
@@ -802,10 +805,10 @@ const CoursesPanel: React.FC = () => {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
-                          Salvando...
+                          {t('admin.courses.saving')}...
                         </>
                       ) : (
-                        isEditing ? 'Aggiorna Corso' : 'Crea Corso'
+                        isEditing ? t('admin.courses.updateCourse') : t('admin.courses.createCourse')
                       )}
                     </button>
                   </div>
@@ -821,12 +824,12 @@ const CoursesPanel: React.FC = () => {
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDeleteCourse}
-        title="Conferma Eliminazione"
+        title={t('admin.courses.confirmDelete')}
         itemName={deletingCourse?.name || ''}
-        itemType="il corso"
-        description="Tutte le materie associate verranno dissociate."
+        itemType={t('admin.courses.courseType')}
+        description={t('admin.courses.deleteDescription')}
         isDeleting={submitting}
-        additionalWarning="Questa azione potrebbe influire sulle lezioni e non può essere annullata."
+        additionalWarning={t('admin.courses.deleteWarning')}
       />
     </div>
   );

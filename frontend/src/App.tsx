@@ -1,6 +1,7 @@
 // frontend/src/App.tsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AppProvider, useAppContext } from './context/AppContext';
 import AdminLayout from './components/layout/AdminLayout';
 import TeacherLayout from './components/layout/TeacherLayout';
@@ -19,6 +20,7 @@ import TeacherDashboard from './components/teacher/TeacherDashboard';
 import ActiveLesson from './components/teacher/ActiveLesson';
 import LessonImages from './components/teacher/LessonImages';
 import CreateLesson from './components/teacher/CreateLesson';
+import './i18n/i18n';
 import './scss/main.scss';
 
 // ProtectedRoute aggiornato con redirect intelligente
@@ -29,9 +31,10 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, roles = ['admin'] }) => {
   const { user, isAuthenticated, isLoading } = useAppContext();
+  const { t } = useTranslation();
   
   if (isLoading) {
-    return <div className="loading-container">...</div>;
+    return <div className="loading-container">{t('common.loading')}</div>;
   }
   
   if (!isAuthenticated) {
@@ -59,9 +62,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, roles = ['adm
 // Componente per il redirect condizionale basato sul ruolo
 const RoleBasedRedirect: React.FC = () => {
   const { user, isAuthenticated, isLoading } = useAppContext();
+  const { t } = useTranslation();
   
   if (isLoading) {
-    return <div className="loading-container">Caricamento...</div>;
+    return <div className="loading-container">{t('common.loading')}</div>;
   }
   
   if (!isAuthenticated) {
@@ -84,6 +88,7 @@ const RoleBasedRedirect: React.FC = () => {
 // Layout per il tecnico (semplificato, solo registrazione studenti)
 const TechnicianLayout: React.FC = () => {
   const { user } = useAppContext();
+  const { t } = useTranslation();
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -99,7 +104,7 @@ const TechnicianLayout: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h1 className="text-lg font-semibold text-gray-900">Registrazione Studenti</h1>
+                <h1 className="text-lg font-semibold text-gray-900">{t('technician.layout.title')}</h1>
               </div>
             </div>
             
@@ -113,7 +118,7 @@ const TechnicianLayout: React.FC = () => {
                 </div>
                 <span className="font-medium text-gray-700">{user?.name}</span>
                 <span className="text-gray-400">•</span>
-                <span className="text-gray-500 capitalize">{user?.role}</span>
+                <span className="text-gray-500 capitalize">{t('technician.layout.userRole')}</span>
               </div>
               
               <div className="h-4 w-px bg-gray-300 hidden sm:block"></div>
@@ -125,12 +130,12 @@ const TechnicianLayout: React.FC = () => {
                   localStorage.removeItem('user');
                   window.location.href = '/login';
                 }}
-                title="Logout"
+                title={t('common.logout')}
               >
                 <svg className="w-4 h-4 sm:mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                <span className="hidden sm:inline">Logout</span>
+                <span className="hidden sm:inline">{t('common.logout')}</span>
               </button>
             </div>
           </div>
@@ -149,7 +154,7 @@ const TechnicianLayout: React.FC = () => {
             </div>
             <div className="flex-1">
               <p className="text-sm text-indigo-700">
-                <span className="font-medium">Registrazione nuovo studente:</span> Compila tutti i campi e scatta una foto chiara per il riconoscimento facciale.
+                <span className="font-medium">{t('technician.layout.infoTitle')}</span> {t('technician.layout.infoDescription')}
               </p>
             </div>
           </div>

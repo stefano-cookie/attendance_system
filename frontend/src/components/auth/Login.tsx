@@ -1,7 +1,9 @@
 // frontend/src/components/auth/Login.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAppContext } from '../../context/AppContext';
+import LanguageSwitcher from '../common/LanguageSwitcher';
 
 interface LoginFormData {
   email: string;
@@ -14,6 +16,7 @@ interface FormErrors {
 }
 
 const Login: React.FC = () => {
+  const { t } = useTranslation();
   const [credentials, setCredentials] = useState<LoginFormData>({
     email: '',
     password: ''
@@ -23,10 +26,10 @@ const Login: React.FC = () => {
   const { login, error, isLoading, isAuthenticated } = useAppContext();
   const navigate = useNavigate();
   
-  // Redirect se l'utente è già autenticato
+  // Redirect if user is already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      // Redirect intelligente basato sul ruolo
+      // Smart redirect based on user role
       try {
         const userStr = localStorage.getItem('user');
         if (userStr) {
@@ -48,7 +51,7 @@ const Login: React.FC = () => {
           navigate('/admin');
         }
       } catch (error) {
-        console.error('Errore parsing user data:', error);
+        console.error('Error parsing user data:', error);
         navigate('/admin');
       }
     }
@@ -61,7 +64,7 @@ const Login: React.FC = () => {
       [name]: value
     });
     
-    // Reset dell'errore quando l'utente inizia a scrivere
+    // Reset error when user starts typing
     if (errors[name as keyof FormErrors]) {
       setErrors({
         ...errors,
@@ -74,13 +77,13 @@ const Login: React.FC = () => {
     const newErrors: FormErrors = {};
     
     if (!credentials.email) {
-      newErrors.email = 'L\'email è obbligatoria';
+      newErrors.email = t('auth.emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(credentials.email)) {
-      newErrors.email = 'Formato email non valido';
+      newErrors.email = t('auth.emailInvalid');
     }
     
     if (!credentials.password) {
-      newErrors.password = 'La password è obbligatoria';
+      newErrors.password = t('auth.passwordRequired');
     }
     
     setErrors(newErrors);
@@ -93,7 +96,7 @@ const Login: React.FC = () => {
     if (validateForm()) {
       const success = await login(credentials.email, credentials.password);
       if (success) {
-        // Redirect intelligente basato sul ruolo dell'utente loggato
+        // Smart redirect based on logged-in user role
         const userStr = localStorage.getItem('user');
         if (userStr) {
           const user = JSON.parse(userStr);
@@ -128,6 +131,11 @@ const Login: React.FC = () => {
              style={{ animationDelay: '4s' }} />
       </div>
 
+      {/* Language Switcher */}
+      <div className="absolute top-4 right-4 z-20">
+        <LanguageSwitcher />
+      </div>
+
       {/* Login Card */}
       <div className="relative z-10 w-full max-w-md">
         <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-blue-500/10 border border-white/20 overflow-hidden">
@@ -150,10 +158,10 @@ const Login: React.FC = () => {
             </div>
             
             <h1 className="text-2xl font-black text-gray-900 mb-2">
-              Sistema Presenze
+              {t('auth.systemTitle')}
             </h1>
             <p className="text-gray-600 font-medium">
-              Accedi al pannello di amministrazione
+              {t('auth.accessPanel')}
             </p>
           </div>
           
@@ -164,7 +172,7 @@ const Login: React.FC = () => {
               {/* Email Field */}
               <div className="space-y-2">
                 <label htmlFor="email" className="block text-sm font-semibold text-gray-700">
-                  Indirizzo Email
+                  {t('auth.email')}
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
@@ -180,7 +188,7 @@ const Login: React.FC = () => {
                     name="email"
                     value={credentials.email}
                     onChange={handleChange}
-                    placeholder="nome@esempio.com"
+                    placeholder={t('auth.emailPlaceholder')}
                     className={`
                       w-full pl-12 pr-4 py-4 bg-gray-50 border rounded-2xl text-gray-900 placeholder-gray-500 
                       focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200
@@ -204,7 +212,7 @@ const Login: React.FC = () => {
               {/* Password Field */}
               <div className="space-y-2">
                 <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
-                  Password
+                  {t('auth.password')}
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
@@ -220,7 +228,7 @@ const Login: React.FC = () => {
                     name="password"
                     value={credentials.password}
                     onChange={handleChange}
-                    placeholder="Inserisci la password"
+                    placeholder={t('auth.passwordPlaceholder')}
                     className={`
                       w-full pl-12 pr-12 py-4 bg-gray-50 border rounded-2xl text-gray-900 placeholder-gray-500 
                       focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200
@@ -234,6 +242,7 @@ const Login: React.FC = () => {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                    title={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                   >
                     {showPassword ? (
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -289,11 +298,11 @@ const Login: React.FC = () => {
                 {isLoading ? (
                   <div className="flex items-center justify-center space-x-3">
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span>Accesso in corso...</span>
+                    <span>{t('auth.loggingIn')}</span>
                   </div>
                 ) : (
                   <div className="flex items-center justify-center space-x-2">
-                    <span>Accedi al Sistema</span>
+                    <span>{t('auth.loginButton')}</span>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
@@ -305,10 +314,10 @@ const Login: React.FC = () => {
             {/* Footer */}
             <div className="mt-8 pt-6 border-t border-gray-200 text-center">
               <p className="text-xs text-gray-500">
-                Sistema di Rilevamento Presenze
+                {t('auth.systemName')}
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                Versione 1.0 - Sicuro e Affidabile
+                {t('auth.version')}
               </p>
             </div>
           </div>

@@ -1,5 +1,6 @@
 // frontend/src/components/admin/LessonsPanel.tsx
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   getLessons, 
   getCourses, 
@@ -12,6 +13,8 @@ import {
 import type { Lesson, Course, Subject, Classroom } from '../../services/api';
 
 const LessonsPanel: React.FC = () => {
+  const { t } = useTranslation();
+  
   // Stati per i dati
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -67,7 +70,7 @@ const LessonsPanel: React.FC = () => {
         getClassrooms()
       ]);
       
-      console.log('Dati caricati:', {
+      console.log(t('admin.lessons.dataLoaded'), {
         lessons: lessonsData,
         courses: coursesData,
         subjects: subjectsData,
@@ -75,13 +78,13 @@ const LessonsPanel: React.FC = () => {
       });
       
       if (!coursesData || coursesData.length === 0) {
-        setError('Nessun corso disponibile. Crea prima un corso.');
+        setError(t('admin.lessons.errors.noCoursesAvailable'));
         setLoading(false);
         return;
       }
       
       if (!classroomsData || classroomsData.length === 0) {
-        setError('Nessuna aula disponibile.');
+        setError(t('admin.lessons.errors.noClassroomsAvailable'));
         setLoading(false);
         return;
       }
@@ -101,8 +104,8 @@ const LessonsPanel: React.FC = () => {
         subjectsData.filter(subject => subject.course_id === coursesData[0].id)
       );
     } catch (err) {
-      console.error('Errore durante il caricamento dei dati:', err);
-      setError('Impossibile caricare i dati. Riprova più tardi.');
+      console.error(t('admin.lessons.errors.dataLoadingError'), err);
+      setError(t('admin.lessons.errors.unableToLoadData'));
     } finally {
       setLoading(false);
     }
@@ -139,7 +142,7 @@ const LessonsPanel: React.FC = () => {
   // Funzioni di supporto
   const getCourseName = (courseId: number): string => {
     const course = courses.find(c => c.id === courseId);
-    return course ? course.name : 'Corso sconosciuto';
+    return course ? course.name : t('admin.lessons.unknownCourse');
   };
   
   const getCourseColor = (courseId: number): string => {
@@ -149,14 +152,14 @@ const LessonsPanel: React.FC = () => {
   };
   
   const getSubjectName = (subjectId?: number): string => {
-    if (!subjectId) return 'Nessuna materia';
+    if (!subjectId) return t('admin.lessons.noSubject');
     const subject = subjects.find(s => s.id === subjectId);
-    return subject ? subject.name : 'Materia sconosciuta';
+    return subject ? subject.name : t('admin.lessons.unknownSubject');
   };
   
   const getClassroomName = (classroomId: number): string => {
     const classroom = classrooms.find(c => c.id === classroomId);
-    return classroom ? classroom.name : 'Aula sconosciuta';
+    return classroom ? classroom.name : t('admin.lessons.unknownClassroom');
   };
   
   const formatDate = (dateString: string): string => {
@@ -245,7 +248,7 @@ const LessonsPanel: React.FC = () => {
     
     try {
       if (!currentLesson.lesson_date || !currentLesson.classroom_id || !currentLesson.course_id) {
-        setError('Data, aula e corso sono campi obbligatori');
+        setError(t('admin.lessons.errors.requiredFields'));
         return;
       }
       
@@ -254,21 +257,21 @@ const LessonsPanel: React.FC = () => {
         lesson_date: new Date(currentLesson.lesson_date).toISOString()
       };
       
-      console.log('Invio dati lezione:', formattedLesson);
+      console.log(t('admin.lessons.sendingLessonData'), formattedLesson);
       
       if (isEditing && currentLesson.id !== undefined) {
         await updateLesson(currentLesson.id, formattedLesson);
-        setInfo('Lezione aggiornata con successo!');
+        setInfo(t('admin.lessons.messages.lessonUpdated'));
       } else {
         await createLesson(formattedLesson);
-        setInfo('Lezione creata con successo!');
+        setInfo(t('admin.lessons.messages.lessonCreated'));
       }
       
       await fetchData();
       handleCloseForm();
     } catch (err) {
-      console.error('Errore durante il salvataggio:', err);
-      setError('Errore durante il salvataggio della lezione');
+      console.error(t('admin.lessons.errors.savingError'), err);
+      setError(t('admin.lessons.errors.lessonSavingError'));
     }
   };
   
@@ -286,10 +289,10 @@ const LessonsPanel: React.FC = () => {
       await fetchData();
       setIsDeleteModalOpen(false);
       setLessonToDelete(null);
-      setInfo('Lezione eliminata con successo!');
+      setInfo(t('admin.lessons.messages.lessonDeleted'));
     } catch (err) {
-      console.error('Errore durante l\'eliminazione:', err);
-      setError('Errore durante l\'eliminazione della lezione');
+      console.error(t('admin.lessons.errors.deletionError'), err);
+      setError(t('admin.lessons.errors.lessonDeletionError'));
     }
   };
   
@@ -302,11 +305,11 @@ const LessonsPanel: React.FC = () => {
       const backendUrl = 'http://localhost:4321';
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('Token di autenticazione mancante. Effettua nuovamente il login.');
+        setError(t('admin.lessons.errors.authTokenMissing'));
         return;
       }
       
-      console.log(`Recupero directory per lezione ID: ${lesson.id}`);
+      console.log(t('admin.lessons.retrievingDirectories', { lessonId: lesson.id }));
       
       const response = await fetch(`${backendUrl}/api/lessons/directory-info/${lesson.id}`, {
         headers: {
@@ -315,30 +318,30 @@ const LessonsPanel: React.FC = () => {
         }
       });
       
-      console.log(`Stato risposta: ${response.status} ${response.statusText}`);
+      console.log(t('admin.lessons.responseStatus', { status: response.status, statusText: response.statusText }));
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Risposta di errore:', errorText);
-        throw new Error(`Errore ${response.status}: ${response.statusText}`);
+        console.error(t('admin.lessons.errorResponse'), errorText);
+        throw new Error(t('admin.lessons.errors.httpError', { status: response.status, statusText: response.statusText }));
       }
       
       try {
         const data = await response.json();
-        console.log('Dati ricevuti:', data);
+        console.log(t('admin.lessons.dataReceived'), data);
         setDirectoryInfo(data);
         setLessonToAnalyze(lesson);
         setIsDirectoryModalOpen(true);
       } catch (jsonError) {
-        console.error('Errore nel parsing JSON:', jsonError);
-        throw new Error('La risposta ricevuta non è in formato JSON valido');
+        console.error(t('admin.lessons.errors.jsonParsingError'), jsonError);
+        throw new Error(t('admin.lessons.errors.invalidJsonResponse'));
       }
     } catch (err: unknown) {
-      console.error('Errore nel recupero delle info sulle directory:', err);
+      console.error(t('admin.lessons.errors.directoryInfoError'), err);
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('Si è verificato un errore sconosciuto');
+        setError(t('admin.lessons.errors.unknownError'));
       }
     } finally {
       setLoading(false);
@@ -358,22 +361,22 @@ const LessonsPanel: React.FC = () => {
       });
       
       if (!response.ok) {
-        throw new Error('Errore nella creazione delle directory');
+        throw new Error(t('admin.lessons.errors.directoryCreationError'));
       }
       
       const data = await response.json();
       
       if (data.success) {
-        setInfo(`Directory create con successo in: ${data.paths.images}`);
+        setInfo(t('admin.lessons.messages.directoriesCreated', { path: data.paths.images }));
         handleViewDirectories(lesson);
       } else {
-        throw new Error(data.message || 'Errore nella creazione delle directory');
+        throw new Error(data.message || t('admin.lessons.errors.directoryCreationError'));
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('Si è verificato un errore sconosciuto');
+        setError(t('admin.lessons.errors.unknownError'));
       }
     } finally {
       setLoading(false);
@@ -391,12 +394,12 @@ const LessonsPanel: React.FC = () => {
       const backendUrl = 'http://localhost:4321';
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('Token di autenticazione mancante. Effettua nuovamente il login.');
+        setError(t('admin.lessons.errors.authTokenMissing'));
         setIsAnalyzing(false);
         return;
       }
       
-      console.log(`Avvio analisi presenze per lezione ID: ${lesson.id}`);
+      console.log(t('admin.lessons.startingAttendanceAnalysis', { lessonId: lesson.id }));
       
       const dirResponse = await fetch(`${backendUrl}/api/lessons/directory-info/${lesson.id}`, {
         headers: {
@@ -406,13 +409,13 @@ const LessonsPanel: React.FC = () => {
       });
       
       if (!dirResponse.ok) {
-        throw new Error('Errore nel recupero delle info sulle directory');
+        throw new Error(t('admin.lessons.errors.directoryInfoRetrievalError'));
       }
       
       const dirData = await dirResponse.json();
       
       if (dirData.directories.images.fileCount === 0) {
-        setError(`Non ci sono immagini nella directory: ${dirData.directories.images.path}. Carica delle immagini prima di avviare l'analisi.`);
+        setError(t('admin.lessons.errors.noImagesInDirectory', { path: dirData.directories.images.path }));
         setIsAnalyzing(false);
         return;
       }
@@ -428,24 +431,24 @@ const LessonsPanel: React.FC = () => {
       
       if (!analyzeResponse.ok) {
         const errorText = await analyzeResponse.text();
-        console.error('Risposta di errore:', errorText);
-        throw new Error(`Errore ${analyzeResponse.status}: Impossibile completare l'analisi`);
+        console.error(t('admin.lessons.errorResponse'), errorText);
+        throw new Error(t('admin.lessons.errors.analysisCompletionError', { status: analyzeResponse.status }));
       }
       
       try {
         const analysisData = await analyzeResponse.json();
         setAnalysisResult(analysisData);
-        setInfo('Analisi completata con successo!');
+        setInfo(t('admin.lessons.messages.analysisCompleted'));
       } catch (jsonError) {
-        console.error('Errore nel parsing JSON:', jsonError);
-        throw new Error('La risposta ricevuta non è in formato JSON valido');
+        console.error(t('admin.lessons.errors.jsonParsingError'), jsonError);
+        throw new Error(t('admin.lessons.errors.invalidJsonResponse'));
       }
     } catch (err: unknown) {
-      console.error('Errore durante l\'analisi delle presenze:', err);
+      console.error(t('admin.lessons.errors.attendanceAnalysisError'), err);
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('Si è verificato un errore sconosciuto');
+        setError(t('admin.lessons.errors.unknownError'));
       }
     } finally {
       setIsAnalyzing(false);
@@ -476,8 +479,8 @@ const LessonsPanel: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex justify-center items-center">
         <div className="text-center bg-white p-8 rounded-2xl shadow-xl">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-          <h3 className="text-xl font-semibold text-gray-700">Caricamento Lezioni</h3>
-          <p className="text-gray-500 mt-2">Preparazione dei dati in corso...</p>
+          <h3 className="text-xl font-semibold text-gray-700">{t('admin.lessons.loading.title')}</h3>
+          <p className="text-gray-500 mt-2">{t('admin.lessons.loading.subtitle')}</p>
         </div>
       </div>
     );
@@ -496,8 +499,8 @@ const LessonsPanel: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-800">Gestione Lezioni</h1>
-                <p className="text-gray-600">Pianificazione e Monitoraggio Didattico</p>
+                <h1 className="text-3xl font-bold text-gray-800">{t('admin.lessons.title')}</h1>
+                <p className="text-gray-600">{t('admin.lessons.subtitle')}</p>
               </div>
             </div>
             
@@ -510,7 +513,7 @@ const LessonsPanel: React.FC = () => {
                 <svg className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                <span>{refreshing ? 'Aggiornando...' : 'Aggiorna'}</span>
+                <span>{refreshing ? t('common.refreshing') : t('common.refresh')}</span>
               </button>
 
               <button
@@ -520,7 +523,7 @@ const LessonsPanel: React.FC = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
                 </svg>
-                <span className="font-semibold">Nuova Lezione</span>
+                <span className="font-semibold">{t('admin.lessons.actions.newLesson')}</span>
               </button>
             </div>
           </div>
@@ -555,7 +558,7 @@ const LessonsPanel: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Lezioni Totali</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.lessons.stats.totalLessons')}</p>
                 <p className="text-3xl font-bold text-gray-800">{lessons.length}</p>
               </div>
               <div className="bg-blue-100 p-3 rounded-xl">
@@ -569,7 +572,7 @@ const LessonsPanel: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Oggi</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.lessons.stats.today')}</p>
                 <p className="text-3xl font-bold text-gray-800">{todayLessons}</p>
               </div>
               <div className="bg-green-100 p-3 rounded-xl">
@@ -583,7 +586,7 @@ const LessonsPanel: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Future</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.lessons.stats.future')}</p>
                 <p className="text-3xl font-bold text-gray-800">{futureLessons}</p>
               </div>
               <div className="bg-purple-100 p-3 rounded-xl">
@@ -597,7 +600,7 @@ const LessonsPanel: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Completate</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.lessons.stats.completed')}</p>
                 <p className="text-3xl font-bold text-gray-800">{pastLessons}</p>
               </div>
               <div className="bg-orange-100 p-3 rounded-xl">
@@ -618,12 +621,12 @@ const LessonsPanel: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-800">Ricerca e Filtri</h3>
+              <h3 className="text-xl font-semibold text-gray-800">{t('admin.lessons.search.title')}</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Cerca lezione</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">{t('admin.lessons.search.searchLesson')}</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 right-3 flex items-center pl-4 pointer-events-none">
                     <svg className="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
@@ -632,7 +635,7 @@ const LessonsPanel: React.FC = () => {
                   </div>
                   <input
                     type="text"
-                    placeholder="Cerca per nome lezione..."
+                    placeholder={t('admin.lessons.search.searchPlaceholder')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
@@ -651,13 +654,13 @@ const LessonsPanel: React.FC = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Filtra per corso</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">{t('admin.lessons.search.filterByCourse')}</label>
                 <select
                   value={selectedCourseId || ''}
                   onChange={(e) => setSelectedCourseId(e.target.value ? parseInt(e.target.value, 10) : null)}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 >
-                  <option value="">🎓 Tutti i corsi</option>
+                  <option value="">{t('admin.lessons.search.allCourses')}</option>
                   {courses.map(course => (
                     <option key={course.id} value={course.id}>
                       {course.name}
@@ -700,10 +703,10 @@ const LessonsPanel: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800">Calendario Lezioni</h3>
+                <h3 className="text-xl font-semibold text-gray-800">{t('admin.lessons.list.title')}</h3>
               </div>
               <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-medium">
-                {filteredLessons.length} {filteredLessons.length === 1 ? 'lezione' : 'lezioni'}
+                {t('admin.lessons.list.lessonCount', { count: filteredLessons.length })}
               </span>
             </div>
           </div>
@@ -721,7 +724,7 @@ const LessonsPanel: React.FC = () => {
                     <div className="p-6 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
                       <div className="flex items-center space-x-3 mb-3">
                         <h3 className="text-lg font-bold text-gray-800 leading-tight">
-                          {lesson.name || `Lezione del ${formatDate(lesson.lesson_date)}`}
+                          {lesson.name || t('admin.lessons.list.lessonOfDate', { date: formatDate(lesson.lesson_date) })}
                         </h3>
                       </div>
                       
@@ -746,7 +749,7 @@ const LessonsPanel: React.FC = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                           </svg>
                           <div className="min-w-0">
-                            <p className="text-xs font-medium text-gray-600 mb-1">Aula</p>
+                            <p className="text-xs font-medium text-gray-600 mb-1">{t('admin.lessons.list.classroom')}</p>
                             <p className="text-sm text-orange-700 font-semibold">
                               {getClassroomName(lesson.classroom_id)}
                             </p>
@@ -757,7 +760,7 @@ const LessonsPanel: React.FC = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
                           <div className="min-w-0">
-                            <p className="text-xs font-medium text-gray-600 mb-1">Materia</p>
+                            <p className="text-xs font-medium text-gray-600 mb-1">{t('admin.lessons.list.subject')}</p>
                             <p className="text-sm text-purple-700 font-semibold truncate">
                               {getSubjectName(lesson.subject_id)}
                             </p>
@@ -768,7 +771,7 @@ const LessonsPanel: React.FC = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           <div className="min-w-0">
-                            <p className="text-xs font-medium text-gray-600 mb-1">Data e Ora</p>
+                            <p className="text-xs font-medium text-gray-600 mb-1">{t('admin.lessons.list.dateTime')}</p>
                             <p className="text-sm text-blue-700 font-semibold truncate">
                               {formatDate(lesson.lesson_date)}
                             </p>
@@ -783,23 +786,23 @@ const LessonsPanel: React.FC = () => {
                           <button
                             onClick={() => handleAnalyzeAttendance(lesson)}
                             className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-200 text-sm font-semibold"
-                            title="Analizza presenze"
+                            title={t('admin.lessons.actions.analyzeAttendance')}
                           >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                             </svg>
-                            Analizza
+                            {t('admin.lessons.actions.analyze')}
                           </button>
                           
                           <button
                             onClick={() => handleViewDirectories(lesson)}
                             className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-200 text-sm font-semibold"
-                            title="Visualizza directory"
+                            title={t('admin.lessons.actions.viewDirectories')}
                           >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z" />
                             </svg>
-                            Directory
+                            {t('admin.lessons.actions.directory')}
                           </button>
                         </div>
                         
@@ -808,23 +811,23 @@ const LessonsPanel: React.FC = () => {
                           <button
                             onClick={() => handleEditLesson(lesson)}
                             className="flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
-                            title="Modifica lezione"
+                            title={t('admin.lessons.actions.editLesson')}
                           >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                            Modifica
+                            {t('common.edit')}
                           </button>
                           
                           <button
                             onClick={() => handleDeleteConfirmation(lesson)}
                             className="flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
-                            title="Elimina lezione"
+                            title={t('admin.lessons.actions.deleteLesson')}
                           >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
-                            Elimina
+                            {t('common.delete')}
                           </button>
                         </div>
                       </div>
@@ -839,11 +842,11 @@ const LessonsPanel: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Nessuna lezione trovata</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('admin.lessons.empty.noLessonsFound')}</h3>
                 <p className="text-gray-500 mb-8">
                   {searchTerm || selectedCourseId 
-                    ? "Nessun risultato corrisponde ai filtri di ricerca applicati" 
-                    : "Non ci sono lezioni programmate nel sistema"
+                    ? t('admin.lessons.empty.noSearchResults')
+                    : t('admin.lessons.empty.noLessonsInSystem')
                   }
                 </p>
                 <div className="flex justify-center space-x-4">
@@ -855,7 +858,7 @@ const LessonsPanel: React.FC = () => {
                       }}
                       className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                     >
-                      Pulisci filtri
+                      {t('admin.lessons.search.clearFilters')}
                     </button>
                   )}
                   <button
@@ -865,7 +868,7 @@ const LessonsPanel: React.FC = () => {
                     <svg className="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                     </svg>
-                    {lessons.length === 0 ? 'Aggiungi la prima lezione' : 'Aggiungi nuova lezione'}
+                    {lessons.length === 0 ? t('admin.lessons.empty.addFirstLesson') : t('admin.lessons.empty.addNewLesson')}
                   </button>
                 </div>
               </div>
@@ -890,7 +893,7 @@ const LessonsPanel: React.FC = () => {
                       </svg>
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900">
-                      {isEditing ? 'Modifica Lezione' : 'Nuova Lezione'}
+                      {isEditing ? t('admin.lessons.form.editTitle') : t('admin.lessons.form.newTitle')}
                     </h3>
                   </div>
                   <button
@@ -906,7 +909,7 @@ const LessonsPanel: React.FC = () => {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
                     <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
-                      Nome Lezione *
+                      {t('admin.lessons.form.nameLabel')}
                     </label>
                     <input
                       type="text"
@@ -914,14 +917,14 @@ const LessonsPanel: React.FC = () => {
                       name="name"
                       value={currentLesson.name || ''}
                       onChange={handleInputChange}
-                      placeholder="Es. Introduzione al calcolo differenziale"
+                      placeholder={t('admin.lessons.form.namePlaceholder')}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     />
                   </div>
                   
                   <div>
                     <label htmlFor="lesson_date" className="block text-sm font-semibold text-gray-700 mb-2">
-                      Data e Ora *
+                      {t('admin.lessons.form.dateTimeLabel')}
                     </label>
                     <input
                       type="datetime-local"
@@ -936,7 +939,7 @@ const LessonsPanel: React.FC = () => {
                   
                   <div>
                     <label htmlFor="course_id" className="block text-sm font-semibold text-gray-700 mb-2">
-                      Corso *
+                      {t('admin.lessons.form.courseLabel')}
                     </label>
                     <select
                       id="course_id"
@@ -946,7 +949,7 @@ const LessonsPanel: React.FC = () => {
                       required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     >
-                      <option value="">Seleziona un corso</option>
+                      <option value="">{t('admin.lessons.form.selectCourse')}</option>
                       {courses.map(course => (
                         <option key={course.id} value={course.id}>
                           {course.name}
@@ -957,7 +960,7 @@ const LessonsPanel: React.FC = () => {
                   
                   <div>
                     <label htmlFor="subject_id" className="block text-sm font-semibold text-gray-700 mb-2">
-                      Materia *
+                      {t('admin.lessons.form.subjectLabel')}
                     </label>
                     <select
                       id="subject_id"
@@ -966,7 +969,7 @@ const LessonsPanel: React.FC = () => {
                       onChange={handleInputChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     >
-                      <option value="">Seleziona una materia</option>
+                      <option value="">{t('admin.lessons.form.selectSubject')}</option>
                       {filteredSubjects.map(subject => (
                         <option key={subject.id} value={subject.id}>
                           {subject.name}
@@ -977,7 +980,7 @@ const LessonsPanel: React.FC = () => {
                   
                   <div>
                     <label htmlFor="classroom_id" className="block text-sm font-semibold text-gray-700 mb-2">
-                      Aula *
+                      {t('admin.lessons.form.classroomLabel')}
                     </label>
                     <select
                       id="classroom_id"
@@ -987,7 +990,7 @@ const LessonsPanel: React.FC = () => {
                       required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     >
-                      <option value="">Seleziona un'aula</option>
+                      <option value="">{t('admin.lessons.form.selectClassroom')}</option>
                       {classrooms.map(classroom => (
                         <option key={classroom.id} value={classroom.id}>
                           {classroom.name}
@@ -1013,13 +1016,13 @@ const LessonsPanel: React.FC = () => {
                       onClick={handleCloseForm}
                       className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
                     >
-                      Annulla
+                      {t('common.cancel')}
                     </button>
                     <button
                       type="submit"
                       className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200"
                     >
-                      {isEditing ? 'Aggiorna Lezione' : 'Crea Lezione'}
+                      {isEditing ? t('admin.lessons.form.updateLesson') : t('admin.lessons.form.createLesson')}
                     </button>
                   </div>
                 </form>
@@ -1045,17 +1048,18 @@ const LessonsPanel: React.FC = () => {
                   </div>
                   <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                     <h3 className="text-xl leading-6 font-bold text-gray-900 mb-2">
-                      Conferma Eliminazione
+                      {t('admin.lessons.deleteConfirmation.title')}
                     </h3>
                     <div className="mt-4">
                       <p className="text-sm text-gray-600 leading-relaxed">
-                        Sei sicuro di voler eliminare la lezione{' '}
-                        <span className="font-bold text-gray-900 bg-gray-100 px-2 py-1 rounded">
-                          {lessonToDelete?.name || `Lezione del ${lessonToDelete ? formatDate(lessonToDelete.lesson_date) : ''}`}
-                        </span>?
+                        {t('admin.lessons.deleteConfirmation.message', {
+                          lessonName: lessonToDelete?.name || t('admin.lessons.list.lessonOfDate', {
+                            date: lessonToDelete ? formatDate(lessonToDelete.lesson_date) : ''
+                          })
+                        })}
                       </p>
                       <p className="text-sm text-red-600 mt-3 font-medium">
-                        ⚠️ Questa azione non può essere annullata.
+                        {t('admin.lessons.deleteConfirmation.warning')}
                       </p>
                     </div>
                   </div>
@@ -1066,13 +1070,13 @@ const LessonsPanel: React.FC = () => {
                   onClick={handleDeleteLesson}
                   className="w-full inline-flex justify-center rounded-lg border border-transparent shadow-lg px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-base font-semibold text-white hover:shadow-xl hover:scale-105 transition-all duration-200 sm:w-auto sm:text-sm"
                 >
-                  Elimina Definitivamente
+                  {t('admin.lessons.deleteConfirmation.deleteButton')}
                 </button>
                 <button
                   onClick={() => setIsDeleteModalOpen(false)}
                   className="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-6 py-3 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors sm:mt-0 sm:w-auto sm:text-sm"
                 >
-                  Annulla
+                  {t('common.cancel')}
                 </button>
               </div>
             </div>
@@ -1095,7 +1099,7 @@ const LessonsPanel: React.FC = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z" />
                       </svg>
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-900">Directory della Lezione</h3>
+                    <h3 className="text-2xl font-bold text-gray-900">{t('admin.lessons.directory.title')}</h3>
                   </div>
                   <button
                     onClick={() => setIsDirectoryModalOpen(false)}
@@ -1111,10 +1115,10 @@ const LessonsPanel: React.FC = () => {
                   {/* Header lezione */}
                   <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
                     <h3 className="text-lg font-semibold text-blue-900">
-                      {directoryInfo.lesson_name || `Lezione ${directoryInfo.lesson_id}`}
+                      {directoryInfo.lesson_name || t('admin.lessons.directory.lessonId', { id: directoryInfo.lesson_id })}
                     </h3>
-                    <p className="text-blue-700">Corso: {directoryInfo.course_name}</p>
-                    <p className="text-blue-600 text-sm">ID lezione: {directoryInfo.lesson_id}</p>
+                    <p className="text-blue-700">{t('admin.lessons.directory.course')}: {directoryInfo.course_name}</p>
+                    <p className="text-blue-600 text-sm">{t('admin.lessons.directory.lessonIdLabel')}: {directoryInfo.lesson_id}</p>
                   </div>
                   
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1124,7 +1128,7 @@ const LessonsPanel: React.FC = () => {
                         <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        Directory Immagini
+                        {t('admin.lessons.directory.imagesDirectory')}
                       </h4>
                       
                       <div className="bg-gray-50 p-3 rounded-lg mb-4">
@@ -1135,10 +1139,10 @@ const LessonsPanel: React.FC = () => {
                           <button
                             onClick={() => {
                               navigator.clipboard.writeText(directoryInfo.directories.images.path);
-                              setInfo("Percorso copiato negli appunti");
+                              setInfo(t('admin.lessons.directory.pathCopied'));
                             }}
                             className="ml-2 p-1 text-gray-500 hover:text-gray-700"
-                            title="Copia percorso"
+                            title={t('admin.lessons.directory.copyPath')}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -1154,7 +1158,7 @@ const LessonsPanel: React.FC = () => {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                             <span className="font-medium text-green-700">
-                              {directoryInfo.directories.images.fileCount} immagini trovate
+                              {t('admin.lessons.directory.imagesFound', { count: directoryInfo.directories.images.fileCount })}
                             </span>
                           </div>
                           <div className="max-h-32 overflow-y-auto bg-gray-50 p-3 rounded">
@@ -1168,7 +1172,7 @@ const LessonsPanel: React.FC = () => {
                       ) : (
                         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
                           <p className="text-yellow-700 text-sm">
-                            ⚠️ Nessuna immagine trovata. Carica le immagini in questa directory.
+                            {t('admin.lessons.directory.noImagesFound')}
                           </p>
                         </div>
                       )}
@@ -1180,7 +1184,7 @@ const LessonsPanel: React.FC = () => {
                         <svg className="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
-                        Directory Report
+                        {t('admin.lessons.directory.reportsDirectory')}
                       </h4>
                       
                       <div className="bg-gray-50 p-3 rounded-lg mb-4">
@@ -1191,10 +1195,10 @@ const LessonsPanel: React.FC = () => {
                           <button
                             onClick={() => {
                               navigator.clipboard.writeText(directoryInfo.directories.reports.path);
-                              setInfo("Percorso copiato negli appunti");
+                              setInfo(t('admin.lessons.directory.pathCopied'));
                             }}
                             className="ml-2 p-1 text-gray-500 hover:text-gray-700"
-                            title="Copia percorso"
+                            title={t('admin.lessons.directory.copyPath')}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -1210,14 +1214,14 @@ const LessonsPanel: React.FC = () => {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                             <span className="font-medium text-green-700">
-                              {directoryInfo.directories.reports.fileCount} report trovati
+                              {t('admin.lessons.directory.reportsFound', { count: directoryInfo.directories.reports.fileCount })}
                             </span>
                           </div>
                         </div>
                       ) : (
                         <div className="bg-gray-50 border-l-4 border-gray-400 p-3 rounded">
                           <p className="text-gray-600 text-sm">
-                            ℹ️ Nessun report generato. Usa "Analizza Presenze" per generare i report.
+                            {t('admin.lessons.directory.noReportsGenerated')}
                           </p>
                         </div>
                       )}
@@ -1230,12 +1234,12 @@ const LessonsPanel: React.FC = () => {
                       <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Istruzioni
+                      {t('admin.lessons.directory.instructions')}
                     </h4>
                     <ol className="list-decimal pl-6 space-y-2 text-blue-800">
-                      <li>Carica le immagini della classe nella directory <strong>Immagini</strong> indicata sopra.</li>
-                      <li>Usa il pulsante "Analizza Presenze" per elaborare le immagini e registrare le presenze.</li>
-                      <li>I report con i volti riconosciuti saranno salvati nella directory <strong>Report</strong>.</li>
+                      <li>{t('admin.lessons.directory.instruction1')}</li>
+                      <li>{t('admin.lessons.directory.instruction2')}</li>
+                      <li>{t('admin.lessons.directory.instruction3')}</li>
                     </ol>
                   </div>
                 </div>
@@ -1246,7 +1250,7 @@ const LessonsPanel: React.FC = () => {
                     disabled={loading}
                     className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                   >
-                    🔄 Aggiorna
+                    {t('admin.lessons.directory.updateButton')}
                   </button>
                   
                   <div className="space-x-3">
@@ -1255,7 +1259,7 @@ const LessonsPanel: React.FC = () => {
                       disabled={loading}
                       className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
                     >
-                      📁 Ricrea Directory
+                      {t('admin.lessons.directory.recreateButton')}
                     </button>
                     
                     {directoryInfo.directories.images.fileCount > 0 && (
@@ -1268,7 +1272,7 @@ const LessonsPanel: React.FC = () => {
                         }}
                         className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition-all"
                       >
-                        ▶️ Analizza Presenze
+                        {t('admin.lessons.directory.analyzeButton')}
                       </button>
                     )}
                   </div>
@@ -1307,7 +1311,7 @@ const LessonsPanel: React.FC = () => {
                       )}
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900">
-                      {isAnalyzing ? 'Analisi in Corso...' : error ? 'Errore Analisi' : 'Analisi Completata'}
+                      {isAnalyzing ? t('admin.lessons.analysis.analyzing') : error ? t('admin.lessons.analysis.error') : t('admin.lessons.analysis.completed')}
                     </h3>
                   </div>
                   <button
@@ -1325,25 +1329,24 @@ const LessonsPanel: React.FC = () => {
                   {isAnalyzing ? (
                     <div className="text-center py-12">
                       <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-                      <h3 className="text-xl font-semibold text-gray-700 mb-2">Analisi in corso...</h3>
+                      <h3 className="text-xl font-semibold text-gray-700 mb-2">{t('admin.lessons.analysis.inProgress')}</h3>
                       <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
                         <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
                       </div>
                       <p className="text-gray-600 max-w-lg mx-auto">
-                        Sto analizzando le immagini per rilevare gli studenti presenti.
-                        Questo processo potrebbe richiedere alcuni minuti.
+                        {t('admin.lessons.analysis.processingDescription')}
                       </p>
                     </div>
                   ) : error ? (
                     <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-lg">
-                      <h3 className="text-lg font-medium text-red-800 mb-2">Errore durante l'analisi</h3>
+                      <h3 className="text-lg font-medium text-red-800 mb-2">{t('admin.lessons.analysis.errorTitle')}</h3>
                       <p className="text-red-700">{error}</p>
                     </div>
                   ) : analysisResult ? (
                     <div className="space-y-6">
                       <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
-                        <h3 className="text-lg font-medium text-green-800">Analisi Completata</h3>
-                        <p className="text-green-700">L'analisi delle immagini è stata completata con successo.</p>
+                        <h3 className="text-lg font-medium text-green-800">{t('admin.lessons.analysis.completedTitle')}</h3>
+                        <p className="text-green-700">{t('admin.lessons.analysis.completedDescription')}</p>
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1352,7 +1355,7 @@ const LessonsPanel: React.FC = () => {
                             <div className="text-2xl font-bold text-blue-600">
                               {analysisResult.results.imagesCount}
                             </div>
-                            <div className="text-sm text-gray-600">Immagini Analizzate</div>
+                            <div className="text-sm text-gray-600">{t('admin.lessons.analysis.imagesAnalyzed')}</div>
                           </div>
                         </div>
                         
@@ -1361,7 +1364,7 @@ const LessonsPanel: React.FC = () => {
                             <div className="text-lg font-semibold text-green-600">
                               {analysisResult.results.courseName}
                             </div>
-                            <div className="text-sm text-gray-600">Corso</div>
+                            <div className="text-sm text-gray-600">{t('admin.lessons.analysis.course')}</div>
                           </div>
                         </div>
                         
@@ -1370,22 +1373,22 @@ const LessonsPanel: React.FC = () => {
                             <div className="text-lg font-semibold text-purple-600">
                               {analysisResult.results.lessonName}
                             </div>
-                            <div className="text-sm text-gray-600">Lezione</div>
+                            <div className="text-sm text-gray-600">{t('admin.lessons.analysis.lesson')}</div>
                           </div>
                         </div>
                       </div>
                       
                       {analysisResult.results.results && (
                         <div className="bg-white border border-gray-200 rounded-lg p-6">
-                          <h4 className="text-lg font-semibold mb-4">Dettaglio Risultati</h4>
+                          <h4 className="text-lg font-semibold mb-4">{t('admin.lessons.analysis.detailResults')}</h4>
                           <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                               <thead className="bg-gray-50">
                                 <tr>
-                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Immagine</th>
-                                  <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">Volti</th>
-                                  <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">Riconosciuti</th>
-                                  <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">Stato</th>
+                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.lessons.analysis.image')}</th>
+                                  <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">{t('admin.lessons.analysis.faces')}</th>
+                                  <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">{t('admin.lessons.analysis.recognized')}</th>
+                                  <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">{t('admin.lessons.analysis.status')}</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-gray-200">
@@ -1404,9 +1407,9 @@ const LessonsPanel: React.FC = () => {
                                     </td>
                                     <td className="px-4 py-2 text-center">
                                       {result.error ? (
-                                        <span className="text-red-500">❌ Errore</span>
+                                        <span className="text-red-500">{t('admin.lessons.analysis.statusError')}</span>
                                       ) : (
-                                        <span className="text-green-500">✅ Completato</span>
+                                        <span className="text-green-500">{t('admin.lessons.analysis.statusCompleted')}</span>
                                       )}
                                     </td>
                                   </tr>
@@ -1419,7 +1422,7 @@ const LessonsPanel: React.FC = () => {
                     </div>
                   ) : (
                     <div className="text-center py-12">
-                      <p className="text-gray-600">Nessun dato di analisi disponibile.</p>
+                      <p className="text-gray-600">{t('admin.lessons.analysis.noDataAvailable')}</p>
                     </div>
                   )}
                 </div>
@@ -1430,7 +1433,7 @@ const LessonsPanel: React.FC = () => {
                     disabled={isAnalyzing}
                     className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
                   >
-                    Chiudi
+                    {t('common.close')}
                   </button>
                   
                   {analysisResult && (
@@ -1441,7 +1444,7 @@ const LessonsPanel: React.FC = () => {
                       }}
                       className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
                     >
-                      👥 Visualizza Presenze
+                      {t('admin.lessons.analysis.viewAttendance')}
                     </button>
                   )}
                 </div>

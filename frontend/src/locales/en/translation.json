@@ -589,6 +589,71 @@
         "loadingAttendance": "Error loading attendance:",
         "loadingAttendanceData": "Error loading attendance data."
       }
+    },
+    "screenshots": {
+      "title": "Screenshot Analysis",
+      "subtitle": "View facial recognition analysis images",
+      "loading": {
+        "title": "Loading Screenshots",
+        "subtitle": "Preparing images..."
+      },
+      "stats": {
+        "totalScreenshots": "screenshots",
+        "refreshing": "Refreshing...",
+        "refresh": "Refresh"
+      },
+      "filters": {
+        "title": "Search Filters",
+        "reset": "Reset filters",
+        "period": "Period",
+        "classroom": "Classroom",
+        "allClassrooms": "All classrooms",
+        "lesson": "Lesson",
+        "allLessons": "All lessons",
+        "minFaces": "Min. Faces",
+        "sorting": "Sorting",
+        "latestFirst": "Latest first",
+        "oldestFirst": "Oldest first"
+      },
+      "viewModes": {
+        "grid": "Grid",
+        "list": "List"
+      },
+      "actions": {
+        "view": "View",
+        "download": "Download image",
+        "openNewWindow": "Open in new window"
+      },
+      "table": {
+        "preview": "Preview",
+        "dateTime": "Date and Time",
+        "classroom": "Classroom",
+        "lesson": "Lesson",
+        "faces": "Faces",
+        "actions": "Actions"
+      },
+      "modal": {
+        "close": "Close",
+        "dateTime": "Date and Time",
+        "classroom": "Classroom",
+        "lesson": "Lesson",
+        "facesDetected": "Faces Detected",
+        "inAnalyzedFrame": "in analyzed frame"
+      },
+      "emptyState": {
+        "noScreenshots": "No screenshots found",
+        "noScreenshotsDesc": "There are no screenshots that match the selected filters",
+        "resetFilters": "Reset filters"
+      },
+      "errors": {
+        "loading": "Error loading initial data",
+        "refreshing": "Error during refresh",
+        "imageNotAvailable": "Image not available"
+      },
+      "messages": {
+        "classroomNotSpecified": "Classroom not specified",
+        "lessonNA": "Lesson N/A"
+      }
     }
   },
   "teacher": {

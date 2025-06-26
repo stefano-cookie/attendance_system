@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import teacherService, { AttendanceReport } from '../../services/teacherService';
 
 const ActiveLesson: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [lesson, setLesson] = useState<any>(null);
   const [attendanceReport, setAttendanceReport] = useState<AttendanceReport | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,7 +33,7 @@ const ActiveLesson: React.FC = () => {
       setAttendanceReport(reportData);
       setError(null);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Errore caricamento lezione');
+      setError(err.response?.data?.error || t('teacher.lessons.errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -51,7 +53,7 @@ const ActiveLesson: React.FC = () => {
         await loadLessonData();
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Errore durante scatto e analisi');
+      setError(err.response?.data?.error || t('teacher.lessons.errorCapturing'));
     } finally {
       setCapturing(false);
     }
@@ -84,7 +86,7 @@ const ActiveLesson: React.FC = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div>
-            <h3 className="text-lg font-medium text-red-800">Errore</h3>
+            <h3 className="text-lg font-medium text-red-800">{t('common.error')}</h3>
             <p className="text-red-700">{error}</p>
           </div>
         </div>
@@ -92,14 +94,14 @@ const ActiveLesson: React.FC = () => {
           onClick={() => navigate('/teacher')}
           className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
         >
-          Torna alla Dashboard
+          {t('teacher.lessons.backToDashboard')}
         </button>
       </div>
     );
   }
 
   if (!lesson) {
-    return <div>Lezione non trovata</div>;
+    return <div>{t('teacher.lessons.lessonNotFound')}</div>;
   }
 
   return (
@@ -155,7 +157,7 @@ const ActiveLesson: React.FC = () => {
 
       {/* Actions */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Controllo Presenze</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('teacher.lessons.attendanceControl')}</h2>
         <div className="flex items-center space-x-4">
           <button 
             onClick={handleCaptureAndAnalyze}
@@ -165,7 +167,7 @@ const ActiveLesson: React.FC = () => {
             {capturing ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                <span>Analizzando...</span>
+                <span>{t('teacher.lessons.analyzing')}</span>
               </>
             ) : (
               <>
@@ -173,7 +175,7 @@ const ActiveLesson: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span>Scatta e Analizza</span>
+                <span>{t('teacher.lessons.captureAndAnalyze')}</span>
               </>
             )}
           </button>
@@ -185,7 +187,7 @@ const ActiveLesson: React.FC = () => {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span>Visualizza Immagini</span>
+            <span>{t('teacher.lessons.viewImages')}</span>
           </button>
         </div>
       </div>
@@ -194,7 +196,7 @@ const ActiveLesson: React.FC = () => {
       {attendanceReport && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Report Presenze</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('teacher.attendance.reportTitle')}</h2>
           </div>
           
           {/* Summary Stats */}
@@ -202,19 +204,19 @@ const ActiveLesson: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="text-center">
                 <p className="text-2xl font-bold text-gray-900">{attendanceReport.attendance.summary.total}</p>
-                <p className="text-sm text-gray-600">Studenti Totali</p>
+                <p className="text-sm text-gray-600">{t('teacher.attendance.totalStudents')}</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-green-600">{attendanceReport.attendance.summary.present}</p>
-                <p className="text-sm text-gray-600">Presenti</p>
+                <p className="text-sm text-gray-600">{t('teacher.attendance.present')}</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-red-600">{attendanceReport.attendance.summary.absent}</p>
-                <p className="text-sm text-gray-600">Assenti</p>
+                <p className="text-sm text-gray-600">{t('teacher.attendance.absent')}</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-blue-600">{attendanceReport.attendance.summary.percentage}%</p>
-                <p className="text-sm text-gray-600">Percentuale</p>
+                <p className="text-sm text-gray-600">{t('teacher.attendance.percentage')}</p>
               </div>
             </div>
           </div>
@@ -226,7 +228,7 @@ const ActiveLesson: React.FC = () => {
                 <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                <p className="text-gray-500">Nessuno studente trovato per questo corso</p>
+                <p className="text-gray-500">{t('teacher.attendance.noStudentsFound')}</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -238,7 +240,7 @@ const ActiveLesson: React.FC = () => {
                         <p className="font-medium text-gray-900">
                           {student.student_name} {student.student_surname}
                         </p>
-                        <p className="text-sm text-gray-600">Matricola: {student.matricola}</p>
+                        <p className="text-sm text-gray-600">{t('teacher.attendance.studentId')}: {student.matricola}</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -247,11 +249,11 @@ const ActiveLesson: React.FC = () => {
                           ? 'bg-green-100 text-green-800' 
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {student.is_present ? 'Presente' : 'Assente'}
+                        {student.is_present ? t('teacher.attendance.present') : t('teacher.attendance.absent')}
                       </span>
                       {student.is_present && student.confidence > 0 && (
                         <p className="text-xs text-gray-500 mt-1">
-                          Confidenza: {Math.round(student.confidence * 100)}%
+                          {t('teacher.attendance.confidence')}: {Math.round(student.confidence * 100)}%
                         </p>
                       )}
                     </div>

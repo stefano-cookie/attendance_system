@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import teacherService, { TeacherDashboardData } from '../../services/teacherService';
 
 const TeacherDashboard: React.FC = () => {
@@ -7,6 +8,7 @@ const TeacherDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   useEffect(() => {
     loadDashboard();
@@ -19,14 +21,14 @@ const TeacherDashboard: React.FC = () => {
       setDashboardData(data);
       setError(null);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Errore caricamento dashboard');
+      setError(err.response?.data?.error || t('teacher.dashboard.errorLoading'));
     } finally {
       setLoading(false);
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('it-IT', {
+    return new Date(dateString).toLocaleDateString(undefined, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -35,7 +37,7 @@ const TeacherDashboard: React.FC = () => {
   };
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('it-IT', {
+    return new Date(dateString).toLocaleTimeString(undefined, {
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -57,7 +59,7 @@ const TeacherDashboard: React.FC = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div>
-            <h3 className="text-lg font-medium text-red-800">Errore</h3>
+            <h3 className="text-lg font-medium text-red-800">{t('common.error')}</h3>
             <p className="text-red-700">{error}</p>
           </div>
         </div>
@@ -65,14 +67,14 @@ const TeacherDashboard: React.FC = () => {
           onClick={loadDashboard}
           className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
         >
-          Riprova
+          {t('common.refresh')}
         </button>
       </div>
     );
   }
 
   if (!dashboardData) {
-    return <div>Nessun dato disponibile</div>;
+    return <div>{t('common.noData')}</div>;
   }
 
   return (
@@ -80,10 +82,10 @@ const TeacherDashboard: React.FC = () => {
       {/* Welcome Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Benvenuto, {dashboardData.teacher.name}
+          {t('teacher.dashboard.welcome', { name: dashboardData.teacher.name })}
         </h2>
         <p className="text-gray-600">
-          Oggi è {formatDate(dashboardData.today.date)}
+          {t('teacher.dashboard.today', { date: formatDate(dashboardData.today.date) })}
         </p>
       </div>
 
@@ -92,7 +94,7 @@ const TeacherDashboard: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Lezioni Totali</p>
+              <p className="text-sm font-medium text-gray-500">{t('teacher.dashboard.stats.totalLessons')}</p>
               <p className="text-3xl font-bold text-gray-900">{dashboardData.stats.total_lessons}</p>
             </div>
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -106,7 +108,7 @@ const TeacherDashboard: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Lezioni Attive</p>
+              <p className="text-sm font-medium text-gray-500">{t('teacher.dashboard.stats.activeLessons')}</p>
               <p className="text-3xl font-bold text-green-600">{dashboardData.stats.active_lessons}</p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -120,7 +122,7 @@ const TeacherDashboard: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Lezioni Completate</p>
+              <p className="text-sm font-medium text-gray-500">{t('teacher.dashboard.stats.completedLessons')}</p>
               <p className="text-3xl font-bold text-gray-900">{dashboardData.stats.completed_lessons}</p>
             </div>
             <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -137,7 +139,7 @@ const TeacherDashboard: React.FC = () => {
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">
-              Lezioni di Oggi ({dashboardData.today.count})
+              {t('teacher.dashboard.todayLessons', { count: dashboardData.today.count })}
             </h3>
             <button 
               onClick={() => navigate('/teacher/lessons/create')}
@@ -146,7 +148,7 @@ const TeacherDashboard: React.FC = () => {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              <span>Nuova Lezione</span>
+              <span>{t('teacher.dashboard.newLesson')}</span>
             </button>
           </div>
         </div>
@@ -157,13 +159,13 @@ const TeacherDashboard: React.FC = () => {
               <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
-              <h4 className="text-lg font-medium text-gray-900 mb-2">Nessuna lezione oggi</h4>
-              <p className="text-gray-500 mb-6">Crea una nuova lezione per iniziare a rilevare le presenze</p>
+              <h4 className="text-lg font-medium text-gray-900 mb-2">{t('teacher.dashboard.noLessonsToday')}</h4>
+              <p className="text-gray-500 mb-6">{t('teacher.dashboard.createLessonPrompt')}</p>
               <button 
                 onClick={() => navigate('/teacher/lessons/create')}
                 className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
               >
-                Crea Prima Lezione
+                {t('teacher.dashboard.createFirstLesson')}
               </button>
             </div>
           ) : (
@@ -190,7 +192,7 @@ const TeacherDashboard: React.FC = () => {
                               <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                               </svg>
-                              Camera
+                              {t('teacher.dashboard.camera')}
                             </span>
                           )}
                         </span>
@@ -223,7 +225,7 @@ const TeacherDashboard: React.FC = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
                       )}
-                      <span>{lesson.classroom.hasCamera ? 'Rileva Presenze' : 'Gestisci Lezione'}</span>
+                      <span>{lesson.classroom.hasCamera ? t('teacher.dashboard.detectAttendance') : t('teacher.dashboard.manageLesson')}</span>
                     </button>
                   </div>
                 </div>
@@ -235,7 +237,7 @@ const TeacherDashboard: React.FC = () => {
 
       {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Azioni Rapide</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('teacher.dashboard.quickActions')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <button 
             onClick={() => navigate('/teacher/lessons/create')}
@@ -247,8 +249,8 @@ const TeacherDashboard: React.FC = () => {
               </svg>
             </div>
             <div>
-              <h4 className="font-medium text-gray-900">Crea Lezione</h4>
-              <p className="text-sm text-gray-500">Pianifica una nuova lezione</p>
+              <h4 className="font-medium text-gray-900">{t('teacher.dashboard.actions.createLesson')}</h4>
+              <p className="text-sm text-gray-500">{t('teacher.dashboard.actions.createLessonDesc')}</p>
             </div>
           </button>
 
@@ -262,8 +264,8 @@ const TeacherDashboard: React.FC = () => {
               </svg>
             </div>
             <div>
-              <h4 className="font-medium text-gray-900">Storico Lezioni</h4>
-              <p className="text-sm text-gray-500">Visualizza tutte le lezioni</p>
+              <h4 className="font-medium text-gray-900">{t('teacher.dashboard.actions.lessonHistory')}</h4>
+              <p className="text-sm text-gray-500">{t('teacher.dashboard.actions.lessonHistoryDesc')}</p>
             </div>
           </button>
 
@@ -277,8 +279,8 @@ const TeacherDashboard: React.FC = () => {
               </svg>
             </div>
             <div>
-              <h4 className="font-medium text-gray-900">Report Presenze</h4>
-              <p className="text-sm text-gray-500">Analisi e statistiche</p>
+              <h4 className="font-medium text-gray-900">{t('teacher.dashboard.actions.attendanceReport')}</h4>
+              <p className="text-sm text-gray-500">{t('teacher.dashboard.actions.attendanceReportDesc')}</p>
             </div>
           </button>
         </div>

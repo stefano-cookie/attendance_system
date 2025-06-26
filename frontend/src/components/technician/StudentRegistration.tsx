@@ -1,5 +1,6 @@
 // src/components/technician/StudentRegistration.tsx - UI REDESIGN
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import { authService } from '../../services/authService';
 import { useNavigate } from 'react-router-dom';
@@ -10,6 +11,7 @@ interface Course {
 }
 
 const StudentRegistration: React.FC = () => {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
   const [matricola, setMatricola] = useState('');
@@ -54,7 +56,7 @@ const StudentRegistration: React.FC = () => {
         setCourses(response.data.courses);
       } catch (error) {
         console.error('Errore caricamento corsi:', error);
-        setMessage({ type: 'error', text: 'Errore caricamento corsi' });
+        setMessage({ type: 'error', text: t('technician.registration.errors.loadingCourses') });
       }
     };
     
@@ -70,7 +72,7 @@ const StudentRegistration: React.FC = () => {
       }
     } catch (error) {
       console.error('Errore accesso webcam:', error);
-      setMessage({ type: 'error', text: 'Errore accesso webcam' });
+      setMessage({ type: 'error', text: t('technician.registration.errors.cameraAccess') });
       setIsCapturing(false);
     }
   };
@@ -111,7 +113,7 @@ const StudentRegistration: React.FC = () => {
     e.preventDefault();
     
     if (!name || !surname || !matricola || !email || !photo) {
-      setMessage({ type: 'error', text: 'Tutti i campi sono obbligatori' });
+      setMessage({ type: 'error', text: t('technician.registration.errors.allFieldsRequired') });
       return;
     }
     
@@ -131,7 +133,7 @@ const StudentRegistration: React.FC = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      setMessage({ type: 'success', text: 'Studente registrato con successo!' });
+      setMessage({ type: 'success', text: t('technician.registration.messages.registrationSuccess') });
       
       // Reset form
       setName('');
@@ -145,7 +147,7 @@ const StudentRegistration: React.FC = () => {
       console.error('Errore registrazione:', error);
       setMessage({ 
         type: 'error', 
-        text: error.response?.data?.message || 'Errore durante la registrazione' 
+        text: error.response?.data?.message || t('technician.registration.errors.registrationFailed') 
       });
     } finally {
       setLoading(false);
@@ -165,8 +167,8 @@ const StudentRegistration: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-800">Registrazione Nuovo Studente</h1>
-                <p className="text-gray-600">Aggiungi un nuovo studente al sistema</p>
+                <h1 className="text-3xl font-bold text-gray-800">{t('technician.registration.title')}</h1>
+                <p className="text-gray-600">{t('technician.registration.subtitle')}</p>
               </div>
             </div>
             
@@ -178,7 +180,7 @@ const StudentRegistration: React.FC = () => {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
-                <span>Dashboard</span>
+                <span>{t('navigation.dashboard')}</span>
               </button>
               
               <button
@@ -188,7 +190,7 @@ const StudentRegistration: React.FC = () => {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                <span>Logout</span>
+                <span>{t('common.logout')}</span>
               </button>
             </div>
           </div>
@@ -231,71 +233,71 @@ const StudentRegistration: React.FC = () => {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-800">Dati Personali</h3>
-                    <p className="text-gray-600">Inserisci le informazioni anagrafiche dello studente</p>
+                    <h3 className="text-xl font-semibold text-gray-800">{t('technician.registration.sections.personalData.title')}</h3>
+                    <p className="text-gray-600">{t('technician.registration.sections.personalData.subtitle')}</p>
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nome *
+                      {t('technician.registration.fields.firstName')} *
                     </label>
                     <input
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="Inserisci il nome"
+                      placeholder={t('technician.registration.placeholders.firstName')}
                       required
                     />
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Cognome *
+                      {t('technician.registration.fields.lastName')} *
                     </label>
                     <input
                       type="text"
                       value={surname}
                       onChange={(e) => setSurname(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="Inserisci il cognome"
+                      placeholder={t('technician.registration.placeholders.lastName')}
                       required
                     />
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Matricola *
+                      {t('technician.registration.fields.studentId')} *
                     </label>
                     <input
                       type="text"
                       value={matricola}
                       onChange={(e) => setMatricola(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="Es. ABC123456"
+                      placeholder={t('technician.registration.placeholders.studentId')}
                       required
                     />
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email *
+                      {t('technician.registration.fields.email')} *
                     </label>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="studente@esempio.com"
+                      placeholder={t('technician.registration.placeholders.email')}
                       required
                     />
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Data di nascita *
+                      {t('technician.registration.fields.birthDate')} *
                     </label>
                     <input
                       type="date"
@@ -307,14 +309,14 @@ const StudentRegistration: React.FC = () => {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Corso di Studi *
+                      {t('technician.registration.fields.course')} *
                     </label>
                     <select
                       value={selectedCourse || ''}
                       onChange={(e) => setSelectedCourse(e.target.value ? parseInt(e.target.value) : null)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     >
-                      <option value="">Seleziona un corso</option>
+                      <option value="">{t('technician.registration.placeholders.selectCourse')}</option>
                       {courses.map(course => (
                         <option key={course.id} value={course.id}>{course.name}</option>
                       ))}
@@ -333,8 +335,8 @@ const StudentRegistration: React.FC = () => {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-800">Foto Profilo *</h3>
-                    <p className="text-gray-600">Scatta una foto per il riconoscimento facciale</p>
+                    <h3 className="text-xl font-semibold text-gray-800">{t('technician.registration.sections.photo.title')} *</h3>
+                    <p className="text-gray-600">{t('technician.registration.sections.photo.subtitle')}</p>
                   </div>
                 </div>
                 
@@ -366,7 +368,7 @@ const StudentRegistration: React.FC = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                           </svg>
-                          Scatta Foto
+                          {t('technician.registration.actions.takePhoto')}
                         </button>
                         
                         <button
@@ -377,7 +379,7 @@ const StudentRegistration: React.FC = () => {
                           <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>
-                          Annulla
+                          {t('common.cancel')}
                         </button>
                       </div>
                     </div>
@@ -388,7 +390,7 @@ const StudentRegistration: React.FC = () => {
                           <div className="relative inline-block">
                             <img 
                               src={URL.createObjectURL(photo)} 
-                              alt="Foto studente" 
+                              alt={t('technician.registration.photo.altText')} 
                               className="w-64 h-64 object-cover border-4 border-green-500 rounded-xl shadow-lg"
                             />
                             <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full p-2">
@@ -410,7 +412,7 @@ const StudentRegistration: React.FC = () => {
                               <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                               </svg>
-                              Scatta Nuova Foto
+                              {t('technician.registration.actions.retakePhoto')}
                             </button>
                           </div>
                         </div>
@@ -422,8 +424,8 @@ const StudentRegistration: React.FC = () => {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                           </div>
-                          <h4 className="text-lg font-medium text-gray-700 mb-2">Nessuna foto scattata</h4>
-                          <p className="text-gray-500 mb-6">Attiva la camera per scattare una foto dello studente</p>
+                          <h4 className="text-lg font-medium text-gray-700 mb-2">{t('technician.registration.photo.noPhoto')}</h4>
+                          <p className="text-gray-500 mb-6">{t('technician.registration.photo.activateCamera')}</p>
                           
                           <button
                             type="button"
@@ -433,7 +435,7 @@ const StudentRegistration: React.FC = () => {
                             <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
-                            Attiva Camera
+                            {t('technician.registration.actions.activateCamera')}
                           </button>
                         </div>
                       )}
@@ -449,7 +451,7 @@ const StudentRegistration: React.FC = () => {
                     <svg className="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
-                    I campi contrassegnati con * sono obbligatori
+                    {t('technician.registration.requiredFieldsNote')}
                   </div>
                   
                   <button
@@ -464,14 +466,14 @@ const StudentRegistration: React.FC = () => {
                     {loading ? (
                       <>
                         <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                        <span>Registrazione in corso...</span>
+                        <span>{t('technician.registration.actions.registering')}</span>
                       </>
                     ) : (
                       <>
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
-                        <span>Registra Studente</span>
+                        <span>{t('technician.registration.actions.registerStudent')}</span>
                       </>
                     )}
                   </button>

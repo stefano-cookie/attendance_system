@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import teacherService, { Course, Classroom, Subject, CreateLessonData } from '../../services/teacherService';
 
 const CreateLesson: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   const [courses, setCourses] = useState<Course[]>([]);
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
@@ -43,7 +45,7 @@ const CreateLesson: React.FC = () => {
       setClassrooms(classroomsData);
       setError(null);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Errore caricamento dati');
+      setError(err.response?.data?.error || t('teacher.lessons.create.errorLoadingData'));
     } finally {
       setLoading(false);
     }
@@ -54,7 +56,7 @@ const CreateLesson: React.FC = () => {
       const subjectsData = await teacherService.getSubjects(courseId);
       setSubjects(subjectsData);
     } catch (err: any) {
-      console.error('Errore caricamento materie:', err);
+      console.error(t('teacher.lessons.create.errorLoadingSubjects')+':', err);
     }
   };
 
@@ -72,7 +74,7 @@ const CreateLesson: React.FC = () => {
     e.preventDefault();
     
     if (!lessonData.course_id || !lessonData.classroom_id) {
-      setError('Corso e aula sono obbligatori');
+      setError(t('teacher.lessons.create.courseAndClassroomRequired'));
       return;
     }
 
@@ -87,7 +89,7 @@ const CreateLesson: React.FC = () => {
         navigate(`/teacher/lessons/${result.lesson.id}`);
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Errore durante la creazione della lezione');
+      setError(err.response?.data?.error || t('teacher.lessons.create.errorCreatingLesson'));
     } finally {
       setCreating(false);
     }
@@ -114,7 +116,7 @@ const CreateLesson: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Nuova Lezione</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('teacher.lessons.create.title')}</h1>
           </div>
           <button 
             onClick={() => navigate('/teacher')}
@@ -133,7 +135,7 @@ const CreateLesson: React.FC = () => {
           {/* Nome Lezione */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-              Nome Lezione (opzionale)
+              {t('teacher.lessons.create.nameLabel')}
             </label>
             <input
               type="text"
@@ -141,7 +143,7 @@ const CreateLesson: React.FC = () => {
               name="name"
               value={lessonData.name}
               onChange={handleInputChange}
-              placeholder="Es. Lezione di Matematica - Algebra..."
+              placeholder={t('teacher.lessons.create.namePlaceholder')}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -149,7 +151,7 @@ const CreateLesson: React.FC = () => {
           {/* Data e Ora */}
           <div>
             <label htmlFor="lesson_date" className="block text-sm font-medium text-gray-700 mb-2">
-              Data e Ora *
+              {t('teacher.lessons.create.dateTimeLabel')}
             </label>
             <input
               type="datetime-local"
@@ -165,7 +167,7 @@ const CreateLesson: React.FC = () => {
           {/* Corso */}
           <div>
             <label htmlFor="course_id" className="block text-sm font-medium text-gray-700 mb-2">
-              Corso *
+              {t('teacher.lessons.create.courseLabel')}
             </label>
             <select
               id="course_id"
@@ -175,7 +177,7 @@ const CreateLesson: React.FC = () => {
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="">Seleziona un corso...</option>
+              <option value="">{t('teacher.lessons.create.selectCourse')}</option>
               {courses.map(course => (
                 <option key={course.id} value={course.id}>
                   {course.name}
@@ -188,7 +190,7 @@ const CreateLesson: React.FC = () => {
           {subjects.length > 0 && (
             <div>
               <label htmlFor="subject_id" className="block text-sm font-medium text-gray-700 mb-2">
-                Materia (opzionale)
+                {t('teacher.lessons.create.subjectLabel')}
               </label>
               <select
                 id="subject_id"
@@ -197,7 +199,7 @@ const CreateLesson: React.FC = () => {
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="">Nessuna materia specifica</option>
+                <option value="">{t('teacher.lessons.create.noSubjectSpecific')}</option>
                 {subjects.map(subject => (
                   <option key={subject.id} value={subject.id}>
                     {subject.name}
@@ -210,7 +212,7 @@ const CreateLesson: React.FC = () => {
           {/* Aula */}
           <div>
             <label htmlFor="classroom_id" className="block text-sm font-medium text-gray-700 mb-2">
-              Aula *
+              {t('teacher.lessons.create.classroomLabel')}
             </label>
             <select
               id="classroom_id"
@@ -220,7 +222,7 @@ const CreateLesson: React.FC = () => {
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="">Seleziona un'aula...</option>
+              <option value="">{t('teacher.lessons.create.selectClassroom')}</option>
               {classrooms.map(classroom => (
                 <option key={classroom.id} value={classroom.id}>
                   {classroom.name} {classroom.hasCamera ? '📹' : ''}
@@ -238,8 +240,8 @@ const CreateLesson: React.FC = () => {
                       <h4 className="font-medium text-gray-900">{selectedClassroom.name}</h4>
                       <p className="text-sm text-gray-600">
                         {selectedClassroom.hasCamera 
-                          ? 'Camera IP configurata - Riconoscimento facciale disponibile' 
-                          : 'Nessuna camera configurata - Presenza manuale richiesta'
+                          ? t('teacher.lessons.create.cameraConfigured')
+                          : t('teacher.lessons.create.noCameraConfigured')
                         }
                       </p>
                     </div>
@@ -249,7 +251,7 @@ const CreateLesson: React.FC = () => {
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
-                      <span className="text-sm font-medium">Auto Rilevamento</span>
+                      <span className="text-sm font-medium">{t('teacher.lessons.create.autoDetection')}</span>
                     </div>
                   )}
                 </div>
@@ -276,7 +278,7 @@ const CreateLesson: React.FC = () => {
               onClick={() => navigate('/teacher')}
               className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
             >
-              Annulla
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
@@ -286,14 +288,14 @@ const CreateLesson: React.FC = () => {
               {creating ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  <span>Creazione...</span>
+                  <span>{t('teacher.lessons.create.creating')}</span>
                 </>
               ) : (
                 <>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                  <span>Crea Lezione</span>
+                  <span>{t('teacher.lessons.create.createLesson')}</span>
                 </>
               )}
             </button>

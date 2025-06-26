@@ -1,6 +1,7 @@
 // src/components/admin/Dashboard.tsx - REDESIGN COMPLETO
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import { authService } from '../../services/authService';
 
@@ -60,6 +61,7 @@ interface ProcessedStats {
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [stats, setStats] = useState<ProcessedStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -130,7 +132,7 @@ const AdminDashboard: React.FC = () => {
       
     } catch (err: any) {
       console.error('Errore caricamento dati dashboard:', err);
-      setError(err.response?.data?.message || 'Errore nel caricamento dei dati');
+      setError(err.response?.data?.message || t('admin.dashboard.errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -149,7 +151,7 @@ const AdminDashboard: React.FC = () => {
     if (record.User) {
       return `${record.User.name} ${record.User.surname}`;
     }
-    return 'Studente sconosciuto';
+    return t('admin.dashboard.attendance.unknownStudent');
   };
   
   const getStudentEmail = (record: AttendanceRecord): string => {
@@ -194,8 +196,8 @@ const AdminDashboard: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex justify-center items-center">
         <div className="text-center bg-white p-8 rounded-2xl shadow-xl">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-          <h3 className="text-xl font-semibold text-gray-700">Caricamento Dashboard</h3>
-          <p className="text-gray-500 mt-2">Preparazione dei dati in corso...</p>
+          <h3 className="text-xl font-semibold text-gray-700">{t('admin.dashboard.loading')}</h3>
+          <p className="text-gray-500 mt-2">{t('admin.dashboard.loadingSubtext')}</p>
         </div>
       </div>
     );
@@ -214,8 +216,8 @@ const AdminDashboard: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-800">Dashboard Amministratore</h1>
-                <p className="text-gray-600">Sistema di Rilevamento Presenze</p>
+                <h1 className="text-3xl font-bold text-gray-800">{t('admin.dashboard.title')}</h1>
+                <p className="text-gray-600">{t('admin.dashboard.subtitle')}</p>
               </div>
             </div>
             
@@ -228,7 +230,7 @@ const AdminDashboard: React.FC = () => {
                 <svg className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                <span>{refreshing ? 'Aggiornando...' : 'Aggiorna'}</span>
+                <span>{refreshing ? t('admin.dashboard.refreshing') : t('admin.dashboard.refresh')}</span>
               </button>
               
               <button
@@ -238,7 +240,7 @@ const AdminDashboard: React.FC = () => {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                <span>Logout</span>
+                <span>{t('common.logout')}</span>
               </button>
             </div>
           </div>
@@ -265,7 +267,7 @@ const AdminDashboard: React.FC = () => {
               <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 mb-1">Studenti Registrati</p>
+                    <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.dashboard.stats.registeredStudents')}</p>
                     <p className="text-3xl font-bold text-gray-800">{stats.totalStudents}</p>
                   </div>
                   <div className="bg-blue-100 p-3 rounded-xl">
@@ -280,7 +282,7 @@ const AdminDashboard: React.FC = () => {
               <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 mb-1">Corsi Attivi</p>
+                    <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.dashboard.stats.activeCourses')}</p>
                     <p className="text-3xl font-bold text-gray-800">{stats.totalCourses}</p>
                   </div>
                   <div className="bg-green-100 p-3 rounded-xl">
@@ -295,7 +297,7 @@ const AdminDashboard: React.FC = () => {
               <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 mb-1">Materie Totali</p>
+                    <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.dashboard.stats.totalSubjects')}</p>
                     <p className="text-3xl font-bold text-gray-800">{stats.totalSubjects}</p>
                   </div>
                   <div className="bg-purple-100 p-3 rounded-xl">
@@ -310,7 +312,7 @@ const AdminDashboard: React.FC = () => {
               <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 mb-1">Lezioni Totali</p>
+                    <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.dashboard.stats.totalLessons')}</p>
                     <p className="text-3xl font-bold text-gray-800">{stats.totalLessons}</p>
                   </div>
                   <div className="bg-orange-100 p-3 rounded-xl">
@@ -328,9 +330,9 @@ const AdminDashboard: React.FC = () => {
               <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-2xl shadow-lg text-white">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-green-100 mb-1">Presenti Oggi</p>
+                    <p className="text-green-100 mb-1">{t('admin.dashboard.stats.presentToday')}</p>
                     <p className="text-4xl font-bold">{stats.todayPresent}</p>
-                    <p className="text-green-100 text-sm mt-1">su {stats.todayTotal} rilevamenti</p>
+                    <p className="text-green-100 text-sm mt-1">{t('admin.dashboard.stats.onDetections', { count: stats.todayTotal })}</p>
                   </div>
                   <div className="bg-white bg-opacity-20 p-3 rounded-xl">
                     <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
@@ -344,9 +346,9 @@ const AdminDashboard: React.FC = () => {
               <div className="bg-gradient-to-r from-red-500 to-red-600 p-6 rounded-2xl shadow-lg text-white">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-red-100 mb-1">Assenti Oggi</p>
+                    <p className="text-red-100 mb-1">{t('admin.dashboard.stats.absentToday')}</p>
                     <p className="text-4xl font-bold">{stats.todayAbsent}</p>
-                    <p className="text-red-100 text-sm mt-1">studenti assenti</p>
+                    <p className="text-red-100 text-sm mt-1">{t('admin.dashboard.stats.studentsAbsent')}</p>
                   </div>
                   <div className="bg-white bg-opacity-20 p-3 rounded-xl">
                     <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
@@ -360,7 +362,7 @@ const AdminDashboard: React.FC = () => {
               <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-2xl shadow-lg text-white">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <p className="text-blue-100 mb-1">Tasso Presenza Oggi</p>
+                    <p className="text-blue-100 mb-1">{t('admin.dashboard.stats.attendanceRateToday')}</p>
                     <p className="text-4xl font-bold">{stats.attendanceRate.toFixed(1)}%</p>
                     <div className="mt-3 w-full bg-white bg-opacity-20 rounded-full h-2">
                       <div 
@@ -388,10 +390,10 @@ const AdminDashboard: React.FC = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-800">Ultime Presenze Rilevate</h3>
+                    <h3 className="text-xl font-semibold text-gray-800">{t('admin.dashboard.stats.recentAttendance')}</h3>
                   </div>
                   <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-medium">
-                    {stats.recentAttendance.length} presenze
+                    {t('admin.dashboard.stats.attendances', { count: stats.recentAttendance.length })}
                   </span>
                 </div>
               </div>
@@ -402,8 +404,8 @@ const AdminDashboard: React.FC = () => {
                     <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <h3 className="mt-4 text-lg font-medium text-gray-900">Nessuna presenza registrata</h3>
-                    <p className="mt-2 text-gray-500">Le presenze appariranno qui quando verranno rilevate dal sistema</p>
+                    <h3 className="mt-4 text-lg font-medium text-gray-900">{t('admin.dashboard.attendance.noRecords')}</h3>
+                    <p className="mt-2 text-gray-500">{t('admin.dashboard.attendance.willAppear')}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -441,7 +443,7 @@ const AdminDashboard: React.FC = () => {
                               {formatDateTime(record.timestamp)}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {record.lesson?.name || 'Lezione N/A'}
+                              {record.lesson?.name || t('admin.dashboard.attendance.lessonNA')}
                             </p>
                           </div>
                           
@@ -450,7 +452,7 @@ const AdminDashboard: React.FC = () => {
                               <span className="mr-1">{getConfidenceIcon(record.confidence)}</span>
                               {(record.confidence * 100).toFixed(0)}%
                             </span>
-                            <p className="text-xs text-gray-500 mt-1">Affidabilità</p>
+                            <p className="text-xs text-gray-500 mt-1">{t('admin.dashboard.attendance.reliability')}</p>
                           </div>
                         </div>
                       </div>
@@ -470,7 +472,7 @@ const AdminDashboard: React.FC = () => {
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                  <span className="text-xl font-semibold">Registra Studente</span>
+                  <span className="text-xl font-semibold">{t('admin.dashboard.actions.registerStudent')}</span>
                 </div>
               </button>
               
@@ -482,7 +484,7 @@ const AdminDashboard: React.FC = () => {
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                   </svg>
-                  <span className="text-xl font-semibold">Gestisci Studenti</span>
+                  <span className="text-xl font-semibold">{t('admin.dashboard.actions.manageStudents')}</span>
                 </div>
               </button>
               
@@ -494,7 +496,7 @@ const AdminDashboard: React.FC = () => {
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
-                  <span className="text-xl font-semibold">Report Presenze</span>
+                  <span className="text-xl font-semibold">{t('admin.dashboard.actions.attendanceReport')}</span>
                 </div>
               </button>
             </div>

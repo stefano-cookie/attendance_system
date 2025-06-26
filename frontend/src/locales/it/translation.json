@@ -589,6 +589,71 @@
         "loadingAttendance": "Errore nel caricamento delle presenze:",
         "loadingAttendanceData": "Errore nel caricamento dei dati delle presenze."
       }
+    },
+    "screenshots": {
+      "title": "Screenshots Analisi",
+      "subtitle": "Visualizza le immagini delle analisi di riconoscimento facciale",
+      "loading": {
+        "title": "Caricamento Screenshots",
+        "subtitle": "Preparazione delle immagini..."
+      },
+      "stats": {
+        "totalScreenshots": "screenshot",
+        "refreshing": "Aggiornando...",
+        "refresh": "Aggiorna"
+      },
+      "filters": {
+        "title": "Filtri di Ricerca",
+        "reset": "Resetta filtri",
+        "period": "Periodo",
+        "classroom": "Aula",
+        "allClassrooms": "Tutte le aule",
+        "lesson": "Lezione",
+        "allLessons": "Tutte le lezioni",
+        "minFaces": "Min. Volti",
+        "sorting": "Ordinamento",
+        "latestFirst": "Più recenti prima",
+        "oldestFirst": "Più vecchi prima"
+      },
+      "viewModes": {
+        "grid": "Griglia",
+        "list": "Lista"
+      },
+      "actions": {
+        "view": "Visualizza",
+        "download": "Scarica immagine",
+        "openNewWindow": "Apri in nuova finestra"
+      },
+      "table": {
+        "preview": "Anteprima",
+        "dateTime": "Data e Ora",
+        "classroom": "Aula",
+        "lesson": "Lezione",
+        "faces": "Volti",
+        "actions": "Azioni"
+      },
+      "modal": {
+        "close": "Chiudi",
+        "dateTime": "Data e Ora",
+        "classroom": "Aula",
+        "lesson": "Lezione",
+        "facesDetected": "Volti Rilevati",
+        "inAnalyzedFrame": "nel frame analizzato"
+      },
+      "emptyState": {
+        "noScreenshots": "Nessuno screenshot trovato",
+        "noScreenshotsDesc": "Non ci sono screenshot che corrispondono ai filtri selezionati",
+        "resetFilters": "Resetta filtri"
+      },
+      "errors": {
+        "loading": "Errore nel caricamento dei dati iniziali",
+        "refreshing": "Errore durante l'aggiornamento",
+        "imageNotAvailable": "Immagine non disponibile"
+      },
+      "messages": {
+        "classroomNotSpecified": "Aula non specificata",
+        "lessonNA": "Lezione N/A"
+      }
     }
   },
   "teacher": {

@@ -1,10 +1,12 @@
 // frontend/src/components/admin/StudentsPanel.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api, { Student, getStudents, deleteStudent } from '../../services/api';
 
 const StudentsPanel: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +33,7 @@ const StudentsPanel: React.FC = () => {
       setError(null);
     } catch (err) {
       console.error('Errore nel caricamento degli studenti:', err);
-      setError('Si è verificato un errore nel caricamento degli studenti. Riprova più tardi.');
+      setError(t('admin.users.errorLoadingStudents'));
     } finally {
       setLoading(false);
     }
@@ -65,7 +67,7 @@ const StudentsPanel: React.FC = () => {
       closeDeleteModal();
     } catch (err) {
       console.error('Errore durante l\'eliminazione dello studente:', err);
-      setError('Impossibile eliminare lo studente. Riprova più tardi.');
+      setError(t('admin.users.errorDeletingStudent'));
     }
   };
   
@@ -82,8 +84,8 @@ const StudentsPanel: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex justify-center items-center">
         <div className="text-center bg-white p-8 rounded-2xl shadow-xl">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-          <h3 className="text-xl font-semibold text-gray-700">Caricamento Studenti</h3>
-          <p className="text-gray-500 mt-2">Preparazione dei dati in corso...</p>
+          <h3 className="text-xl font-semibold text-gray-700">{t('admin.users.loadingStudents')}</h3>
+          <p className="text-gray-500 mt-2">{t('admin.users.loadingSubtext')}</p>
         </div>
       </div>
     );
@@ -102,8 +104,8 @@ const StudentsPanel: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-800">Gestione Studenti</h1>
-                <p className="text-gray-600">Sistema di Registrazione e Monitoraggio</p>
+                <h1 className="text-3xl font-bold text-gray-800">{t('admin.users.studentManagement')}</h1>
+                <p className="text-gray-600">{t('admin.users.studentManagementSubtitle')}</p>
               </div>
             </div>
             
@@ -116,7 +118,7 @@ const StudentsPanel: React.FC = () => {
                 <svg className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                <span>{refreshing ? 'Aggiornando...' : 'Aggiorna'}</span>
+                <span>{refreshing ? t('admin.users.refreshing') : t('common.refresh')}</span>
               </button>
 
               <button
@@ -126,7 +128,7 @@ const StudentsPanel: React.FC = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
                 </svg>
-                <span className="font-semibold">Registra Nuovo Studente</span>
+                <span className="font-semibold">{t('admin.users.registerNewStudent')}</span>
               </button>
             </div>
           </div>
@@ -139,7 +141,7 @@ const StudentsPanel: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Studenti Totali</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.users.totalStudents')}</p>
                 <p className="text-3xl font-bold text-gray-800">{students.length}</p>
               </div>
               <div className="bg-blue-100 p-3 rounded-xl">
@@ -153,7 +155,7 @@ const StudentsPanel: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Risultati Ricerca</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.users.searchResults')}</p>
                 <p className="text-3xl font-bold text-gray-800">{filteredStudents.length}</p>
               </div>
               <div className="bg-green-100 p-3 rounded-xl">
@@ -167,7 +169,7 @@ const StudentsPanel: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Con Foto Profilo</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.users.withProfilePhoto')}</p>
                 <p className="text-3xl font-bold text-gray-800">
                   {students.filter(s => s.photoPath).length}
                 </p>
@@ -190,7 +192,7 @@ const StudentsPanel: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-800">Ricerca Studenti</h3>
+              <h3 className="text-xl font-semibold text-gray-800">{t('admin.users.searchStudents')}</h3>
             </div>
             
             <div className="relative">
@@ -202,7 +204,7 @@ const StudentsPanel: React.FC = () => {
               <input
                 type="text"
                 className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Cerca per nome, cognome, matricola o email..."
+                placeholder={t('admin.users.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -241,10 +243,10 @@ const StudentsPanel: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800">Lista Studenti</h3>
+                <h3 className="text-xl font-semibold text-gray-800">{t('admin.users.studentList')}</h3>
               </div>
               <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-medium">
-                {filteredStudents.length} {filteredStudents.length === 1 ? 'studente' : 'studenti'}
+                {t('admin.users.studentCount', { count: filteredStudents.length })}
               </span>
             </div>
           </div>
@@ -298,7 +300,7 @@ const StudentsPanel: React.FC = () => {
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
                               </svg>
-                              <span className="text-gray-700 font-medium">Corso ID: {student.course_id}</span>
+                              <span className="text-gray-700 font-medium">{t('admin.users.courseId')}: {student.course_id}</span>
                             </div>
                           )}
                         </div>
@@ -314,7 +316,7 @@ const StudentsPanel: React.FC = () => {
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                           </svg>
-                          <span>Modifica</span>
+                          <span>{t('common.edit')}</span>
                         </button>
                         
                         <button
@@ -325,7 +327,7 @@ const StudentsPanel: React.FC = () => {
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                           </svg>
-                          <span>Elimina</span>
+                          <span>{t('common.delete')}</span>
                         </button>
                       </div>
                     </div>
@@ -339,9 +341,9 @@ const StudentsPanel: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Nessuno studente trovato</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('admin.users.noStudentsFound')}</h3>
                 <p className="text-gray-500 mb-8">
-                  {searchTerm ? "Nessun risultato corrisponde alla tua ricerca" : "Non ci sono studenti registrati nel sistema"}
+                  {searchTerm ? t('admin.users.noSearchResults') : t('admin.users.noStudentsInSystem')}
                 </p>
                 <button
                   onClick={handleCreateStudent}
@@ -350,7 +352,7 @@ const StudentsPanel: React.FC = () => {
                   <svg className="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                   </svg>
-                  {students.length === 0 ? 'Aggiungi il primo studente' : 'Registra nuovo studente'}
+                  {students.length === 0 ? t('admin.users.addFirstStudent') : t('admin.users.registerNewStudent')}
                 </button>
               </div>
             )}
@@ -379,17 +381,16 @@ const StudentsPanel: React.FC = () => {
                   </div>
                   <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                     <h3 className="text-xl leading-6 font-bold text-gray-900 mb-2" id="modal-title">
-                      Conferma Eliminazione
+                      {t('admin.users.confirmDelete')}
                     </h3>
                     <div className="mt-4">
                       <p className="text-sm text-gray-600 leading-relaxed">
-                        Sei sicuro di voler eliminare lo studente{' '}
-                        <span className="font-bold text-gray-900 bg-gray-100 px-2 py-1 rounded">
-                          {studentToDelete?.name} {studentToDelete?.surname}
-                        </span>?
+                        {t('admin.users.deleteConfirmMessage', { 
+                          name: `${studentToDelete?.name} ${studentToDelete?.surname}` 
+                        })}
                       </p>
                       <p className="text-sm text-red-600 mt-3 font-medium">
-                        ⚠️ Questa azione è irreversibile e cancellerà tutti i dati associati.
+                        ⚠️ {t('admin.users.deleteWarning')}
                       </p>
                     </div>
                   </div>
@@ -404,14 +405,14 @@ const StudentsPanel: React.FC = () => {
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  Elimina Definitivamente
+                  {t('admin.users.deletePermanently')}
                 </button>
                 <button
                   type="button"
                   className="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-6 py-3 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors sm:mt-0 sm:w-auto sm:text-sm"
                   onClick={closeDeleteModal}
                 >
-                  Annulla
+                  {t('common.cancel')}
                 </button>
               </div>
             </div>

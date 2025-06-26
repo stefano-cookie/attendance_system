@@ -589,6 +589,71 @@
         "loadingAttendance": "Eroare la încărcarea prezenței:",
         "loadingAttendanceData": "Eroare la încărcarea datelor de prezență."
       }
+    },
+    "screenshots": {
+      "title": "Analiză Capturi de Ecran",
+      "subtitle": "Vizualizează imaginile analizelor de recunoaștere facială",
+      "loading": {
+        "title": "Încărcare Capturi de Ecran",
+        "subtitle": "Pregătire imagini..."
+      },
+      "stats": {
+        "totalScreenshots": "capturi de ecran",
+        "refreshing": "Reîmprospătare...",
+        "refresh": "Reîmprospătează"
+      },
+      "filters": {
+        "title": "Filtre de Căutare",
+        "reset": "Resetează filtrele",
+        "period": "Perioadă",
+        "classroom": "Sala de clasă",
+        "allClassrooms": "Toate sălile",
+        "lesson": "Lecție",
+        "allLessons": "Toate lecțiile",
+        "minFaces": "Min. Fețe",
+        "sorting": "Sortare",
+        "latestFirst": "Cele mai recente primul",
+        "oldestFirst": "Cele mai vechi primul"
+      },
+      "viewModes": {
+        "grid": "Grilă",
+        "list": "Listă"
+      },
+      "actions": {
+        "view": "Vizualizează",
+        "download": "Descarcă imagine",
+        "openNewWindow": "Deschide în fereastră nouă"
+      },
+      "table": {
+        "preview": "Previzualizare",
+        "dateTime": "Data și Ora",
+        "classroom": "Sala de clasă",
+        "lesson": "Lecție",
+        "faces": "Fețe",
+        "actions": "Acțiuni"
+      },
+      "modal": {
+        "close": "Închide",
+        "dateTime": "Data și Ora",
+        "classroom": "Sala de clasă",
+        "lesson": "Lecție",
+        "facesDetected": "Fețe Detectate",
+        "inAnalyzedFrame": "în cadrul analizat"
+      },
+      "emptyState": {
+        "noScreenshots": "Nu s-au găsit capturi de ecran",
+        "noScreenshotsDesc": "Nu există capturi de ecran care să corespundă filtrelor selectate",
+        "resetFilters": "Resetează filtrele"
+      },
+      "errors": {
+        "loading": "Eroare la încărcarea datelor inițiale",
+        "refreshing": "Eroare în timpul reîmprospătării",
+        "imageNotAvailable": "Imagine indisponibilă"
+      },
+      "messages": {
+        "classroomNotSpecified": "Sala de clasă nespecificată",
+        "lessonNA": "Lecție N/A"
+      }
     }
   },
   "teacher": {
