@@ -147,7 +147,7 @@ const ScreenshotPanel: React.FC = () => {
   const fetchClassrooms = async () => {
     try {
       const response = await api.get('/classrooms');
-      setClassrooms(response.data || []);
+      setClassrooms(response.data.data || []);
     } catch (err) {
       console.error('Errore nel caricamento delle aule:', err);
     }

@@ -64,7 +64,7 @@ router.get('/dashboard', async (req, res) => {
             },
             include: [
                 { model: Course, as: 'course', attributes: ['id', 'name'] },
-                { model: Classroom, as: 'classroom', attributes: ['id', 'name'] },
+                { model: Classroom, as: 'classroom', attributes: ['id', 'name', 'camera_ip'] },
                 { model: Subject, as: 'subject', attributes: ['id', 'name'] }
             ],
             order: [['lesson_date', 'ASC']]
@@ -89,7 +89,13 @@ router.get('/dashboard', async (req, res) => {
                 },
                 today: {
                     date: today.toISOString().split('T')[0],
-                    lessons: todayLessons,
+                    lessons: todayLessons.map(lesson => ({
+                        ...lesson.toJSON(),
+                        classroom: {
+                            ...lesson.classroom.toJSON(),
+                            hasCamera: !!lesson.classroom.camera_ip
+                        }
+                    })),
                     count: todayLessons.length
                 },
                 stats: {
@@ -459,6 +465,30 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
                 analyzed_at: new Date()
             });
 
+            // Salva l'immagine report con i riquadri se disponibile
+            if (analysisResult.reportImageBlob) {
+                try {
+                    const reportImage = await LessonImage.create({
+                        lesson_id: lessonId,
+                        image_data: analysisResult.reportImageBlob,
+                        file_size: analysisResult.reportImageBlob.length,
+                        mime_type: 'image/jpeg',
+                        source: 'face_detection_report',
+                        captured_at: new Date(),
+                        camera_ip: lesson.classroom.camera_ip,
+                        is_analyzed: true,
+                        detected_faces: analysisResult.detected_faces || 0,
+                        recognized_faces: analysisResult.recognized_students?.length || 0,
+                        processing_status: 'completed',
+                        analyzed_at: new Date()
+                    });
+                    
+                    console.log(`✅ Immagine report salvata: ID ${reportImage.id}`);
+                } catch (reportError) {
+                    console.warn('⚠️ Errore salvataggio immagine report:', reportError.message);
+                }
+            }
+
         } catch (analysisError) {
             console.error('❌ Errore face detection:', analysisError);
             
@@ -526,10 +556,11 @@ router.get('/lessons/:id/images', async (req, res) => {
             order: [['captured_at', 'DESC']]
         });
 
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
         const imagesWithUrls = images.map(img => ({
             ...img.toJSON(),
-            url: `/api/images/lesson/${img.id}`,
-            thumbnail_url: `/api/images/lesson/${img.id}`
+            url: `${baseUrl}/api/images/lesson/${img.id}`,
+            thumbnail_url: `${baseUrl}/api/images/lesson/${img.id}`
         }));
 
         res.json({

@@ -17,11 +17,18 @@ api.interceptors.request.use(config => {
   return config;
 });
 
-// Aggiunge il token di autenticazione se presente
-const token = localStorage.getItem('token');
-if (token) {
-  api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-}
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token scaduto o non valido - pulisci localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      // Non fare redirect automatico, lascia che sia AppContext a gestirlo
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Tipi per gli oggetti di risposta - ORIGINALI
 export interface User {
@@ -58,8 +65,32 @@ export interface CourseData {
 export interface Classroom {
   id: number;
   name: string;
-  camera_id?: string;
+  code?: string;
   capacity?: number;
+  floor?: string;
+  building?: string;
+  has_projector?: boolean;
+  has_whiteboard?: boolean;
+  camera_ip?: string;
+  camera_port?: number;
+  camera_username?: string;
+  camera_password?: string;
+  camera_model?: string;
+  camera_manufacturer?: string;
+  camera_status?: 'unknown' | 'online' | 'offline' | 'error' | 'disabled';
+  camera_last_check?: string;
+  camera_last_success?: string;
+  camera_preferred_method?: string;
+  camera_capabilities?: any;
+  camera_resolution?: string;
+  camera_fps?: number;
+  camera_position?: string;
+  camera_angle?: string;
+  camera_notes?: string;
+  is_active?: boolean;
+  maintenance_mode?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Lesson {
@@ -213,7 +244,8 @@ export const deleteCourse = async (id: number): Promise<any> => {
 export const getClassrooms = async (params?: any): Promise<Classroom[]> => {
   try {
     const response = await api.get('/classrooms', { params });
-    return response.data || [];
+    console.log('Risposta classrooms:', response.data);
+    return response.data.data || [];
   } catch (error: any) {
     console.error('Errore nel recupero delle aule:', error);
     throw error;

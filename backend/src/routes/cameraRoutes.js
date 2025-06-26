@@ -424,6 +424,171 @@ router.post('/:id/capture', authenticate, async (req, res) => {
 });
 
 /**
+ * POST /api/cameras/discover
+ * Discovery automatico camere sulla rete (nuovo endpoint per frontend)
+ */
+router.post('/discover', authenticate, async (req, res) => {
+  try {
+    const { networkRange } = req.body;
+    
+    console.log(`🔍 Frontend discovery VELOCE richiesto`);
+    
+    // Per l'API usiamo un range limitato per velocità
+    // Rileva automaticamente la rete locale ma limita il range
+    let detectedNetwork;
+    try {
+      detectedNetwork = await enhancedCameraService.detectLocalNetwork();
+      console.log(`🌐 Rete rilevata: ${detectedNetwork}.x`);
+    } catch (error) {
+      detectedNetwork = '192.168.1'; // Fallback
+      console.log(`🌐 Uso rete fallback: ${detectedNetwork}.x`);
+    }
+    
+    // Discovery LIMITATO per API (range 1-50 per velocità)
+    const startTime = Date.now();
+    const result = await enhancedCameraService.discoverCamerasLimited(detectedNetwork, 1, 50);
+    const discoveryDuration = Date.now() - startTime;
+    
+    console.log(`✅ Discovery LIMITATO completato in ${discoveryDuration}ms:`);
+    console.log(`   - Totale: ${result.total}`);
+    console.log(`   - Confermate: ${result.confirmed?.length || 0}`);
+    console.log(`   - Potenziali: ${result.potential?.length || 0}`);
+    
+    // Formato corretto per il frontend
+    res.json({
+      total: result.total,
+      confirmed: result.confirmed || [],
+      potential: result.potential || [],
+      discoveryDuration,
+      timestamp: new Date(),
+      scannedRange: result.scannedRange || `${detectedNetwork}.1-50`,
+      note: "Discovery veloce range limitato con auto-test credenziali comuni."
+    });
+    
+  } catch (error) {
+    console.error('❌ Errore discovery frontend:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore durante la ricerca delle camere',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/cameras/test
+ * Test connessione camera specifica tramite IP
+ */
+router.post('/test', authenticate, async (req, res) => {
+  try {
+    const { ip } = req.body;
+    
+    if (!ip) {
+      return res.status(400).json({
+        success: false,
+        error: 'IP richiesto'
+      });
+    }
+    
+    console.log(`🔍 Test connessione IP: ${ip}`);
+    
+    const startTime = Date.now();
+    const isOnline = await enhancedCameraService.testCameraConnection(ip);
+    const testDuration = Date.now() - startTime;
+    
+    res.json({
+      success: isOnline,
+      message: isOnline ? 'Camera raggiungibile' : 'Camera non raggiungibile',
+      ip,
+      status: isOnline ? 'online' : 'offline',
+      testDuration,
+      timestamp: new Date()
+    });
+    
+  } catch (error) {
+    console.error('❌ Errore test IP:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore durante il test della camera',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/cameras/test-credentials
+ * Test camera con credenziali specifiche - PRIORITA' RTSP
+ */
+router.post('/test-credentials', authenticate, async (req, res) => {
+  try {
+    const { ip, username, password } = req.body;
+    
+    if (!ip || !username || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'IP, username e password sono obbligatori'
+      });
+    }
+    
+    console.log(`🎯 Test camera con credenziali: ${ip} (${username}:***)`);
+    
+    const startTime = Date.now();
+    const result = await enhancedCameraService.testCameraWithCredentials(ip, username, password);
+    const testDuration = Date.now() - startTime;
+    
+    if (result.success) {
+      console.log(`✅ Test SUCCESS: ${result.protocol} funziona! Metodo: ${result.method}`);
+      
+      res.json({
+        success: true,
+        message: `Camera funzionante con protocollo ${result.protocol}`,
+        data: {
+          ip: result.ip,
+          protocol: result.protocol,
+          method: result.method,
+          endpoint: result.endpoint,
+          model: result.model,
+          imageSize: result.imageSize,
+          responseTime: result.responseTime,
+          openPorts: result.openPorts,
+          supportedProtocols: result.supportedProtocols,
+          credentials: {
+            username: result.credentials.username,
+            passwordSet: !!result.credentials.password
+          },
+          testDuration,
+          testedAt: new Date()
+        }
+      });
+    } else {
+      console.log(`❌ Test FAILED: ${result.error}`);
+      
+      res.status(400).json({
+        success: false,
+        message: result.error,
+        data: {
+          ip: result.ip,
+          error: result.error,
+          openPorts: result.openPorts,
+          testResults: result.testResults,
+          suggestions: result.suggestions,
+          testDuration,
+          testedAt: new Date()
+        }
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Errore test credenziali:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Errore durante il test delle credenziali',
+      details: error.message
+    });
+  }
+});
+
+/**
  * GET /api/cameras/discovery
  * Discovery automatico camere sulla rete
  */

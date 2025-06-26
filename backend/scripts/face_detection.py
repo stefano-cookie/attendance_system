@@ -134,9 +134,10 @@ class FaceDetectionSystem:
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             faces = face_cascade.detectMultiScale(
                 gray, 
-                scaleFactor=1.1, 
-                minNeighbors=4,
-                minSize=(50, 50)
+                scaleFactor=1.2, 
+                minNeighbors=6,  # Più restrittivo per evitare false detection
+                minSize=(80, 80),  # Dimensione minima maggiore
+                maxSize=(400, 400)  # Evita detection troppo grandi
             )
             
             face_data = []

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getClassrooms, createClassroom, updateClassroom, deleteClassroom } from '../../services/api';
 import type { Classroom } from '../../services/api';
+import CameraDiscovery from './CameraDiscovery';
 
 const ClassroomsPanel: React.FC = () => {
   // Stati per i dati
@@ -15,11 +16,27 @@ const ClassroomsPanel: React.FC = () => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
   const [classroomToDelete, setClassroomToDelete] = useState<Classroom | null>(null);
+  const [isCameraDiscoveryOpen, setIsCameraDiscoveryOpen] = useState<boolean>(false);
   const [currentClassroom, setCurrentClassroom] = useState<Partial<Classroom>>({
     id: undefined,
     name: '',
-    camera_id: '',
-    capacity: undefined
+    code: '',
+    capacity: undefined,
+    floor: '',
+    building: '',
+    has_projector: false,
+    has_whiteboard: false,
+    camera_ip: '',
+    camera_port: 80,
+    camera_username: 'admin',
+    camera_password: '',
+    camera_model: '',
+    camera_manufacturer: '',
+    camera_position: '',
+    camera_angle: '',
+    camera_notes: '',
+    is_active: true,
+    maintenance_mode: false
   });
   
   // Stato per la ricerca
@@ -56,7 +73,8 @@ const ClassroomsPanel: React.FC = () => {
   // Filtra le aule in base alla ricerca
   const filteredClassrooms = classrooms.filter(classroom => 
     classroom.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (classroom.camera_id && classroom.camera_id.toLowerCase().includes(searchTerm.toLowerCase()))
+    (classroom.camera_ip && classroom.camera_ip.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (classroom.code && classroom.code.toLowerCase().includes(searchTerm.toLowerCase()))
   );
   
   // Gestori per i form
@@ -64,8 +82,23 @@ const ClassroomsPanel: React.FC = () => {
     setCurrentClassroom({
       id: undefined,
       name: '',
-      camera_id: '',
-      capacity: undefined
+      code: '',
+      capacity: undefined,
+      floor: '',
+      building: '',
+      has_projector: false,
+      has_whiteboard: false,
+      camera_ip: '',
+      camera_port: 80,
+      camera_username: 'admin',
+      camera_password: '',
+      camera_model: '',
+      camera_manufacturer: '',
+      camera_position: '',
+      camera_angle: '',
+      camera_notes: '',
+      is_active: true,
+      maintenance_mode: false
     });
     setIsEditing(false);
     setIsFormOpen(true);
@@ -75,8 +108,23 @@ const ClassroomsPanel: React.FC = () => {
     setCurrentClassroom({
       id: classroom.id,
       name: classroom.name,
-      camera_id: classroom.camera_id || '',
-      capacity: classroom.capacity
+      code: classroom.code || '',
+      capacity: classroom.capacity,
+      floor: classroom.floor || '',
+      building: classroom.building || '',
+      has_projector: classroom.has_projector || false,
+      has_whiteboard: classroom.has_whiteboard || false,
+      camera_ip: classroom.camera_ip || '',
+      camera_port: classroom.camera_port || 80,
+      camera_username: classroom.camera_username || 'admin',
+      camera_password: classroom.camera_password || '',
+      camera_model: classroom.camera_model || '',
+      camera_manufacturer: classroom.camera_manufacturer || '',
+      camera_position: classroom.camera_position || '',
+      camera_angle: classroom.camera_angle || '',
+      camera_notes: classroom.camera_notes || '',
+      is_active: classroom.is_active !== undefined ? classroom.is_active : true,
+      maintenance_mode: classroom.maintenance_mode || false
     });
     setIsEditing(true);
     setIsFormOpen(true);
@@ -87,11 +135,19 @@ const ClassroomsPanel: React.FC = () => {
     setError(null);
   };
   
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    let processedValue: any = value;
+    
+    if (type === 'checkbox') {
+      processedValue = (e.target as HTMLInputElement).checked;
+    } else if (name === 'capacity' || name === 'camera_port') {
+      processedValue = value ? parseInt(value, 10) : undefined;
+    }
+    
     setCurrentClassroom({
       ...currentClassroom,
-      [name]: name === 'capacity' ? (value ? parseInt(value, 10) : undefined) : value
+      [name]: processedValue
     });
   };
   
@@ -138,8 +194,20 @@ const ClassroomsPanel: React.FC = () => {
     }
   };
 
+  const handleCameraSelect = (camera: any) => {
+    setCurrentClassroom({
+      ...currentClassroom,
+      camera_ip: camera.ip,
+      camera_model: camera.model,
+      camera_manufacturer: camera.model.includes('IMOU') ? 'IMOU' : 'Generic',
+      camera_username: 'admin',
+      camera_password: ''
+    });
+    setIsCameraDiscoveryOpen(false);
+  };
+
   // Calcola statistiche
-  const classroomsWithCamera = classrooms.filter(classroom => classroom.camera_id).length;
+  const classroomsWithCamera = classrooms.filter(classroom => classroom.camera_ip).length;
   const totalCapacity = classrooms.reduce((sum, classroom) => sum + (classroom.capacity || 0), 0);
   const averageCapacity = classrooms.length > 0 ? Math.round(totalCapacity / classrooms.length) : 0;
   
@@ -183,6 +251,16 @@ const ClassroomsPanel: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
                 <span>{refreshing ? 'Aggiornando...' : 'Aggiorna'}</span>
+              </button>
+
+              <button
+                onClick={() => setIsCameraDiscoveryOpen(true)}
+                className="flex items-center space-x-2 bg-purple-100 text-purple-700 px-4 py-2 rounded-lg hover:bg-purple-200 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <span>Cerca Camere</span>
               </button>
 
               <button
@@ -373,14 +451,23 @@ const ClassroomsPanel: React.FC = () => {
                       {/* Content */}
                       <div className="p-6 flex-grow">
                         <div className="space-y-3">
-                          {classroom.camera_id ? (
+                          {classroom.camera_ip ? (
                             <div className="flex items-center p-3 bg-green-50 rounded-lg">
                               <svg className="w-5 h-5 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                               </svg>
                               <div>
-                                <p className="text-sm font-medium text-gray-700">Telecamera</p>
-                                <p className="text-sm text-green-700 font-semibold">{classroom.camera_id}</p>
+                                <p className="text-sm font-medium text-gray-700">Camera IP</p>
+                                <p className="text-sm text-green-700 font-semibold">{classroom.camera_ip}</p>
+                                {classroom.camera_status && (
+                                  <span className={`inline-block mt-1 px-2 py-1 text-xs rounded-full ${
+                                    classroom.camera_status === 'online' ? 'bg-green-100 text-green-800' :
+                                    classroom.camera_status === 'offline' ? 'bg-red-100 text-red-800' :
+                                    'bg-yellow-100 text-yellow-800'
+                                  }`}>
+                                    {classroom.camera_status}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           ) : (
@@ -389,7 +476,7 @@ const ClassroomsPanel: React.FC = () => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18 21l-4.95-4.95m0 0L5.636 5.636M13.05 16.05L18 21" />
                               </svg>
                               <div>
-                                <p className="text-sm font-medium text-gray-500">Telecamera</p>
+                                <p className="text-sm font-medium text-gray-500">Camera IP</p>
                                 <p className="text-sm text-gray-400">Non configurata</p>
                               </div>
                             </div>
@@ -519,21 +606,6 @@ const ClassroomsPanel: React.FC = () => {
                     />
                   </div>
                   
-                  <div>
-                    <label htmlFor="camera_id" className="block text-sm font-semibold text-gray-700 mb-2">
-                      ID Telecamera
-                    </label>
-                    <input
-                      type="text"
-                      id="camera_id"
-                      name="camera_id"
-                      value={currentClassroom.camera_id}
-                      onChange={handleInputChange}
-                      placeholder="Es. CAM_001, /dev/video0..."
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    />
-                    <p className="text-sm text-gray-500 mt-1">Identificativo univoco della telecamera per il rilevamento presenze</p>
-                  </div>
                   
                   <div>
                     <label htmlFor="capacity" className="block text-sm font-semibold text-gray-700 mb-2">
@@ -641,6 +713,14 @@ const ClassroomsPanel: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+      
+      {/* Modal Camera Discovery */}
+      {isCameraDiscoveryOpen && (
+        <CameraDiscovery
+          onCameraSelect={handleCameraSelect}
+          onClose={() => setIsCameraDiscoveryOpen(false)}
+        />
       )}
     </div>
   );

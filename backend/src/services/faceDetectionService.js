@@ -113,9 +113,22 @@ class FaceDetectionService {
                 await this._saveAttendanceRecords(lessonId, analysisResult.recognized_students);
             }
             
+            // 8. Converti l'immagine report in BLOB se esiste
+            let reportImageBlob = null;
+            if (analysisResult.report_image && fs.existsSync(analysisResult.report_image)) {
+                try {
+                    reportImageBlob = fs.readFileSync(analysisResult.report_image);
+                    console.log(`✅ Report immagine convertita: ${reportImageBlob.length} bytes`);
+                } catch (error) {
+                    console.warn(`⚠️ Errore lettura report immagine: ${error.message}`);
+                }
+            }
+            
             return {
                 success: true,
                 sessionId,
+                reportImagePath: analysisResult.report_image,
+                reportImageBlob: reportImageBlob, // BLOB dell'immagine con riquadri
                 ...analysisResult
             };
             
@@ -131,13 +144,15 @@ class FaceDetectionService {
             };
             
         } finally {
-            // Cleanup
-            this._cleanupTempFiles([
+            // Cleanup (esclude reportImagePath se esiste)
+            const filesToCleanup = [
                 tempImagePath,
                 tempStudentsJsonPath,
                 tempOutputPath,
                 tempStudentsDir
-            ], sessionId);
+            ];
+            
+            this._cleanupTempFiles(filesToCleanup, sessionId);
         }
     }
 

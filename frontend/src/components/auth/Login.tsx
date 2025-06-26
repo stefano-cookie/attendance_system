@@ -26,7 +26,31 @@ const Login: React.FC = () => {
   // Redirect se l'utente è già autenticato
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/admin');
+      // Redirect intelligente basato sul ruolo
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          switch (user?.role) {
+            case 'admin':
+              navigate('/admin');
+              break;
+            case 'teacher':
+              navigate('/teacher');
+              break;
+            case 'technician':
+              navigate('/technician');
+              break;
+            default:
+              navigate('/admin');
+          }
+        } else {
+          navigate('/admin');
+        }
+      } catch (error) {
+        console.error('Errore parsing user data:', error);
+        navigate('/admin');
+      }
     }
   }, [isAuthenticated, navigate]);
   
@@ -69,7 +93,26 @@ const Login: React.FC = () => {
     if (validateForm()) {
       const success = await login(credentials.email, credentials.password);
       if (success) {
-        navigate('/admin');
+        // Redirect intelligente basato sul ruolo dell'utente loggato
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          switch (user.role) {
+            case 'admin':
+              navigate('/admin');
+              break;
+            case 'teacher':
+              navigate('/teacher');
+              break;
+            case 'technician':
+              navigate('/technician');
+              break;
+            default:
+              navigate('/admin');
+          }
+        } else {
+          navigate('/admin');
+        }
       }
     }
   };
@@ -90,7 +133,7 @@ const Login: React.FC = () => {
         <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-blue-500/10 border border-white/20 overflow-hidden">
           
           {/* Decorative header gradient */}
-          <div className="absolute top-0 right-3 right-0 h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+          <div className="absolute top-0 right-0 h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
           
           {/* Header */}
           <div className="relative p-8 pb-6 text-center">
@@ -124,7 +167,7 @@ const Login: React.FC = () => {
                   Indirizzo Email
                 </label>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 right-2 flex items-center pl-4 pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                     <svg className={`w-5 h-5 transition-colors duration-200 ${
                       errors.email ? 'text-red-500' : 'text-gray-400 group-focus-within:text-blue-500'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -164,6 +207,13 @@ const Login: React.FC = () => {
                   Password
                 </label>
                 <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                    <svg className={`w-5 h-5 transition-colors duration-200 ${
+                      errors.password ? 'text-red-500' : 'text-gray-400 group-focus-within:text-blue-500'
+                    }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
                   <input
                     type={showPassword ? 'text' : 'password'}
                     id="password"

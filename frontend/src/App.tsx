@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useAppContext } from './context/AppContext';
 import AdminLayout from './components/layout/AdminLayout';
+import TeacherLayout from './components/layout/TeacherLayout';
 import Login from './components/auth/Login';
 import Dashboard from './components/admin/Dashboard';
 import StudentsPanel from './components/admin/StudentsPanel';
@@ -14,6 +15,10 @@ import ScreenshotPanel from './components/admin/ScreenshotPanel';
 import ClassroomsPanel from './components/admin/ClassroomPanel';
 import StudentEdit from './components/admin/StudentEdit';
 import StudentRegistration from './components/technician/StudentRegistration';
+import TeacherDashboard from './components/teacher/TeacherDashboard';
+import ActiveLesson from './components/teacher/ActiveLesson';
+import LessonImages from './components/teacher/LessonImages';
+import CreateLesson from './components/teacher/CreateLesson';
 import './scss/main.scss';
 
 // ProtectedRoute aggiornato con redirect intelligente
@@ -39,6 +44,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, roles = ['adm
     switch (user.role) {
       case 'admin':
         return <Navigate to="/admin" replace />;
+      case 'teacher':
+        return <Navigate to="/teacher" replace />;
       case 'technician':
         return <Navigate to="/technician" replace />;
       default:
@@ -65,6 +72,8 @@ const RoleBasedRedirect: React.FC = () => {
   switch (user?.role) {
     case 'admin':
       return <Navigate to="/admin" replace />;
+    case 'teacher':
+      return <Navigate to="/teacher" replace />;
     case 'technician':
       return <Navigate to="/technician" replace />;
     default:
@@ -167,6 +176,18 @@ const AppRoutes: React.FC = () => {
           <TechnicianLayout />
         </ProtectedRoute>
       } />
+      
+      {/* Route per docenti */}
+      <Route path="/teacher" element={
+        <ProtectedRoute roles={['teacher']}>
+          <TeacherLayout />
+        </ProtectedRoute>
+      }>
+        <Route index element={<TeacherDashboard />} />
+        <Route path="lessons/create" element={<CreateLesson />} />
+        <Route path="lessons/:id" element={<ActiveLesson />} />
+        <Route path="lessons/:id/images" element={<LessonImages />} />
+      </Route>
       
       {/* Route protette con layout admin */}
       <Route path="/admin" element={

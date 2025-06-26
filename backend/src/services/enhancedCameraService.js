@@ -577,62 +577,392 @@ class EnhancedCameraService {
   }
 
   /**
-   * Discovery automatico camere sulla rete - VERSIONE CORRETTA
+   * Discovery INTELLIGENTE camere sulla rete - AUTO-TEST CREDENZIALI
    */
-  async discoverCameras(networkRange = '192.168.1') {
-    console.log(`🔍 Discovery camere sulla rete ${networkRange}.x`);
-    console.log(`⏭️ IP esclusi: ${this.excludedIPs.join(', ')}`);
+  async discoverCameras(networkRange = null) {
+    // Auto-detect network se non specificato
+    if (!networkRange) {
+      networkRange = await this.detectLocalNetwork();
+    }
     
-    const cameras = [];
-    const promises = [];
+    console.log(`🚀 Discovery INTELLIGENTE sulla rete ${networkRange}.x`);
+    console.log(`🔐 Con auto-test credenziali comuni`);
     
-    // Scansiona range IP (salto gli esclusi)
+    const detectedDevices = [];
+    
+    // FASE 1: Scan rapido dispositivi attivi con concorrenza limitata
+    console.log('📡 FASE 1: Scan completo rete con concorrenza ottimizzata...');
+    
+    // Batch processing per evitare sovraccarico di rete
+    const BATCH_SIZE = 20; // Massimo 20 IP simultanei
+    const allIPs = [];
     for (let i = 1; i <= 254; i++) {
-      const ip = `${networkRange}.${i}`;
+      allIPs.push(`${networkRange}.${i}`);
+    }
+    
+    // Processa in batch
+    for (let i = 0; i < allIPs.length; i += BATCH_SIZE) {
+      const batch = allIPs.slice(i, i + BATCH_SIZE);
+      console.log(`📡 Scansione batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(allIPs.length/BATCH_SIZE)}: ${batch[0]} - ${batch[batch.length-1]}`);
       
-      if (this.excludedIPs.includes(ip)) {
-        console.log(`⏭️ Saltando IP escluso: ${ip}`);
-        continue;
-      }
-      
-      promises.push(
-        this.testCameraAtIP(ip).then(result => {
-          if (result.isCamera) {
-            cameras.push(result);
-            console.log(`📷 Camera confermata: ${ip} (${result.model}) - Endpoint: ${result.workingEndpoint}`);
+      const batchPromises = batch.map(ip => 
+        this.quickDeviceScan(ip).then(result => {
+          if (result.isActive) {
+            detectedDevices.push(result);
+            console.log(`📍 TROVATO: ${ip} - Porte: ${result.openPorts.join(',') || 'nessuna'}`);
           }
         }).catch(() => {
-          // Ignora errori (IP non raggiungibili)
+          // Ignora errori
         })
       );
+      
+      await Promise.allSettled(batchPromises);
+      
+      // Pausa ridotta tra batch per velocità
+      if (i + BATCH_SIZE < allIPs.length) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
     }
     
-    // Attendi tutti i test con timeout globale
-    await Promise.allSettled(promises);
+    console.log(`✅ FASE 1 completata: ${detectedDevices.length} dispositivi attivi trovati`);
     
-    console.log(`✅ Discovery completato: ${cameras.length} camere VERE trovate`);
+    // FASE 2: Identifica potenziali camere
+    const potentialCameras = detectedDevices.filter(device => 
+      device.openPorts.some(port => [80, 443, 554, 8080, 8000, 8888, 9000].includes(port))
+    );
     
-    // Stampa riepilogo dettagliato
-    if (cameras.length > 0) {
-      console.log('\n📋 CAMERE TROVATE:');
-      console.log('='.repeat(70));
-      cameras.forEach(cam => {
-        console.log(`📷 ${cam.ip.padEnd(15)} | ${cam.model.padEnd(20)} | ${cam.workingEndpoint}`);
-        console.log(`   Credenziali: ${cam.workingCredentials.username}:${cam.workingCredentials.password || 'empty'}`);
-        console.log(`   Dimensione test: ${(cam.imageSize / 1024).toFixed(1)}KB`);
-      });
-    } else {
-      console.log('\n⚠️ Nessuna camera trovata. Suggerimenti:');
-      console.log('   - Verifica che le camere siano accese e connesse');
-      console.log('   - Controlla che HTTP Service sia abilitato');
-      console.log('   - Verifica credenziali admin/password');
+    console.log(`📷 ${potentialCameras.length} possibili camere rilevate`);
+    
+    // FASE 3: AUTO-TEST con credenziali comuni (NUOVO!)
+    console.log('🔐 FASE 3: Auto-test credenziali comuni...');
+    const confirmedCameras = [];
+    const remainingPotential = [];
+    
+    const commonCredentials = [
+      { username: 'admin', password: 'Mannoli2025' }, // Credenziali user (priorità massima)
+      { username: 'admin', password: 'admin123' }     // Solo le più comuni per velocità
+    ];
+    
+    // Test ogni potenziale camera con credenziali comuni
+    for (const device of potentialCameras) {
+      console.log(`🎯 Auto-test camera: ${device.ip}`);
+      
+      let cameraConfirmed = false;
+      
+      for (const creds of commonCredentials) {
+        try {
+          console.log(`  🔑 Provo ${creds.username}:${creds.password || 'empty'}`);
+          
+          const testResult = await this.testCameraWithCredentials(
+            device.ip, 
+            creds.username, 
+            creds.password
+          );
+          
+          if (testResult.success) {
+            console.log(`  ✅ SUCCESSO! Camera confermata con ${creds.username}:${creds.password}`);
+            
+            // Aggiungi alle confermate
+            confirmedCameras.push({
+              ip: device.ip,
+              model: testResult.model || this.detectCameraModelFromPorts(device.openPorts),
+              openPorts: device.openPorts,
+              isCamera: true,
+              isPotentialCamera: false,
+              workingCredentials: creds,
+              protocol: testResult.protocol,
+              method: testResult.method,
+              workingEndpoint: testResult.endpoint,
+              imageSize: testResult.imageSize,
+              responseTime: testResult.responseTime,
+              supportedProtocols: this.getSupportedProtocols(device.openPorts),
+              reason: `Camera confermata automaticamente con ${testResult.protocol}`,
+              autoConfirmed: true
+            });
+            
+            cameraConfirmed = true;
+            break; // Stop testing altri credenziali
+          }
+          
+        } catch (error) {
+          console.log(`  ❌ Fallito: ${error.message}`);
+        }
+      }
+      
+      // Se non confermata, lascia come potenziale
+      if (!cameraConfirmed) {
+        console.log(`  ⚠️ Nessuna credenziale funziona - lasciata come potenziale`);
+        remainingPotential.push({
+          ip: device.ip,
+          model: this.detectCameraModelFromPorts(device.openPorts),
+          openPorts: device.openPorts,
+          isCamera: false,
+          isPotentialCamera: true,
+          reason: this.getCameraReason(device.openPorts),
+          suggestion: 'Credenziali comuni non funzionano - inserisci quelle corrette',
+          requiresCredentials: true,
+          supportedProtocols: this.getSupportedProtocols(device.openPorts)
+        });
+      }
     }
     
-    return cameras;
+    // Riepilogo finale
+    console.log('\n📊 RIEPILOGO DISCOVERY INTELLIGENTE:');
+    console.log('='.repeat(60));
+    console.log(`✅ CAMERE CONFERMATE: ${confirmedCameras.length}`);
+    confirmedCameras.forEach(cam => {
+      console.log(`  📷 ${cam.ip.padEnd(15)} | ${cam.protocol.padEnd(8)} | ${cam.workingCredentials.username}:${cam.workingCredentials.password}`);
+    });
+    
+    console.log(`⚠️ CAMERE POTENZIALI: ${remainingPotential.length}`);
+    remainingPotential.forEach(cam => {
+      console.log(`  📷 ${cam.ip.padEnd(15)} | ${cam.supportedProtocols.join(',').padEnd(8)} | Richiede credenziali`);
+    });
+    
+    const totalCameras = confirmedCameras.length + remainingPotential.length;
+    
+    return {
+      confirmed: confirmedCameras,
+      potential: remainingPotential,
+      total: totalCameras,
+      scanTime: Date.now(),
+      message: totalCameras > 0 ? 
+        `Trovate ${confirmedCameras.length} camere funzionanti e ${remainingPotential.length} da configurare.` :
+        'Nessuna camera trovata. Verifica che siano accese e sulla stessa rete.'
+    };
   }
 
   /**
-   * Test se IP specifico è una camera - VERSIONE CORRETTA
+   * Discovery EXPRESS per API veloce - Senza auto-test credenziali
+   */
+  async discoverCamerasExpress(networkRange = null) {
+    // Auto-detect network se non specificato
+    if (!networkRange) {
+      networkRange = await this.detectLocalNetwork();
+    }
+    
+    console.log(`⚡ Discovery EXPRESS sulla rete ${networkRange}.x`);
+    console.log(`🚀 SENZA auto-test credenziali per massima velocità`);
+    
+    const detectedDevices = [];
+    
+    // FASE 1: Scan rapido dispositivi attivi
+    console.log('📡 FASE 1: Scan veloce rete...');
+    
+    const BATCH_SIZE = 30; // Più grande per velocità
+    const allIPs = [];
+    for (let i = 1; i <= 254; i++) {
+      allIPs.push(`${networkRange}.${i}`);
+    }
+    
+    // Processa in batch più grandi
+    for (let i = 0; i < allIPs.length; i += BATCH_SIZE) {
+      const batch = allIPs.slice(i, i + BATCH_SIZE);
+      console.log(`📡 Batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(allIPs.length/BATCH_SIZE)}: ${batch[0]} - ${batch[batch.length-1]}`);
+      
+      const batchPromises = batch.map(ip => 
+        this.quickDeviceScan(ip).then(result => {
+          if (result.isActive) {
+            detectedDevices.push(result);
+            console.log(`📍 TROVATO: ${ip} - Porte: ${result.openPorts.join(',') || 'nessuna'}`);
+          }
+        }).catch(() => {
+          // Ignora errori
+        })
+      );
+      
+      await Promise.allSettled(batchPromises);
+      
+      // Nessuna pausa per massima velocità
+    }
+    
+    console.log(`✅ FASE 1 completata: ${detectedDevices.length} dispositivi attivi trovati`);
+    
+    // FASE 2: Identifica potenziali camere (SOLO IDENTIFICAZIONE)
+    const potentialCameras = detectedDevices.filter(device => 
+      device.openPorts.some(port => [80, 443, 554, 8080, 8000, 8888, 9000].includes(port))
+    );
+    
+    console.log(`📷 ${potentialCameras.length} possibili camere rilevate`);
+    
+    // SALTA FASE 3 per velocità - solo categorizza
+    const cameraResults = potentialCameras.map(device => ({
+      ip: device.ip,
+      model: this.detectCameraModelFromPorts(device.openPorts),
+      openPorts: device.openPorts,
+      isCamera: false,
+      isPotentialCamera: true,
+      reason: this.getCameraReason(device.openPorts),
+      suggestion: 'Inserisci credenziali per testare e confermare',
+      requiresCredentials: true,
+      supportedProtocols: this.getSupportedProtocols(device.openPorts)
+    }));
+    
+    // Riepilogo finale
+    console.log('\n📊 RIEPILOGO DISCOVERY EXPRESS:');
+    console.log('='.repeat(50));
+    console.log(`⚠️ CAMERE POTENZIALI: ${cameraResults.length} (test credenziali richiesto)`);
+    
+    return {
+      confirmed: [], // Nessuna confermata senza test
+      potential: cameraResults,
+      total: cameraResults.length,
+      scanTime: Date.now(),
+      scannedRange: `${networkRange}.1-254`,
+      message: cameraResults.length > 0 ? 
+        `Trovate ${cameraResults.length} possibili camere. Testa le credenziali per confermarle.` :
+        'Nessuna camera potenziale trovata. Verifica che siano accese e sulla stessa rete.',
+      expressMode: true
+    };
+  }
+
+  /**
+   * Discovery LIMITATO per API veloce - Solo range specifico
+   */
+  async discoverCamerasLimited(networkRange, startIP = 1, endIP = 50) {
+    console.log(`⚡ Discovery LIMITATO sulla rete ${networkRange}.${startIP}-${endIP}`);
+    console.log(`🔐 Con auto-test credenziali comuni`);
+    
+    const detectedDevices = [];
+    
+    // FASE 1: Scan rapido dispositivi attivi - RANGE LIMITATO
+    console.log('📡 FASE 1: Scan rapido range limitato...');
+    
+    // Batch processing più piccolo per velocità
+    const BATCH_SIZE = 10; // Massimo 10 IP simultanei
+    const allIPs = [];
+    for (let i = startIP; i <= endIP; i++) {
+      allIPs.push(`${networkRange}.${i}`);
+    }
+    
+    // Processa in batch
+    for (let i = 0; i < allIPs.length; i += BATCH_SIZE) {
+      const batch = allIPs.slice(i, i + BATCH_SIZE);
+      console.log(`📡 Batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(allIPs.length/BATCH_SIZE)}: ${batch[0]} - ${batch[batch.length-1]}`);
+      
+      const batchPromises = batch.map(ip => 
+        this.quickDeviceScan(ip).then(result => {
+          if (result.isActive) {
+            detectedDevices.push(result);
+            console.log(`📍 TROVATO: ${ip} - Porte: ${result.openPorts.join(',') || 'nessuna'}`);
+          }
+        }).catch(() => {
+          // Ignora errori
+        })
+      );
+      
+      await Promise.allSettled(batchPromises);
+      
+      // Piccola pausa tra batch
+      if (i + BATCH_SIZE < allIPs.length) {
+        await new Promise(resolve => setTimeout(resolve, 50)); // Pausa più breve
+      }
+    }
+    
+    console.log(`✅ FASE 1 completata: ${detectedDevices.length} dispositivi attivi trovati`);
+    
+    // FASE 2: Identifica potenziali camere
+    const potentialCameras = detectedDevices.filter(device => 
+      device.openPorts.some(port => [80, 443, 554, 8080, 8000, 8888, 9000].includes(port))
+    );
+    
+    console.log(`📷 ${potentialCameras.length} possibili camere rilevate`);
+    
+    // FASE 3: AUTO-TEST limitato (solo prime 2 credenziali per velocità)
+    console.log('🔐 FASE 3: Auto-test veloce credenziali...');
+    const confirmedCameras = [];
+    const remainingPotential = [];
+    
+    const quickCredentials = [
+      { username: 'admin', password: 'Mannoli2025' }, // Credenziali user
+      { username: 'admin', password: 'admin123' }     // Solo le più comuni
+    ];
+    
+    // Test ogni potenziale camera con credenziali limitate
+    for (const device of potentialCameras) {
+      console.log(`🎯 Auto-test veloce: ${device.ip}`);
+      
+      let cameraConfirmed = false;
+      
+      for (const creds of quickCredentials) {
+        try {
+          console.log(`  🔑 Provo ${creds.username}:${creds.password}`);
+          
+          const testResult = await this.testCameraWithCredentials(
+            device.ip, 
+            creds.username, 
+            creds.password
+          );
+          
+          if (testResult.success) {
+            console.log(`  ✅ SUCCESSO! Camera confermata`);
+            
+            // Aggiungi alle confermate
+            confirmedCameras.push({
+              ip: device.ip,
+              model: testResult.model || this.detectCameraModelFromPorts(device.openPorts),
+              openPorts: device.openPorts,
+              isCamera: true,
+              isPotentialCamera: false,
+              workingCredentials: creds,
+              protocol: testResult.protocol,
+              method: testResult.method,
+              workingEndpoint: testResult.endpoint,
+              imageSize: testResult.imageSize,
+              responseTime: testResult.responseTime,
+              supportedProtocols: this.getSupportedProtocols(device.openPorts),
+              reason: `Camera confermata automaticamente con ${testResult.protocol}`,
+              autoConfirmed: true
+            });
+            
+            cameraConfirmed = true;
+            break; // Stop testing altri credenziali
+          }
+          
+        } catch (error) {
+          console.log(`  ❌ Fallito: ${error.message}`);
+        }
+      }
+      
+      // Se non confermata, lascia come potenziale
+      if (!cameraConfirmed) {
+        console.log(`  ⚠️ Credenziali quick non funzionano - lasciata come potenziale`);
+        remainingPotential.push({
+          ip: device.ip,
+          model: this.detectCameraModelFromPorts(device.openPorts),
+          openPorts: device.openPorts,
+          isCamera: false,
+          isPotentialCamera: true,
+          reason: this.getCameraReason(device.openPorts),
+          suggestion: 'Test credenziali per confermare',
+          requiresCredentials: true,
+          supportedProtocols: this.getSupportedProtocols(device.openPorts)
+        });
+      }
+    }
+    
+    // Riepilogo finale
+    console.log('\n📊 RIEPILOGO DISCOVERY LIMITATO:');
+    console.log('='.repeat(50));
+    console.log(`✅ CAMERE CONFERMATE: ${confirmedCameras.length}`);
+    console.log(`⚠️ CAMERE POTENZIALI: ${remainingPotential.length}`);
+    
+    const totalCameras = confirmedCameras.length + remainingPotential.length;
+    
+    return {
+      confirmed: confirmedCameras,
+      potential: remainingPotential,
+      total: totalCameras,
+      scanTime: Date.now(),
+      scannedRange: `${networkRange}.${startIP}-${endIP}`,
+      message: totalCameras > 0 ? 
+        `Trovate ${confirmedCameras.length} camere funzionanti e ${remainingPotential.length} da configurare (scan limitato).` :
+        'Nessuna camera trovata nel range limitato. Usa scan completo se necessario.'
+    };
+  }
+
+  /**
+   * Test se IP specifico è una camera - VERSIONE MIGLIORATA
    */
   async testCameraAtIP(ip) {
     // ESCLUDI il MacBook dell'utente e altri IP noti
@@ -644,8 +974,18 @@ class EnhancedCameraService {
     try {
       console.log(`🔍 Test camera: ${ip}`);
       
-      // Test rapido connessione base
+      // Prima controlla se l'IP risponde a ping
+      const isReachable = await this.pingTest(ip);
+      if (!isReachable) {
+        return { isCamera: false, reason: 'not_reachable' };
+      }
+      
+      // Test porte comuni delle camere
+      const openPorts = await this.checkCameraPorts(ip);
+      
+      // Test rapido connessione base HTTP
       let baseResponse;
+      let httpResponds = false;
       try {
         baseResponse = await axios({
           method: 'GET',
@@ -653,6 +993,8 @@ class EnhancedCameraService {
           timeout: 2000,
           validateStatus: () => true
         });
+        
+        httpResponds = true;
         
         // Se non risponde o errore server, non è camera
         if (baseResponse.status >= 500) {
@@ -727,12 +1069,264 @@ class EnhancedCameraService {
         }
       }
       
+      // Se nessun endpoint HTTP funziona ma abbiamo porte camera aperte,
+      // potrebbe essere una camera con HTTP disabilitato
+      if (openPorts.some(port => [80, 554, 8080, 8000].includes(port))) {
+        console.log(`🔍 ${ip}: Possibile camera - porte camera aperte ma HTTP non risponde`);
+        return {
+          isCamera: false,
+          isPotentialCamera: true,
+          ip,
+          reason: 'HTTP service disabled - camera ports open',
+          openPorts,
+          model: 'Unknown Camera (HTTP disabled)',
+          suggestion: 'Enable HTTP Service in camera settings'
+        };
+      }
+      
       console.log(`❌ ${ip}: Non è una camera (nessun endpoint funzionante)`);
       return { isCamera: false, reason: 'no_working_endpoints' };
       
     } catch (error) {
       return { isCamera: false, reason: error.message };
     }
+  }
+
+  /**
+   * Test ping per verificare se IP è raggiungibile
+   */
+  async pingTest(ip) {
+    try {
+      const { exec } = require('child_process');
+      const { promisify } = require('util');
+      const execAsync = promisify(exec);
+      
+      await execAsync(`ping -c 1 -W 1000 ${ip}`, { timeout: 2000 });
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Scan RAPIDO di un singolo dispositivo - solo ping + porte principali
+   */
+  async quickDeviceScan(ip) {
+    try {
+      // Test ping rapido (500ms timeout)
+      const isReachable = await this.fastPing(ip);
+      if (!isReachable) {
+        return { isActive: false, ip };
+      }
+      
+      // Test porte camera principali (timeout ridotto)
+      const openPorts = await this.fastPortScan(ip);
+      
+      return {
+        isActive: openPorts.length > 0,
+        ip,
+        openPorts,
+        timestamp: Date.now()
+      };
+      
+    } catch (error) {
+      return { isActive: false, ip };
+    }
+  }
+
+  /**
+   * Ping velocissimo - VERSIONE MIGLIORATA
+   */
+  async fastPing(ip) {
+    try {
+      const { exec } = require('child_process');
+      const { promisify } = require('util');
+      const execAsync = promisify(exec);
+      
+      // Ping singolo con timeout aumentato per macOS - alcuni dispositivi rispondono lentamente
+      await execAsync(`ping -c 1 -W 2000 ${ip}`, { timeout: 4000 });
+      return true;
+    } catch (error) {
+      // Se ping fallisce, prova una connessione TCP diretta su porta 80 o 554
+      return await this.fallbackConnectivityTest(ip);
+    }
+  }
+
+  /**
+   * Test di connettività alternativo se ping fallisce
+   */
+  async fallbackConnectivityTest(ip) {
+    const net = require('net');
+    const testPorts = [80, 554, 8080]; // Porte comuni per camere
+    
+    for (const port of testPorts) {
+      try {
+        await new Promise((resolve, reject) => {
+          const socket = new net.Socket();
+          const timeout = setTimeout(() => {
+            socket.destroy();
+            reject(new Error('timeout'));
+          }, 1000);
+          
+          socket.connect(port, ip, () => {
+            clearTimeout(timeout);
+            socket.destroy();
+            resolve(true);
+          });
+          
+          socket.on('error', () => {
+            clearTimeout(timeout);
+            reject(new Error('connection failed'));
+          });
+        });
+        
+        // Se raggiungiamo qui, la connessione è riuscita
+        console.log(`📡 ${ip} raggiungibile via TCP ${port} (ping fallito ma porta aperta)`);
+        return true;
+        
+      } catch (error) {
+        // Continua con la prossima porta
+        continue;
+      }
+    }
+    
+    return false;
+  }
+
+  /**
+   * Scan porte veloce - solo porte camera principali
+   */
+  async fastPortScan(ip) {
+    const net = require('net');
+    const cameraPorts = [80, 554, 8080, 8000]; // Solo porte principali
+    const openPorts = [];
+    
+    const portPromises = cameraPorts.map(port => {
+      return new Promise((resolve) => {
+        const socket = new net.Socket();
+        const timeout = setTimeout(() => {
+          socket.destroy();
+          resolve(null);
+        }, 500); // Timeout ridotto a 500ms
+        
+        socket.connect(port, ip, () => {
+          clearTimeout(timeout);
+          socket.destroy();
+          resolve(port);
+        });
+        
+        socket.on('error', () => {
+          clearTimeout(timeout);
+          resolve(null);
+        });
+      });
+    });
+    
+    const results = await Promise.all(portPromises);
+    results.forEach(port => {
+      if (port !== null) {
+        openPorts.push(port);
+      }
+    });
+    
+    return openPorts;
+  }
+
+  /**
+   * Rileva tipo camera dalle porte aperte
+   */
+  detectCameraModelFromPorts(openPorts) {
+    if (openPorts.includes(554)) {
+      if (openPorts.includes(80)) {
+        return 'Camera IP (HTTP + RTSP)';
+      }
+      return 'Camera IP (Solo RTSP)';
+    }
+    
+    if (openPorts.includes(80) || openPorts.includes(8080)) {
+      return 'Camera IP (HTTP)';
+    }
+    
+    return 'Dispositivo Camera';
+  }
+
+  /**
+   * Determina protocolli supportati
+   */
+  getSupportedProtocols(openPorts) {
+    const protocols = [];
+    
+    if (openPorts.includes(554)) {
+      protocols.push('RTSP');
+    }
+    
+    if (openPorts.includes(80) || openPorts.includes(8080)) {
+      protocols.push('HTTP');
+    }
+    
+    if (openPorts.includes(443)) {
+      protocols.push('HTTPS');
+    }
+    
+    return protocols.length > 0 ? protocols : ['Unknown'];
+  }
+
+  /**
+   * Genera motivo rilevamento camera
+   */
+  getCameraReason(openPorts) {
+    if (openPorts.includes(554) && openPorts.includes(80)) {
+      return 'Porte camera complete (HTTP + RTSP) - Pronto per test';
+    }
+    
+    if (openPorts.includes(554)) {
+      return 'Porta RTSP aperta - Camera streaming supportata';
+    }
+    
+    if (openPorts.includes(80) || openPorts.includes(8080)) {
+      return 'Porta HTTP aperta - Possibile camera web';
+    }
+    
+    return 'Porte camera rilevate';
+  }
+
+  /**
+   * Controlla porte comuni delle camere (metodo originale per compatibilità)
+   */
+  async checkCameraPorts(ip) {
+    const net = require('net');
+    const ports = [80, 443, 554, 8080, 8000, 8888, 9000];
+    const openPorts = [];
+    
+    const portPromises = ports.map(port => {
+      return new Promise((resolve) => {
+        const socket = new net.Socket();
+        const timeout = setTimeout(() => {
+          socket.destroy();
+          resolve(null);
+        }, 1000);
+        
+        socket.connect(port, ip, () => {
+          clearTimeout(timeout);
+          socket.destroy();
+          resolve(port);
+        });
+        
+        socket.on('error', () => {
+          clearTimeout(timeout);
+          resolve(null);
+        });
+      });
+    });
+    
+    const results = await Promise.all(portPromises);
+    results.forEach(port => {
+      if (port !== null) {
+        openPorts.push(port);
+      }
+    });
+    
+    return openPorts;
   }
 
   /**
@@ -825,6 +1419,297 @@ class EnhancedCameraService {
     }
     
     return results;
+  }
+
+  /**
+   * Test camera con credenziali - PRIORITA' RTSP
+   */
+  async testCameraWithCredentials(ip, username, password) {
+    console.log(`🎯 Test camera ${ip} con credenziali ${username}:${password}`);
+    
+    try {
+      // Prima controlla se è raggiungibile
+      const isReachable = await this.fastPing(ip);
+      if (!isReachable) {
+        return {
+          success: false,
+          error: 'Camera non raggiungibile sulla rete',
+          ip
+        };
+      }
+      
+      // Controlla porte disponibili
+      const openPorts = await this.fastPortScan(ip);
+      console.log(`📊 Porte aperte: ${openPorts.join(', ')}`);
+      
+      // Se non trova porte con fast scan, prova scan completo
+      if (openPorts.length === 0) {
+        console.log('⚠️ Nessuna porta trovata con fast scan, provo scan completo...');
+        const allPorts = await this.checkCameraPorts(ip);
+        openPorts.push(...allPorts);
+        console.log(`📊 Porte trovate (scan completo): ${openPorts.join(', ')}`);
+      }
+      
+      let testResults = [];
+      let bestMethod = null;
+      
+      // PRIORITA' 1: RTSP (se porta 554 aperta)
+      if (openPorts.includes(554)) {
+        console.log('📺 Test RTSP (priorità alta)...');
+        
+        const rtspResult = await this.testRTSPConnection(ip, username, password);
+        testResults.push(rtspResult);
+        
+        if (rtspResult.success) {
+          bestMethod = rtspResult;
+          console.log('✅ RTSP funziona! Usato come metodo principale.');
+        }
+      }
+      
+      // PRIORITA' 2: HTTP (se non funziona RTSP o come backup)
+      if (!bestMethod && (openPorts.includes(80) || openPorts.includes(8080))) {
+        console.log('🌐 Test HTTP...');
+        
+        const httpResult = await this.testHTTPConnection(ip, username, password);
+        testResults.push(httpResult);
+        
+        if (httpResult.success) {
+          bestMethod = httpResult;
+          console.log('✅ HTTP funziona!');
+        }
+      }
+      
+      if (bestMethod) {
+        return {
+          success: true,
+          ip,
+          method: bestMethod.method,
+          protocol: bestMethod.protocol,
+          endpoint: bestMethod.endpoint,
+          credentials: { username, password },
+          imageSize: bestMethod.imageSize || 0,
+          responseTime: bestMethod.responseTime,
+          model: this.detectCameraModelFromPorts(openPorts),
+          openPorts,
+          supportedProtocols: this.getSupportedProtocols(openPorts),
+          testResults
+        };
+      } else {
+        return {
+          success: false,
+          error: 'Nessun protocollo funzionante con le credenziali fornite',
+          ip,
+          openPorts,
+          testResults,
+          suggestions: [
+            'Verifica username e password',
+            'Controlla che i servizi camera siano abilitati',
+            'Prova credenziali diverse (admin/admin, admin/123456)',
+            openPorts.includes(554) ? 'Camera supporta RTSP - verifica configurazione stream' : null,
+            openPorts.includes(80) ? 'Camera supporta HTTP - verifica servizio web abilitato' : null
+          ].filter(Boolean)
+        };
+      }
+      
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        ip
+      };
+    }
+  }
+
+  /**
+   * Test connessione RTSP con FFmpeg
+   */
+  async testRTSPConnection(ip, username, password) {
+    try {
+      console.log(`📺 Test RTSP: ${ip}:554`);
+      
+      const { exec } = require('child_process');
+      const { promisify } = require('util');
+      const fs = require('fs');
+      const path = require('path');
+      
+      const execAsync = promisify(exec);
+      
+      // Assicura che temp directory esista
+      const tempDir = path.join(__dirname, '../../../temp');
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+      
+      const outputFile = path.join(tempDir, `rtsp_test_${ip}_${Date.now()}.jpg`);
+      
+      // URL RTSP comuni per camere IP
+      const rtspUrls = [
+        `rtsp://${username}:${password}@${ip}:554/cam/realmonitor?channel=1&subtype=0`, // Dahua/IMOU principale
+        `rtsp://${username}:${password}@${ip}:554/cam/realmonitor?channel=1&subtype=1`, // Dahua/IMOU secondario
+        `rtsp://${username}:${password}@${ip}:554/`,                                    // Generico
+        `rtsp://${username}:${password}@${ip}:554/live`,                               // Live stream
+        `rtsp://${username}:${password}@${ip}:554/stream1`,                            // Stream 1
+        `rtsp://${username}:${password}@${ip}:554/h264`                                // H264 stream
+      ];
+      
+      const startTime = Date.now();
+      
+      for (const rtspUrl of rtspUrls) {
+        try {
+          console.log(`🔗 Provo URL: ${rtspUrl.replace(password, '***')}`);
+          
+          // Comando FFmpeg ottimizzato per test rapido
+          const ffmpegCmd = [
+            'ffmpeg',
+            '-rtsp_transport tcp',
+            '-i', `"${rtspUrl}"`,
+            '-vframes 1',
+            '-f image2',
+            '-q:v 2',
+            '-y',
+            `"${outputFile}"`
+          ].join(' ');
+
+          await execAsync(ffmpegCmd, { timeout: 8000 }); // Timeout di 8 secondi
+          
+          if (fs.existsSync(outputFile)) {
+            const imageBuffer = fs.readFileSync(outputFile);
+            
+            // Cleanup
+            fs.unlinkSync(outputFile);
+            
+            if (imageBuffer.length > 1000 && this.isValidJPEG(imageBuffer)) {
+              const responseTime = Date.now() - startTime;
+              console.log(`✅ RTSP SUCCESS: ${(imageBuffer.length / 1024).toFixed(1)}KB in ${responseTime}ms`);
+              
+              return {
+                success: true,
+                method: 'rtsp_ffmpeg',
+                protocol: 'RTSP',
+                endpoint: rtspUrl.split('@')[1], // Remove credentials from logged URL
+                imageSize: imageBuffer.length,
+                responseTime,
+                imageBuffer
+              };
+            }
+          }
+          
+        } catch (urlError) {
+          console.log(`❌ URL fallito: ${urlError.message.substring(0, 100)}`);
+          continue;
+        }
+      }
+      
+      throw new Error('Nessun URL RTSP funzionante');
+      
+    } catch (error) {
+      return {
+        success: false,
+        method: 'rtsp_ffmpeg',
+        protocol: 'RTSP',
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Test connessione HTTP veloce
+   */
+  async testHTTPConnection(ip, username, password) {
+    try {
+      console.log(`🌐 Test HTTP: ${ip}:80`);
+      
+      const httpEndpoints = [
+        '/tmpfs/snap.jpg',      // IMOU/Dahua
+        '/cgi-bin/snapshot.cgi', // Generico
+        '/snapshot.jpg',         // Semplice
+        '/image.jpg'            // Alternativo
+      ];
+      
+      const startTime = Date.now();
+      
+      for (const endpoint of httpEndpoints) {
+        try {
+          console.log(`🔗 Test endpoint: ${endpoint}`);
+          
+          const response = await axios({
+            method: 'GET',
+            url: `http://${ip}${endpoint}`,
+            auth: { username, password },
+            timeout: 3000,
+            responseType: 'arraybuffer',
+            headers: {
+              'User-Agent': 'AttendanceSystem/1.0 Fast-Test'
+            }
+          });
+          
+          if (response.status === 200 && response.data.length > 1000) {
+            const buffer = Buffer.from(response.data);
+            
+            if (this.isValidJPEG(buffer)) {
+              const responseTime = Date.now() - startTime;
+              console.log(`✅ HTTP SUCCESS: ${(buffer.length / 1024).toFixed(1)}KB in ${responseTime}ms`);
+              
+              return {
+                success: true,
+                method: 'http',
+                protocol: 'HTTP',
+                endpoint,
+                imageSize: buffer.length,
+                responseTime,
+                imageBuffer: buffer
+              };
+            }
+          }
+          
+        } catch (endpointError) {
+          console.log(`❌ Endpoint ${endpoint} fallito: ${endpointError.message}`);
+          continue;
+        }
+      }
+      
+      throw new Error('Nessun endpoint HTTP funzionante');
+      
+    } catch (error) {
+      return {
+        success: false,
+        method: 'http',
+        protocol: 'HTTP',
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Rileva automaticamente la rete locale
+   */
+  async detectLocalNetwork() {
+    try {
+      const os = require('os');
+      const interfaces = os.networkInterfaces();
+      
+      // Cerca interfacce di rete attive
+      for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+          // Cerca IPv4 non loopback
+          if (iface.family === 'IPv4' && !iface.internal) {
+            // Estrai i primi 3 ottetti dell'IP
+            const parts = iface.address.split('.');
+            const network = parts.slice(0, 3).join('.');
+            console.log(`🌐 Rete rilevata automaticamente: ${network}.x (da ${iface.address})`);
+            return network;
+          }
+        }
+      }
+      
+      // Fallback se non trova nulla
+      console.log('⚠️ Rete non rilevata, uso default 192.168.1');
+      return '192.168.1';
+      
+    } catch (error) {
+      console.error('❌ Errore rilevamento rete:', error);
+      return '192.168.1';
+    }
   }
 
   /**
