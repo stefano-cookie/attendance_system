@@ -171,7 +171,7 @@ const StudentsPanel: React.FC = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.users.withProfilePhoto')}</p>
                 <p className="text-3xl font-bold text-gray-800">
-                  {students.filter(s => s.photoPath).length}
+                  {students.filter(s => s.hasPhoto).length}
                 </p>
               </div>
               <div className="bg-purple-100 p-3 rounded-xl">
@@ -266,12 +266,22 @@ const StudentsPanel: React.FC = () => {
                                 className="h-16 w-16 rounded-full object-cover border-3 border-white shadow-lg"
                                 src={student.photoPath}
                                 alt={`${student.name} ${student.surname}`}
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  const nextElement = target.nextElementSibling as HTMLDivElement;
+                                  if (nextElement) {
+                                    nextElement.style.display = 'flex';
+                                  }
+                                }}
                               />
-                            ) : (
-                              <div className="h-16 w-16 rounded-full flex items-center justify-center text-white bg-gradient-to-r from-blue-600 to-indigo-600 text-xl font-bold shadow-lg">
-                                {student.name[0]}{student.surname[0]}
-                              </div>
-                            )}
+                            ) : null}
+                            <div 
+                              className="h-16 w-16 rounded-full flex items-center justify-center text-white bg-gradient-to-r from-blue-600 to-indigo-600 text-xl font-bold shadow-lg"
+                              style={{ display: student.photoPath ? 'none' : 'flex' }}
+                            >
+                              {student.name[0]}{student.surname[0]}
+                            </div>
                           </div>
                           <div className="flex-1">
                             <h3 className="text-lg font-bold text-gray-800">

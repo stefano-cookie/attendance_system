@@ -466,14 +466,14 @@ router.delete('/students/:id', authenticate, async (req, res) => {
 
 // ===== GESTIONE FOTO STUDENTI (BLOB) =====
 
-// GET /api/users/students/:id/photo (recupera foto studente)
-router.get('/students/:id/photo', authenticate, async (req, res) => {
+// GET /api/users/students/:id/photo (recupera foto studente) - PUBLIC ACCESS
+router.get('/students/:id/photo', async (req, res) => {
   try {
     const studentId = req.params.id;
     
     const student = await User.findOne({
       where: { id: studentId, role: 'student' },
-      attributes: ['id', 'photoPath', 'photoMimeType', 'photoSize', 'photoOriginalName']
+      attributes: ['id', 'photoPath']
     });
 
     if (!student) {
@@ -490,12 +490,13 @@ router.get('/students/:id/photo', authenticate, async (req, res) => {
       });
     }
 
-    const mimeType = student.photoMimeType || 'image/jpeg';
-    const filename = student.photoOriginalName || `student_${studentId}_photo.jpg`;
+    // Default values since these fields don't exist in the database
+    const mimeType = 'image/jpeg';
+    const filename = `student_${studentId}_photo.jpg`;
 
     res.set({
       'Content-Type': mimeType,
-      'Content-Length': student.photoSize,
+      'Content-Length': student.photoPath.length,
       'Content-Disposition': `inline; filename="${filename}"`,
       'Cache-Control': 'public, max-age=86400'
     });
@@ -543,10 +544,7 @@ router.post('/students/:id/photo', authenticate, upload.single('photo'), async (
     }
 
     await student.update({
-      photoPath: photoFile.buffer,
-      photoMimeType: photoFile.mimetype,
-      photoSize: photoFile.size,
-      photoOriginalName: photoFile.originalname
+      photoPath: photoFile.buffer
     });
 
     res.json({
@@ -606,9 +604,8 @@ router.get('/courses', authenticate, async (req, res) => {
   try {
     const courses = await Course.findAll({
       attributes: [
-        'id', 'name', 'description', 'code', 'color', 'icon', 
-        'academic_year', 'semester', 'credits', 'is_active', 
-        'max_students', 'createdAt', 'updatedAt'
+        'id', 'name', 'description', 'color', 'years', 
+        'is_active', 'createdAt', 'updatedAt'
       ],
       where: { is_active: true },
       order: [['name', 'ASC']]
@@ -638,8 +635,7 @@ router.post('/courses', authenticate, async (req, res) => {
     }
 
     const { 
-      name, description, code, color, icon, 
-      academic_year, semester, credits, max_students 
+      name, description, color, years, is_active 
     } = req.body;
 
     if (!name) {
@@ -652,14 +648,9 @@ router.post('/courses', authenticate, async (req, res) => {
     const newCourse = await Course.create({
       name: name.trim(),
       description: description ? description.trim() : null,
-      code: code ? code.trim() : null,
-      color: color || '#3B82F6',
-      icon: icon || null,
-      academic_year: academic_year || null,
-      semester: semester || null,
-      credits: credits ? parseInt(credits) : null,
-      max_students: max_students ? parseInt(max_students) : null,
-      is_active: true
+      color: color || '#3498db',
+      years: years || 3,
+      is_active: is_active !== undefined ? is_active : true
     });
 
     res.status(201).json({
@@ -689,8 +680,7 @@ router.put('/courses/:id', authenticate, async (req, res) => {
 
     const courseId = req.params.id;
     const { 
-      name, description, code, color, icon, 
-      academic_year, semester, credits, max_students, is_active 
+      name, description, color, years, is_active 
     } = req.body;
 
     const course = await Course.findByPk(courseId);
@@ -705,13 +695,8 @@ router.put('/courses/:id', authenticate, async (req, res) => {
     const updateData = {};
     if (name !== undefined) updateData.name = name.trim();
     if (description !== undefined) updateData.description = description ? description.trim() : null;
-    if (code !== undefined) updateData.code = code ? code.trim() : null;
     if (color !== undefined) updateData.color = color;
-    if (icon !== undefined) updateData.icon = icon;
-    if (academic_year !== undefined) updateData.academic_year = academic_year;
-    if (semester !== undefined) updateData.semester = semester;
-    if (credits !== undefined) updateData.credits = credits ? parseInt(credits) : null;
-    if (max_students !== undefined) updateData.max_students = max_students ? parseInt(max_students) : null;
+    if (years !== undefined) updateData.years = years;
     if (is_active !== undefined) updateData.is_active = is_active;
 
     await course.update(updateData);
@@ -752,11 +737,18 @@ router.delete('/courses/:id', authenticate, async (req, res) => {
       });
     }
 
-    await course.update({ is_active: false });
+    // Prima aggiorna gli utenti che hanno questo courseId
+    await User.update(
+      { courseId: null },
+      { where: { courseId: courseId } }
+    );
+
+    // Poi elimina il corso (subjects si aggiornano con SET NULL, lessons con CASCADE)
+    await course.destroy();
 
     res.json({
       success: true,
-      message: 'Corso disattivato con successo'
+      message: 'Corso eliminato con successo'
     });
 
   } catch (error) {

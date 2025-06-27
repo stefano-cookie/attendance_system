@@ -255,7 +255,12 @@
       "confirmDelete": "Confirm Deletion",
       "courseType": "the course",
       "deleteDescription": "All associated subjects will be disassociated.",
-      "deleteWarning": "This action may affect lessons and cannot be undone."
+      "deleteWarning": "This action may affect lessons and cannot be undone.",
+      "duration": "Duration",
+      "year": "year",
+      "years": "years",
+      "isActive": "Active",
+      "isActiveDescription": "Active courses can enroll students and create lessons"
     },
     "subjects": {
       "title": "Subject Management",

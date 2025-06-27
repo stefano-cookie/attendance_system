@@ -43,14 +43,16 @@ export interface Student extends User {
   course_id?: number;
   matricola?: string;
   photoPath?: string;
+  hasPhoto?: boolean;
 }
 
 export interface Course {
   id: number;
   name: string;
   description?: string | null;
-  year?: number | null;
+  years: number;
   color?: string;
+  is_active?: boolean;
   createdAt?: string;
   updatedAt?: string;   
 }
@@ -58,8 +60,9 @@ export interface Course {
 export interface CourseData {
   name: string;
   description?: string;
-  year?: number;
-  color?: string;  
+  years: number;
+  color?: string;
+  is_active?: boolean;
 }
 
 export interface Classroom {
@@ -116,7 +119,7 @@ export interface Attendance {
 export interface Subject {
   id: number;
   name: string;
-  course_id: number;
+  course_id: number | null;
   Course?: {
     id: number;
     name: string;
@@ -144,17 +147,14 @@ export const getStudents = async (params?: any): Promise<Student[]> => {
   // Adatta i dati per assicurarti che tutti i campi siano presenti
   const students = Array.isArray(response.data) ? response.data : (response.data?.students || []);
   
-  // Mappa i dati e converti i percorsi delle foto in URL
+  // Mappa i dati e genera URL per le foto dalla API
   return students.map((student: any) => {
-    // Estrai il percorso dell'immagine
-    let photoPath = student.photoPath || student.photo_path || '';
+    // Le foto sono servite tramite API endpoints come BLOB dal database (pubblico)
+    let photoPath = '';
     
-    // Converti il percorso in URL se necessario
-    if (photoPath && !photoPath.startsWith('http')) {
-      // Estrai solo il nome del file dalla path completa
-      const filename = photoPath.split('/').pop();
-      // Crea l'URL completo
-      photoPath = `http://localhost:4321/static/photos/${filename}`;
+    // Se lo studente ha una foto (stored as BLOB), usa l'endpoint API
+    if (student.photoPath || student.photo_path || student.hasPhoto) {
+      photoPath = `http://localhost:4321/api/users/students/${student.id}/photo`;
     }
     
     return {
@@ -165,14 +165,24 @@ export const getStudents = async (params?: any): Promise<Student[]> => {
       matricola: student.matricola || '',
       course_id: student.course_id || student.courseId || null,
       role: student.role || 'student',
-      photoPath: photoPath
+      photoPath: photoPath,
+      hasPhoto: !!(student.photoPath || student.photo_path || student.hasPhoto)
     };
   });
 };
 
 export const getStudent = async (id: number): Promise<Student> => {
   const response = await api.get(`/users/students/${id}`);
-  return response.data;
+  const student = response.data;
+  
+  // Aggiungi l'URL per la foto se lo studente ne ha una
+  if (student.photoPath || student.photo_path || student.hasPhoto) {
+    student.photoPath = `http://localhost:4321/api/users/students/${student.id}/photo`;
+  } else {
+    student.photoPath = '';
+  }
+  
+  return student;
 };
 
 export const createStudent = async (data: Partial<Student>): Promise<Student> => {
@@ -222,9 +232,9 @@ export const createCourse = async (data: Partial<Course>): Promise<Course> => {
 };
 
 export const updateCourse = async (id: number, data: Partial<Course>): Promise<Course> => {
-  // ✅ FIX: INCLUDE color nei dati inviati
-  const { name, description, color } = data;
-  const courseData = { name, description, color }; // ✅ Include color
+  // ✅ FIX: INCLUDE tutti i campi necessari
+  const { name, description, color, years, is_active } = data;
+  const courseData = { name, description, color, years, is_active };
   
   console.log('📤 api.ts - updateCourse invio:', courseData);
   

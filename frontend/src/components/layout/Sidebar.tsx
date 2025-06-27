@@ -62,7 +62,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         </svg>
       ),
       color: 'from-blue-500 to-cyan-500',
-      badge: '4'
     },
     {
       to: '/admin/courses',

@@ -255,7 +255,12 @@
       "confirmDelete": "Confirmă Ștergerea",
       "courseType": "cursul",
       "deleteDescription": "Toate materiile asociate vor fi disociate.",
-      "deleteWarning": "Această acțiune ar putea afecta lecțiile și nu poate fi anulată."
+      "deleteWarning": "Această acțiune ar putea afecta lecțiile și nu poate fi anulată.",
+      "duration": "Durată",
+      "year": "an",
+      "years": "ani",
+      "isActive": "Activ",
+      "isActiveDescription": "Cursurile active pot înscrie studenți și crea lecții"
     },
     "subjects": {
       "title": "Gestionare Materii",

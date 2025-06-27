@@ -79,13 +79,15 @@ const SubjectsPanel: React.FC = () => {
   });
   
   // Funzione per ottenere il nome del corso
-  const getCourseName = (courseId: number): string => {
+  const getCourseName = (courseId: number | null): string => {
+    if (!courseId) return t('admin.subjects.list.noCourse');
     const course = courses.find(c => c.id === courseId);
     return course ? course.name : t('admin.subjects.list.unknownCourse');
   };
   
   // ✅ Funzione aggiornata per ottenere il colore del corso dal DB
-  const getCourseColor = (courseId: number): string => {
+  const getCourseColor = (courseId: number | null): string => {
+    if (!courseId) return '#6B7280'; // Colore grigio per materie senza corso
     // Cerca il corso nella lista dei corsi
     const course = courses.find(c => c.id === courseId);
     

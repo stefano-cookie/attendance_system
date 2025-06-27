@@ -32,6 +32,8 @@ const CoursesPanel: React.FC = () => {
   const [formName, setFormName] = useState<string>('');
   const [formDescription, setFormDescription] = useState<string>('');
   const [formColor, setFormColor] = useState<string>('#3498db'); // ✅ Ripristinato
+  const [formYears, setFormYears] = useState<number>(3);
+  const [formIsActive, setFormIsActive] = useState<boolean>(true);
   const [selectedSubjects, setSelectedSubjects] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState<boolean>(false);
   
@@ -122,6 +124,8 @@ const CoursesPanel: React.FC = () => {
     setFormName('');
     setFormDescription('');
     setFormColor('#3498db'); // ✅ Reset colore default
+    setFormYears(3);
+    setFormIsActive(true);
     setSelectedSubjects([]);
     setError(null);
     setShowModal(true);
@@ -133,6 +137,8 @@ const CoursesPanel: React.FC = () => {
     setFormName(course.name);
     setFormDescription(course.description || '');
     setFormColor(course.color || '#3498db'); // ✅ Usa colore del corso o default
+    setFormYears(course.years || 3);
+    setFormIsActive(course.is_active !== false);
     setError(null);
     
     try {
@@ -180,7 +186,9 @@ const CoursesPanel: React.FC = () => {
       const courseData = {
         name: formName.trim(),
         description: formDescription.trim() || undefined,
-        color: formColor // ✅ Aggiunto colore
+        color: formColor, // ✅ Aggiunto colore
+        years: formYears,
+        is_active: formIsActive
       };
       
       // 🐛 DEBUG: Verifica dati inviati
@@ -210,7 +218,7 @@ const CoursesPanel: React.FC = () => {
         const currentCourseSubjects = allSubjects.filter(subject => subject.course_id === savedCourse.id);
         for (const subject of currentCourseSubjects) {
           if (!selectedSubjects.includes(subject.id)) {
-            await updateSubject(subject.id, { course_id: 0 });
+            await updateSubject(subject.id, { course_id: null });
           }
         }
         
@@ -250,7 +258,7 @@ const CoursesPanel: React.FC = () => {
       // Prima dissocia tutte le materie
       const courseSubjects = allSubjects.filter(subject => subject.course_id === deletingCourse.id);
       for (const subject of courseSubjects) {
-        await updateSubject(subject.id, { course_id: 0 });
+        await updateSubject(subject.id, { course_id: null });
       }
       
       // Poi elimina il corso
@@ -742,6 +750,44 @@ const CoursesPanel: React.FC = () => {
                         </span>
                       </div>
                     </div>
+                  </div>
+                  
+                  {/* Years field */}
+                  <div>
+                    <label htmlFor="years" className="block text-sm font-semibold text-gray-700 mb-2">
+                      {t('admin.courses.duration')} *
+                    </label>
+                    <select
+                      id="years"
+                      value={formYears}
+                      onChange={(e) => setFormYears(Number(e.target.value))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      required
+                    >
+                      <option value={1}>1 {t('admin.courses.year')}</option>
+                      <option value={2}>2 {t('admin.courses.years')}</option>
+                      <option value={3}>3 {t('admin.courses.years')}</option>
+                      <option value={4}>4 {t('admin.courses.years')}</option>
+                      <option value={5}>5 {t('admin.courses.years')}</option>
+                    </select>
+                  </div>
+                  
+                  {/* Is Active field */}
+                  <div>
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formIsActive}
+                        onChange={(e) => setFormIsActive(e.target.checked)}
+                        className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-3"
+                      />
+                      <span className="text-sm font-semibold text-gray-700">
+                        {t('admin.courses.isActive')}
+                      </span>
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1 ml-8">
+                      {t('admin.courses.isActiveDescription')}
+                    </p>
                   </div>
                   
                   <div>

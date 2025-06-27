@@ -255,7 +255,12 @@
       "confirmDelete": "Conferma Eliminazione",
       "courseType": "il corso",
       "deleteDescription": "Tutte le materie associate verranno dissociate.",
-      "deleteWarning": "Questa azione potrebbe influire sulle lezioni e non può essere annullata."
+      "deleteWarning": "Questa azione potrebbe influire sulle lezioni e non può essere annullata.",
+      "duration": "Durata",
+      "year": "anno",
+      "years": "anni",
+      "isActive": "Attivo",
+      "isActiveDescription": "I corsi attivi possono iscrivere studenti e creare lezioni"
     },
     "subjects": {
       "title": "Gestione Materie",

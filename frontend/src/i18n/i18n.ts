@@ -18,19 +18,23 @@ const resources = {
   }
 };
 
+// Ottieni la lingua salvata o usa quella predefinita
+const savedLanguage = localStorage.getItem('userLanguage') || 'ro';
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources,
-    lng: 'ro', // Default language
+    lng: savedLanguage, // Usa la lingua salvata
     fallbackLng: 'ro',
     interpolation: {
       escapeValue: false
     },
     detection: {
       order: ['localStorage', 'navigator', 'htmlTag'],
-      caches: ['localStorage']
+      caches: ['localStorage'],
+      lookupLocalStorage: 'userLanguage' // Specifica la chiave localStorage
     }
   });
 

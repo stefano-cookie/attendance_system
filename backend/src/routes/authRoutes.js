@@ -17,7 +17,7 @@ router.post('/login', async (req, res) => {
             include: [{
                 model: Course,
                 as: 'course',
-                attributes: ['id', 'name', 'code']
+                attributes: ['id', 'name']
             }]
         });
         
@@ -115,7 +115,7 @@ router.get('/me', authenticate, async (req, res) => {
             include: [{
                 model: Course,
                 as: 'course',
-                attributes: ['id', 'name', 'code']
+                attributes: ['id', 'name']
             }]
         });
         

@@ -15,48 +15,23 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       comment: 'Descrizione del corso'
     },
-    code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
-      unique: true,
-      comment: 'Codice corso univoco'
-    },
     color: {
       type: DataTypes.STRING,
       allowNull: true,
       defaultValue: '#3498db',
       comment: 'Colore identificativo del corso'
     },
-    icon: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      comment: 'Icona del corso'
-    },
-    academic_year: {
-      type: DataTypes.STRING(9),
-      allowNull: true,
-      comment: 'Anno accademico (es. 2024-2025)'
-    },
-    semester: {
-      type: DataTypes.ENUM('first', 'second', 'annual'),
-      allowNull: true,
-      comment: 'Semestre del corso'
-    },
-    credits: {
+    years: {
       type: DataTypes.INTEGER,
-      allowNull: true,
-      comment: 'Crediti formativi CFU'
+      allowNull: false,
+      defaultValue: 3,
+      comment: 'Durata del corso in anni'
     },
     is_active: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,
       comment: 'Corso attivo'
-    },
-    max_students: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      comment: 'Numero massimo di studenti'
     }
   }, {
     tableName: 'Courses',
@@ -64,28 +39,14 @@ module.exports = (sequelize, DataTypes) => {
     
     indexes: [
       {
-        name: 'course_code_idx',
-        fields: ['code']
-      },
-      {
         name: 'course_active_idx',
         fields: ['is_active']
-      },
-      {
-        name: 'course_academic_year_idx',
-        fields: ['academic_year']
       }
     ]
   });
 
   Course.prototype.getDisplayName = function() {
-    return this.code ? `${this.code} - ${this.name}` : this.name;
-  };
-
-  Course.prototype.isCurrentYear = function() {
-    if (!this.academic_year) return false;
-    const currentYear = new Date().getFullYear();
-    return this.academic_year.includes(currentYear.toString());
+    return this.name;
   };
 
   Course.prototype.getStudentCount = async function() {
