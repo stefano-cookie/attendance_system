@@ -1,4 +1,3 @@
-// frontend/src/components/admin/LessonsPanel.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
@@ -8,43 +7,55 @@ import {
   getClassrooms,
   createLesson, 
   updateLesson, 
-  deleteLesson 
+  deleteLesson,
+  getTeachers
 } from '../../services/api';
-import type { Lesson, Course, Subject, Classroom } from '../../services/api';
+import type { Lesson, Course, Subject, Classroom, User } from '../../services/api';
+
+interface ExtendedLesson extends Lesson {
+  teacher_id?: number;
+}
 
 const LessonsPanel: React.FC = () => {
   const { t } = useTranslation();
   
-  // Stati per i dati
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
+  const [teachers, setTeachers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   
-  // Stati per i form e modali
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
   const [lessonToDelete, setLessonToDelete] = useState<Lesson | null>(null);
   const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([]);
-  const [currentLesson, setCurrentLesson] = useState<Partial<Lesson>>({
+  const [currentLesson, setCurrentLesson] = useState<Partial<ExtendedLesson>>({
     id: undefined,
     name: '',
     lesson_date: new Date().toISOString().split('T')[0] + 'T09:00',
     classroom_id: 0,
     course_id: 0,
-    subject_id: undefined
+    subject_id: undefined,
+    teacher_id: undefined
   });
   
-  // Stato per l'analisi delle presenze
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [analysisResult, setAnalysisResult] = useState<any | null>(null);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState<boolean>(false);
   const [lessonToAnalyze, setLessonToAnalyze] = useState<Lesson | null>(null);
+  
+  const [isCaptureAnalyzing, setIsCaptureAnalyzing] = useState<boolean>(false);
+  const [captureAnalysisResult, setCaptureAnalysisResult] = useState<any | null>(null);
+  const [isCaptureAnalysisModalOpen, setIsCaptureAnalysisModalOpen] = useState<boolean>(false);
+  
+  const [isImagesModalOpen, setIsImagesModalOpen] = useState<boolean>(false);
+  const [lessonImages, setLessonImages] = useState<any[]>([]);
+  const [loadingImages, setLoadingImages] = useState<boolean>(false);
   const [isDirectoryModalOpen, setIsDirectoryModalOpen] = useState<boolean>(false);
   const [directoryInfo, setDirectoryInfo] = useState<any>({
     directories: {
@@ -53,28 +64,28 @@ const LessonsPanel: React.FC = () => {
     }
   });
   
-  // Stato per la ricerca e filtri
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   
-  // Carica i dati
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const [lessonsData, coursesData, subjectsData, classroomsData] = await Promise.all([
+      const [lessonsData, coursesData, subjectsData, classroomsData, teachersData] = await Promise.all([
         getLessons(),
         getCourses(),
         getSubjects(),
-        getClassrooms()
+        getClassrooms(),
+        getTeachers()
       ]);
       
       console.log(t('admin.lessons.dataLoaded'), {
         lessons: lessonsData,
         courses: coursesData,
         subjects: subjectsData,
-        classrooms: classroomsData
+        classrooms: classroomsData,
+        teachers: teachersData
       });
       
       if (!coursesData || coursesData.length === 0) {
@@ -93,6 +104,7 @@ const LessonsPanel: React.FC = () => {
       setCourses(coursesData);
       setSubjects(subjectsData || []);
       setClassrooms(classroomsData);
+      setTeachers(teachersData || []);
       
       setCurrentLesson(prev => ({
         ...prev,
@@ -101,7 +113,7 @@ const LessonsPanel: React.FC = () => {
       }));
   
       setFilteredSubjects(
-        subjectsData.filter(subject => subject.course_id === coursesData[0].id)
+        subjectsData.filter((subject: Subject) => subject.course_id === coursesData[0].id)
       );
     } catch (err) {
       console.error(t('admin.lessons.errors.dataLoadingError'), err);
@@ -130,7 +142,6 @@ const LessonsPanel: React.FC = () => {
     }
   }, [info]);
   
-  // Filtra le lezioni
   const filteredLessons = lessons.filter(lesson => {
     const matchesSearch = lesson.name 
       ? lesson.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -139,14 +150,12 @@ const LessonsPanel: React.FC = () => {
     return matchesSearch && matchesCourse;
   });
   
-  // Funzioni di supporto
   const getCourseName = (courseId: number): string => {
     const course = courses.find(c => c.id === courseId);
     return course ? course.name : t('admin.lessons.unknownCourse');
   };
   
   const getCourseColor = (courseId: number): string => {
-    // ✅ FIX: Uso colori fissi basati sull'ID
     const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
     return colors[courseId % colors.length];
   };
@@ -173,7 +182,6 @@ const LessonsPanel: React.FC = () => {
     });
   };
   
-  // Gestori per i form
   const handleAddLesson = () => {
     setCurrentLesson({
       id: undefined,
@@ -275,7 +283,6 @@ const LessonsPanel: React.FC = () => {
     }
   };
   
-  // Gestori per l'eliminazione
   const handleDeleteConfirmation = (lesson: Lesson) => {
     setLessonToDelete(lesson);
     setIsDeleteModalOpen(true);
@@ -296,7 +303,108 @@ const LessonsPanel: React.FC = () => {
     }
   };
   
-  // Gestori per analisi presenze
+  const handleViewImages = async (lesson: Lesson) => {
+    try {
+      setLoadingImages(true);
+      setLessonToAnalyze(lesson);
+      setIsImagesModalOpen(true);
+      
+      const backendUrl = 'http://localhost:4321';
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Token di autenticazione mancante');
+        setLoadingImages(false);
+        return;
+      }
+      
+      const response = await fetch(`${backendUrl}/api/images/lesson/${lesson.id}/list`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Errore caricamento immagini: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setLessonImages(data.images || []);
+      
+    } catch (err: unknown) {
+      console.error('❌ Errore caricamento immagini:', err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Errore sconosciuto durante caricamento immagini');
+      }
+    } finally {
+      setLoadingImages(false);
+    }
+  };
+
+  const handleCaptureAndAnalyze = async (lesson: Lesson) => {
+    try {
+      setIsCaptureAnalyzing(true);
+      setCaptureAnalysisResult(null);
+      setError(null);
+      setLessonToAnalyze(lesson);
+      setIsCaptureAnalysisModalOpen(true);
+      
+      console.log(`📸 Scatto e analisi per lezione ${lesson.id}`);
+      
+      const backendUrl = 'http://localhost:4321';
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError(t('admin.lessons.errors.authTokenMissing'));
+        setIsCaptureAnalyzing(false);
+        return;
+      }
+      
+      const response = await fetch(`${backendUrl}/api/admin/lessons/${lesson.id}/capture-and-analyze`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Errore response:', errorText);
+        throw new Error(`Errore durante scatto e analisi: ${response.status}`);
+      }
+      
+      try {
+        const data = await response.json();
+        setCaptureAnalysisResult(data);
+        
+        let message = `✅ Scatto completato: ${data.analysis.detected_faces} volti, ${data.analysis.recognized_students} riconosciuti`;
+        if (data.lesson_completed) {
+          message += '. Lezione marcata come completata.';
+        }
+        setInfo(message);
+        
+        if (data.lesson_completed) {
+          fetchData(); // Ricarica la lista delle lezioni
+        }
+      } catch (jsonError) {
+        console.error('❌ Errore parsing JSON:', jsonError);
+        throw new Error('Risposta non valida dal server');
+      }
+    } catch (err: unknown) {
+      console.error('❌ Errore scatto e analisi:', err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Errore sconosciuto durante scatto e analisi');
+      }
+    } finally {
+      setIsCaptureAnalyzing(false);
+    }
+  };
+
   const handleViewDirectories = async (lesson: Lesson) => {
     try {
       setLoading(true);
@@ -455,7 +563,6 @@ const LessonsPanel: React.FC = () => {
     }
   };
 
-  // Calcola statistiche
   const todayLessons = lessons.filter(lesson => {
     const today = new Date().toISOString().split('T')[0];
     const lessonDate = new Date(lesson.lesson_date).toISOString().split('T')[0];
@@ -722,10 +829,18 @@ const LessonsPanel: React.FC = () => {
                   >
                     {/* Header della card */}
                     <div className="p-6 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
-                      <div className="flex items-center space-x-3 mb-3">
+                      <div className="flex items-center justify-between mb-3">
                         <h3 className="text-lg font-bold text-gray-800 leading-tight">
                           {lesson.name || t('admin.lessons.list.lessonOfDate', { date: formatDate(lesson.lesson_date) })}
                         </h3>
+                        {lesson.is_completed && (
+                          <div className="flex items-center space-x-1 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>Completata</span>
+                          </div>
+                        )}
                       </div>
                       
                       {/* Corso prominente */}
@@ -781,33 +896,41 @@ const LessonsPanel: React.FC = () => {
 
                       {/* Azioni */}
                       <div className="space-y-3">
-                        {/* Azioni principali */}
-                        <div className="grid grid-cols-2 gap-3">
+                        {/* Azione principale */}
+                        {lesson.is_completed ? (
+                          <div className="w-full flex items-center justify-center px-4 py-3 bg-gray-400 text-white rounded-lg text-sm font-semibold opacity-75">
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            ✅ Lezione Completata
+                          </div>
+                        ) : (
                           <button
-                            onClick={() => handleAnalyzeAttendance(lesson)}
-                            className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-200 text-sm font-semibold"
-                            title={t('admin.lessons.actions.analyzeAttendance')}
+                            onClick={() => handleCaptureAndAnalyze(lesson)}
+                            className="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-200 text-sm font-semibold"
+                            title="Scatta e Analizza in tempo reale"
                           >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
-                            {t('admin.lessons.actions.analyze')}
+                            Scatta e Analizza
                           </button>
-                          
-                          <button
-                            onClick={() => handleViewDirectories(lesson)}
-                            className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-200 text-sm font-semibold"
-                            title={t('admin.lessons.actions.viewDirectories')}
-                          >
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z" />
-                            </svg>
-                            {t('admin.lessons.actions.directory')}
-                          </button>
-                        </div>
+                        )}
                         
                         {/* Azioni secondarie */}
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-3 gap-3">
+                          <button
+                            onClick={() => handleViewImages(lesson)}
+                            className="flex items-center justify-center px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
+                            title="Visualizza immagini con riquadri"
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Immagini
+                          </button>
+                          
                           <button
                             onClick={() => handleEditLesson(lesson)}
                             className="flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
@@ -994,6 +1117,26 @@ const LessonsPanel: React.FC = () => {
                       {classrooms.map(classroom => (
                         <option key={classroom.id} value={classroom.id}>
                           {classroom.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="teacher_id" className="block text-sm font-semibold text-gray-700 mb-2">
+                      Docente
+                    </label>
+                    <select
+                      id="teacher_id"
+                      name="teacher_id"
+                      value={currentLesson.teacher_id || ''}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    >
+                      <option value="">Seleziona un docente</option>
+                      {teachers.map(teacher => (
+                        <option key={teacher.id} value={teacher.id}>
+                          {teacher.name} {teacher.surname}
                         </option>
                       ))}
                     </select>
@@ -1447,6 +1590,351 @@ const LessonsPanel: React.FC = () => {
                       {t('admin.lessons.analysis.viewAttendance')}
                     </button>
                   )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Visualizzazione Immagini */}
+      {isImagesModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity backdrop-blur-sm"></div>
+            
+            <div className="relative bg-white rounded-2xl shadow-2xl transform transition-all sm:max-w-6xl sm:w-full max-h-screen overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="bg-green-100 p-3 rounded-xl">
+                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      Immagini della Lezione
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setIsImagesModalOpen(false)}
+                    className="p-2 bg-gray-100 text-gray-500 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <div className="space-y-6">
+                  {loadingImages ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-500 border-t-transparent mx-auto mb-4"></div>
+                      <h3 className="text-lg font-semibold text-gray-700 mb-2">Caricamento immagini...</h3>
+                    </div>
+                  ) : lessonImages.length > 0 ? (
+                    <div>
+                      <div className="mb-4 flex items-center justify-between">
+                        <p className="text-gray-600">{lessonImages.length} immagini trovate</p>
+                        <div className="flex items-center space-x-4 text-sm">
+                          <div className="flex items-center">
+                            <div className="w-3 h-3 bg-blue-500 rounded mr-2"></div>
+                            <span>Originali</span>
+                          </div>
+                          <div className="flex items-center">
+                            <div className="w-3 h-3 bg-green-500 rounded mr-2"></div>
+                            <span>Con riquadri</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {lessonImages
+                          .sort((a, b) => {
+                            if (a.source === 'face_detection_report' && b.source !== 'face_detection_report') return -1;
+                            if (b.source === 'face_detection_report' && a.source !== 'face_detection_report') return 1;
+                            return new Date(b.captured_at).getTime() - new Date(a.captured_at).getTime();
+                          })
+                          .map((image, index) => (
+                          <div key={image.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                            <div className="aspect-video bg-gray-100 relative">
+                              <img 
+                                src={image.url} 
+                                alt={`Immagine ${index + 1}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgMTZsNC41ODYtNC41ODZhMiAyIDAgMDEyLjgyOCAwTDE2IDE2bS0yLTJsMS41ODYtMS41ODZhMiAyIDAgMDEyLjgyOCAwTDIwIDE0bS02LTZoLjAxTTYgMjBoMTJhMiAyIDAgMDAyLTJWNmEyIDIgMCAwMC0yLTJINmEyIDIgMCAwMC0yIDJ2MTJhMiAyIDAgMDAyIDJ6IiBzdHJva2U9IiM5Q0E3QjIiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo=';
+                                }}
+                              />
+                            </div>
+                            
+                            <div className="p-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-gray-900">
+                                  {new Date(image.captured_at).toLocaleString('it-IT')}
+                                </span>
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                  image.is_analyzed 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-yellow-100 text-yellow-800'
+                                }`}>
+                                  {image.is_analyzed ? 'Analizzata' : 'In attesa'}
+                                </span>
+                              </div>
+                              
+                              <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+                                <span className="flex items-center">
+                                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                  </svg>
+                                  {image.detected_faces || 0} volti
+                                </span>
+                                <span className="flex items-center">
+                                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  {image.recognized_faces || 0} riconosciuti
+                                </span>
+                              </div>
+                              
+                              <div className="text-xs text-gray-500">
+                                Fonte: {image.source === 'camera' ? 'Camera originale' : 
+                                        image.source === 'face_detection_report' ? 'Analisi con contorni' : 'Upload'}
+                                {image.camera_ip && ` • ${image.camera_ip}`}
+                              </div>
+                              
+                              {image.source === 'face_detection_report' && (
+                                <div className="mt-2 inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  Con riquadri verdi
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <div className="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+                        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Nessuna immagine disponibile</h3>
+                      <p className="text-gray-600 mb-6">Non sono ancora state scattate immagini per questa lezione</p>
+                      <button 
+                        onClick={() => {
+                          setIsImagesModalOpen(false);
+                          if (lessonToAnalyze) {
+                            handleCaptureAndAnalyze(lessonToAnalyze);
+                          }
+                        }}
+                        className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700"
+                      >
+                        Scatta Prima Immagine
+                      </button>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex justify-end mt-6 pt-4 border-t border-gray-200">
+                  <button
+                    onClick={() => setIsImagesModalOpen(false)}
+                    className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Chiudi
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Scatta e Analizza */}
+      {isCaptureAnalysisModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity backdrop-blur-sm"></div>
+            
+            <div className="relative bg-white rounded-2xl shadow-2xl transform transition-all sm:max-w-2xl sm:w-full">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-3 rounded-xl ${
+                      isCaptureAnalyzing ? 'bg-emerald-100' : error ? 'bg-red-100' : 'bg-green-100'
+                    }`}>
+                      {isCaptureAnalyzing ? (
+                        <svg className="w-6 h-6 text-emerald-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        </svg>
+                      ) : error ? (
+                        <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      {isCaptureAnalyzing ? 'Scatto in corso...' : error ? 'Errore' : 'Scatto completato'}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setIsCaptureAnalysisModalOpen(false)}
+                    disabled={isCaptureAnalyzing}
+                    className="p-2 bg-gray-100 text-gray-500 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <div className="space-y-6">
+                  {isCaptureAnalyzing ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent mx-auto mb-4"></div>
+                      <h3 className="text-lg font-semibold text-gray-700 mb-2">Scatto e analisi in corso</h3>
+                      <p className="text-gray-600">
+                        Attendere mentre la camera scatta la foto e il sistema analizza i volti...
+                      </p>
+                    </div>
+                  ) : error ? (
+                    <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+                      <h3 className="text-lg font-medium text-red-800 mb-2">Errore durante lo scatto</h3>
+                      <p className="text-red-700">{error}</p>
+                    </div>
+                  ) : captureAnalysisResult ? (
+                    <div className="space-y-4">
+                      <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
+                        <h3 className="text-lg font-medium text-green-800 mb-2">✅ Scatto completato con successo</h3>
+                        <p className="text-green-700">Immagine acquisita e analisi face detection completata</p>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
+                          <div className="text-2xl font-bold text-blue-600">
+                            {captureAnalysisResult.analysis.detected_faces}
+                          </div>
+                          <div className="text-sm text-gray-600">Volti rilevati</div>
+                        </div>
+                        
+                        <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
+                          <div className="text-2xl font-bold text-green-600">
+                            {captureAnalysisResult.analysis.recognized_students}
+                          </div>
+                          <div className="text-sm text-gray-600">Studenti riconosciuti</div>
+                        </div>
+                      </div>
+                      
+                      {captureAnalysisResult.analysis.students && captureAnalysisResult.analysis.students.length > 0 && (
+                        <div className="bg-white border border-gray-200 rounded-lg p-4">
+                          <h4 className="font-semibold mb-3">Studenti riconosciuti:</h4>
+                          <div className="space-y-2">
+                            {captureAnalysisResult.analysis.students.map((student: any, index: number) => (
+                              <div key={index} className="flex items-center justify-between p-2 bg-green-50 rounded">
+                                <span className="font-medium">{student.name} {student.surname}</span>
+                                <span className="text-sm text-green-600">
+                                  {Math.round(student.confidence * 100)}% sicurezza
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Mostra l'immagine del report se disponibile */}
+                      {captureAnalysisResult.image_id && (
+                        <div className="bg-white border border-gray-200 rounded-lg p-4">
+                          <h4 className="font-semibold mb-3 text-gray-900">📸 Report Immagine con Rilevamenti</h4>
+                          <div className="relative bg-gray-50 rounded-lg overflow-hidden">
+                            <img 
+                              src={`http://localhost:4321/api/images/lesson/${captureAnalysisResult.image_id}`}
+                              alt="Report con volti rilevati"
+                              className="w-full h-auto max-h-96 object-contain"
+                              onError={(e) => {
+                                console.warn('Errore caricamento immagine report');
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                            <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+                              Volti rilevati: {captureAnalysisResult.analysis.detected_faces}
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-600 mt-2">
+                            I riquadri verdi indicano i volti riconosciuti, quelli rossi i volti non identificati.
+                          </p>
+                        </div>
+                      )}
+                      
+                      {captureAnalysisResult.lesson_completed && (
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-lg">
+                          <h4 className="font-semibold text-amber-800 mb-2">🎓 Lezione Completata</h4>
+                          <p className="text-amber-700">
+                            Questa lezione è stata marcata come completata. Non sarà più possibile effettuare nuovi scatti.
+                          </p>
+                        </div>
+                      )}
+                      
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 className="font-semibold mb-2 text-blue-900">📸 Dettagli tecnici</h4>
+                        <div className="text-sm text-blue-800 space-y-1">
+                          <p>• Metodo camera: {captureAnalysisResult.camera.method}</p>
+                          <p>• Dimensione file: {Math.round(captureAnalysisResult.camera.file_size / 1024)} KB</p>
+                          <p>• ID immagine: {captureAnalysisResult.image_id}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-gray-600">Nessun dato disponibile</p>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex justify-between mt-6 pt-4 border-t border-gray-200">
+                  <div className="flex space-x-3">
+                    {captureAnalysisResult && !isCaptureAnalyzing && captureAnalysisResult.lesson_completed && (
+                      <button
+                        onClick={() => {
+                          setIsCaptureAnalysisModalOpen(false);
+                          setCaptureAnalysisResult(null);
+                          setLessonToAnalyze(null);
+                        }}
+                        className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
+                      >
+                        🏠 Torna alla Dashboard
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => setIsCaptureAnalysisModalOpen(false)}
+                      disabled={isCaptureAnalyzing}
+                      className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    >
+                      {isCaptureAnalyzing ? 'Attendere...' : 'Chiudi'}
+                    </button>
+                    
+                    {captureAnalysisResult && !isCaptureAnalyzing && (
+                      <button
+                        onClick={() => {
+                          setIsCaptureAnalysisModalOpen(false);
+                          window.location.href = `/admin/attendance?lessonId=${lessonToAnalyze?.id}`;
+                        }}
+                        className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
+                      >
+                        Visualizza Report Dettagliato
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

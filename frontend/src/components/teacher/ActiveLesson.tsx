@@ -2,15 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import teacherService, { AttendanceReport } from '../../services/teacherService';
+import { sendAttendanceEmails } from '../../services/api';
 
 const ActiveLesson: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [lesson, setLesson] = useState<any>(null);
+  const [reportImageId, setReportImageId] = useState<number | null>(null);
   const [attendanceReport, setAttendanceReport] = useState<AttendanceReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [capturing, setCapturing] = useState(false);
+  const [sendingEmails, setSendingEmails] = useState(false);
+  const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,17 +49,73 @@ const ActiveLesson: React.FC = () => {
     try {
       setCapturing(true);
       setError(null);
+      setEmailSuccess(null);
       
       const result = await teacherService.captureAndAnalyze(parseInt(id));
       
       if (result.success) {
-        // Ricarica i dati dopo l'analisi
-        await loadLessonData();
+        if (result.lesson_completed) {
+          const mockReport: AttendanceReport = {
+            lesson: {
+              id: parseInt(id),
+              name: lesson?.name || 'Lezione',
+              date: lesson?.lesson_date || new Date().toISOString(),
+              course: lesson?.course?.name || '',
+              classroom: lesson?.classroom?.name || ''
+            },
+            attendance: {
+              students: (result.analysis?.students || []).map((student: any, index: number) => ({
+                student_id: student.id || index + 1,
+                student_name: student.name || `Studente ${index + 1}`,
+                student_surname: student.surname || '',
+                matricola: student.matricola || `MAT${index + 1}`,
+                is_present: true,
+                confidence: student.confidence || 0.8,
+                detection_method: 'face_detection'
+              })),
+              summary: {
+                total: result.analysis?.students?.length || 0,
+                present: result.analysis?.students?.length || 0,
+                absent: 0,
+                percentage: 100
+              },
+              last_updated: new Date().toISOString()
+            }
+          };
+          
+          setAttendanceReport(mockReport);
+          setEmailSuccess('Analisi completata con successo! La lezione è stata marcata come completata.');
+          
+          setLesson((prev: any) => prev ? {...prev, is_completed: true} : null);
+          setReportImageId(result.image_id);
+        } else {
+          await loadLessonData();
+        }
       }
     } catch (err: any) {
       setError(err.response?.data?.error || t('teacher.lessons.errorCapturing'));
     } finally {
       setCapturing(false);
+    }
+  };
+
+  const handleSendEmails = async () => {
+    if (!id) return;
+    
+    try {
+      setSendingEmails(true);
+      setError(null);
+      setEmailSuccess(null);
+      
+      const result = await sendAttendanceEmails(parseInt(id));
+      
+      if (result.success) {
+        setEmailSuccess(result.message);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Errore durante invio email');
+    } finally {
+      setSendingEmails(false);
     }
   };
 
@@ -106,7 +166,6 @@ const ActiveLesson: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between">
           <div>
@@ -143,7 +202,6 @@ const ActiveLesson: React.FC = () => {
         </div>
       </div>
 
-      {/* Error Display */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-center">
@@ -155,13 +213,23 @@ const ActiveLesson: React.FC = () => {
         </div>
       )}
 
-      {/* Actions */}
+      {emailSuccess && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-green-700">{emailSuccess}</span>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('teacher.lessons.attendanceControl')}</h2>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 flex-wrap gap-4">
           <button 
             onClick={handleCaptureAndAnalyze}
-            disabled={capturing}
+            disabled={capturing || lesson?.is_completed}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
           >
             {capturing ? (
@@ -179,27 +247,87 @@ const ActiveLesson: React.FC = () => {
               </>
             )}
           </button>
+
+          {lesson?.is_completed && (
+            <div className="w-full space-y-3">
+              <div className="flex items-center justify-center px-4 py-3 bg-green-100 text-green-800 rounded-lg text-sm font-semibold border border-green-200">
+                ✅ {t('teacher.lessons.lessonCompleted') || 'Lezione Completata'}
+              </div>
+              <button 
+                onClick={() => navigate('/teacher')}
+                className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Torna alla Dashboard
+              </button>
+            </div>
+          )}
+
+          {attendanceReport && attendanceReport.attendance.students.length > 0 && !lesson?.is_completed && (
+            <button 
+              onClick={handleSendEmails}
+              disabled={sendingEmails}
+              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            >
+              {sendingEmails ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Invio email...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.05a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span>Invia Email Presenze</span>
+                </>
+              )}
+            </button>
+          )}
           
-          <button 
-            onClick={() => navigate(`/teacher/lessons/${id}/images`)}
-            className="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 flex items-center space-x-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span>{t('teacher.lessons.viewImages')}</span>
-          </button>
+          {!lesson?.is_completed && (
+            <button 
+              onClick={() => navigate(`/teacher/lessons/${id}/images`)}
+              className="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 flex items-center space-x-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span>{t('teacher.lessons.viewImages')}</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Attendance Report */}
       {attendanceReport && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">{t('teacher.attendance.reportTitle')}</h2>
           </div>
           
-          {/* Summary Stats */}
+          {lesson?.is_completed && reportImageId && (
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-md font-semibold text-gray-900 mb-4">Immagine con Riconoscimenti</h3>
+              <div className="flex justify-center">
+                <img 
+                  src={`http://localhost:4321/api/images/lesson/${reportImageId}`}
+                  alt="Report con riconoscimenti facciali"
+                  className="max-w-full h-auto rounded-lg border border-gray-300 shadow-sm"
+                  style={{ maxHeight: '400px' }}
+                  onError={(e) => {
+                    console.error('Errore caricamento immagine report:', e);
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              </div>
+              <p className="text-sm text-gray-600 text-center mt-2">
+                I riquadri verdi indicano i volti riconosciuti degli studenti
+              </p>
+            </div>
+          )}
+          
           <div className="p-6 border-b border-gray-200">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="text-center">
@@ -221,7 +349,6 @@ const ActiveLesson: React.FC = () => {
             </div>
           </div>
 
-          {/* Students List */}
           <div className="p-6">
             {attendanceReport.attendance.students.length === 0 ? (
               <div className="text-center py-8">

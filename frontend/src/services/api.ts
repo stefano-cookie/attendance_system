@@ -1,7 +1,5 @@
-// frontend/src/services/api.ts - FIX SENZA COLOR
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
-// Creazione di un'istanza di axios
 const api: AxiosInstance = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:4321/api',
   headers: {
@@ -21,16 +19,13 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token scaduto o non valido - pulisci localStorage
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      // Non fare redirect automatico, lascia che sia AppContext a gestirlo
     }
     return Promise.reject(error);
   }
 );
 
-// Tipi per gli oggetti di risposta - ORIGINALI
 export interface User {
   id: number;
   name: string;
@@ -103,6 +98,9 @@ export interface Lesson {
   classroom_id: number;
   course_id: number;
   subject_id?: number;
+  status?: string;
+  is_completed?: boolean;
+  completed_at?: string;
   Course?: Course;
   Classroom?: Classroom;
   Subject?: Subject;
@@ -123,7 +121,6 @@ export interface Subject {
   Course?: {
     id: number;
     name: string;
-    // color?: string; // ✅ Commentato temporaneamente
   };
 }
 
@@ -134,25 +131,19 @@ export interface Screenshot {
   lessonId?: number;
 }
 
-// Autenticazione
 export const login = async (credentials: { email: string; password: string }): Promise<any> => {
   const response: AxiosResponse = await api.post('/auth/login', credentials);
   return response.data;
 };
 
-// Studenti
 export const getStudents = async (params?: any): Promise<Student[]> => {
   const response: AxiosResponse = await api.get('/users/students', { params });
   
-  // Adatta i dati per assicurarti che tutti i campi siano presenti
   const students = Array.isArray(response.data) ? response.data : (response.data?.students || []);
   
-  // Mappa i dati e genera URL per le foto dalla API
   return students.map((student: any) => {
-    // Le foto sono servite tramite API endpoints come BLOB dal database (pubblico)
     let photoPath = '';
     
-    // Se lo studente ha una foto (stored as BLOB), usa l'endpoint API
     if (student.photoPath || student.photo_path || student.hasPhoto) {
       photoPath = `http://localhost:4321/api/users/students/${student.id}/photo`;
     }
@@ -175,7 +166,6 @@ export const getStudent = async (id: number): Promise<Student> => {
   const response = await api.get(`/users/students/${id}`);
   const student = response.data;
   
-  // Aggiungi l'URL per la foto se lo studente ne ha una
   if (student.photoPath || student.photo_path || student.hasPhoto) {
     student.photoPath = `http://localhost:4321/api/users/students/${student.id}/photo`;
   } else {
@@ -190,21 +180,21 @@ export const createStudent = async (data: Partial<Student>): Promise<Student> =>
   return response.data;
 };
 
-// Aggiorna uno studente
 export const updateStudent = async (id: number, data: Partial<Student>): Promise<Student> => {
   const response = await api.put(`/users/students/${id}`, data);
   return response.data.student || response.data;
 };
 
-// Elimina uno studente
 export const deleteStudent = async (id: number): Promise<any> => {
   const response = await api.delete(`/users/students/${id}`);
   return response.data;
 };
 
-// ===================================
-// CORSI - ✅ SENZA COLOR (FIX)
-// ===================================
+export const getTeachers = async (): Promise<User[]> => {
+  const response: AxiosResponse = await api.get('/users/teachers');
+  return response.data.teachers || [];
+};
+
 
 export const getCourses = async (params?: any): Promise<Course[]> => {
   try {
@@ -218,9 +208,8 @@ export const getCourses = async (params?: any): Promise<Course[]> => {
 };
 
 export const createCourse = async (data: Partial<Course>): Promise<Course> => {
-  // ✅ FIX: INCLUDE color nei dati inviati
   const { name, description, color } = data;
-  const courseData = { name, description, color }; // ✅ Include color
+  const courseData = { name, description, color };
   
   console.log('📤 api.ts - createCourse invio:', courseData);
   
@@ -232,7 +221,6 @@ export const createCourse = async (data: Partial<Course>): Promise<Course> => {
 };
 
 export const updateCourse = async (id: number, data: Partial<Course>): Promise<Course> => {
-  // ✅ FIX: INCLUDE tutti i campi necessari
   const { name, description, color, years, is_active } = data;
   const courseData = { name, description, color, years, is_active };
   
@@ -250,7 +238,6 @@ export const deleteCourse = async (id: number): Promise<any> => {
   return response.data;
 };
 
-// Aule
 export const getClassrooms = async (params?: any): Promise<Classroom[]> => {
   try {
     const response = await api.get('/classrooms', { params });
@@ -282,7 +269,6 @@ export const deleteClassroom = async (id: number): Promise<any> => {
   return response.data;
 };
 
-// Lezioni
 export const getLessons = async (params?: any): Promise<Lesson[]> => {
   try {
     const response = await api.get('/lessons', { params });
@@ -312,7 +298,6 @@ export const createLesson = async (data: Partial<Lesson>): Promise<Lesson> => {
   } catch (error: any) {
     console.error('Errore nella creazione della lezione:', error);
     
-    // Log dettagliato dell'errore
     if (error.response) {
       console.error('Status:', error.response.status);
       console.error('Data:', error.response.data);
@@ -342,7 +327,6 @@ export const deleteLesson = async (id: number): Promise<any> => {
   }
 };
 
-// Presenze
 export const getAttendance = async (params?: any): Promise<Attendance[]> => {
   const response: AxiosResponse = await api.get('/attendance', { params });
   return response.data.attendances || [];
@@ -358,7 +342,6 @@ export const updateAttendance = async (id: number, data: Partial<Attendance>): P
   return response.data;
 };
 
-// Materie
 export const getSubjects = async (params?: any): Promise<Subject[]> => {
   try {
     console.log('Chiamata getSubjects con params:', params);
@@ -390,7 +373,6 @@ export const deleteSubject = async (id: number): Promise<any> => {
   return response.data;
 };
 
-// Materie superate
 export interface StudentSubject {
   id: number;
   student_id: number;
@@ -421,16 +403,13 @@ export const deleteStudentSubject = async (id: number): Promise<any> => {
   return response.data;
 };
 
-// Screenshots
 export const getScreenshots = async (params?: any): Promise<Screenshot[]> => {
   const response: AxiosResponse = await api.get('/admin/screenshots', { params });
   
-  // Converti i percorsi delle immagini in URL utilizzabili
   const screenshots = response.data.screenshots || response.data || [];
   return screenshots.map((screenshot: any) => {
     let path = screenshot.path || '';
     
-    // Converti il percorso in URL se necessario
     if (path && !path.startsWith('http')) {
       const filename = path.split('/').pop();
       path = `http://localhost:4321/static/screenshots/${filename}`;
@@ -441,6 +420,52 @@ export const getScreenshots = async (params?: any): Promise<Screenshot[]> => {
       path
     };
   });
+};
+
+export const testCameraConnection = async (classroomId: number): Promise<any> => {
+  const response: AxiosResponse = await api.post(`/cameras/${classroomId}/test`);
+  return response.data;
+};
+
+export const discoverCameras = async (): Promise<any> => {
+  const response: AxiosResponse = await api.post('/cameras/discover');
+  return response.data;
+};
+
+export const assignCameraToClassroom = async (classroomId: number, cameraData: any): Promise<any> => {
+  const response: AxiosResponse = await api.put(`/classrooms/${classroomId}`, {
+    camera_ip: cameraData.ip,
+    camera_username: cameraData.workingCredentials?.username || 'admin',
+    camera_password: cameraData.workingCredentials?.password || 'Mannoli2025',
+    camera_model: cameraData.model,
+    camera_manufacturer: cameraData.model.includes('IMOU') ? 'IMOU' : 'Generic'
+  });
+  return response.data;
+};
+
+export const getCameraHealth = async (): Promise<any> => {
+  const response: AxiosResponse = await api.get('/cameras/health');
+  return response.data;
+};
+
+export const testAllCameras = async (): Promise<any> => {
+  const response: AxiosResponse = await api.post('/cameras/test-all');
+  return response.data;
+};
+
+export const sendAttendanceEmails = async (lessonId: number): Promise<any> => {
+  const response: AxiosResponse = await api.post(`/teacher/lessons/${lessonId}/send-attendance-emails`);
+  return response.data;
+};
+
+export const sendStudentEmail = async (lessonId: number, studentId: number): Promise<any> => {
+  const response: AxiosResponse = await api.post(`/teacher/lessons/${lessonId}/send-student-email/${studentId}`);
+  return response.data;
+};
+
+export const getTeacherSystemStatus = async (): Promise<any> => {
+  const response: AxiosResponse = await api.get('/teacher/system-status');
+  return response.data;
 };
 
 export default api;
