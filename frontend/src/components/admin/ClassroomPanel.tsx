@@ -1,7 +1,16 @@
 // frontend/src/components/admin/ClassroomsPanel.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getClassrooms, createClassroom, updateClassroom, deleteClassroom } from '../../services/api';
+import { 
+  getClassrooms, 
+  createClassroom, 
+  updateClassroom, 
+  deleteClassroom,
+  testCameraConnection,
+  discoverCameras,
+  assignCameraToClassroom,
+  getCameraHealth 
+} from '../../services/api';
 import type { Classroom } from '../../services/api';
 import CameraDiscovery from './CameraDiscovery';
 
@@ -45,6 +54,11 @@ const ClassroomsPanel: React.FC = () => {
   // Stato per la ricerca
   const [searchTerm, setSearchTerm] = useState<string>('');
   
+  // Stati per gestione camere avanzata
+  const [targetClassroomForCamera, setTargetClassroomForCamera] = useState<Classroom | null>(null);
+  const [testingCameraId, setTestingCameraId] = useState<number | null>(null);
+  const [cameraStatuses, setCameraStatuses] = useState<Record<number, string>>({});
+  
   // Carica i dati
   const fetchData = useCallback(async () => {
     try {
@@ -54,6 +68,15 @@ const ClassroomsPanel: React.FC = () => {
       const classroomsData = await getClassrooms();
       console.log('Classrooms loaded:', classroomsData);
       setClassrooms(classroomsData);
+      
+      // Inizializza stati camera dai dati del database
+      const initialStatuses: Record<number, string> = {};
+      classroomsData.forEach(classroom => {
+        if (classroom.camera_ip && classroom.camera_status) {
+          initialStatuses[classroom.id] = classroom.camera_status;
+        }
+      });
+      setCameraStatuses(initialStatuses);
     } catch (err) {
       console.error('Error loading classrooms:', err);
       setError(t('admin.classrooms.errorLoading'));
@@ -198,15 +221,80 @@ const ClassroomsPanel: React.FC = () => {
   };
 
   const handleCameraSelect = (camera: any) => {
-    setCurrentClassroom({
-      ...currentClassroom,
-      camera_ip: camera.ip,
-      camera_model: camera.model,
-      camera_manufacturer: camera.model.includes('IMOU') ? 'IMOU' : 'Generic',
-      camera_username: 'admin',
-      camera_password: ''
-    });
+    if (targetClassroomForCamera) {
+      // Modalità assegnazione diretta - assegna camera alla classroom specifica
+      handleDirectCameraAssignment(targetClassroomForCamera, camera);
+    } else {
+      // Modalità normale - popola il form
+      setCurrentClassroom({
+        ...currentClassroom,
+        camera_ip: camera.ip,
+        camera_model: camera.model,
+        camera_manufacturer: camera.model.includes('IMOU') ? 'IMOU' : 'Generic',
+        camera_username: camera.workingCredentials?.username || 'admin',
+        camera_password: camera.workingCredentials?.password || 'Mannoli2025'
+      });
+    }
     setIsCameraDiscoveryOpen(false);
+    setTargetClassroomForCamera(null);
+  };
+
+  // Assegnazione diretta camera a classroom specifica
+  const handleDirectCameraAssignment = async (classroom: Classroom, camera: any) => {
+    try {
+      setError(null);
+      console.log(`🎯 Assegnazione diretta camera ${camera.ip} a aula ${classroom.name}`);
+      
+      await assignCameraToClassroom(classroom.id, camera);
+      
+      // Aggiorna la lista delle aule
+      await fetchData();
+      
+      console.log(`✅ Camera ${camera.ip} assegnata con successo a ${classroom.name}`);
+      
+    } catch (err: any) {
+      console.error('Errore assegnazione camera:', err);
+      setError(`Errore nell'assegnazione della camera: ${err.response?.data?.error || err.message}`);
+    }
+  };
+
+  // Test connessione camera
+  const handleTestCamera = async (classroom: Classroom) => {
+    try {
+      setTestingCameraId(classroom.id);
+      setError(null);
+      
+      console.log(`🧪 Test camera per aula: ${classroom.name} (${classroom.camera_ip})`);
+      
+      const result = await testCameraConnection(classroom.id);
+      
+      // Aggiorna lo stato della camera
+      setCameraStatuses(prev => ({
+        ...prev,
+        [classroom.id]: result.success ? 'online' : 'error'
+      }));
+      
+      // Aggiorna la lista per riflettere i nuovi stati
+      await fetchData();
+      
+      console.log(`📊 Test camera risultato: ${result.success ? 'Successo' : 'Fallito'}`);
+      
+    } catch (err: any) {
+      console.error('Errore test camera:', err);
+      setCameraStatuses(prev => ({
+        ...prev,
+        [classroom.id]: 'error'
+      }));
+      setError(`Errore test camera: ${err.response?.data?.error || err.message}`);
+    } finally {
+      setTestingCameraId(null);
+    }
+  };
+
+  // Apri discovery per assegnazione diretta
+  const handleAssignCameraToClassroom = (classroom: Classroom) => {
+    setTargetClassroomForCamera(classroom);
+    setIsCameraDiscoveryOpen(true);
   };
 
   // Calcola statistiche
@@ -438,6 +526,37 @@ const ClassroomsPanel: React.FC = () => {
                                 <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                               </svg>
                             </button>
+                            {/* Camera Test Button */}
+                            {classroom.camera_ip && (
+                              <button
+                                onClick={() => handleTestCamera(classroom)}
+                                disabled={testingCameraId === classroom.id}
+                                className="p-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 transition-colors disabled:opacity-50"
+                                title="Test Camera Connection"
+                              >
+                                {testingCameraId === classroom.id ? (
+                                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent"></div>
+                                ) : (
+                                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  </svg>
+                                )}
+                              </button>
+                            )}
+                            
+                            {/* Assign Camera Button */}
+                            {!classroom.camera_ip && (
+                              <button
+                                onClick={() => handleAssignCameraToClassroom(classroom)}
+                                className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
+                                title="Assign Camera to Classroom"
+                              >
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                              </button>
+                            )}
+                            
                             <button
                               onClick={() => handleDeleteConfirmation(classroom)}
                               className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
@@ -462,13 +581,19 @@ const ClassroomsPanel: React.FC = () => {
                               <div>
                                 <p className="text-sm font-medium text-gray-700">{t('admin.classrooms.cameraIP')}</p>
                                 <p className="text-sm text-green-700 font-semibold">{classroom.camera_ip}</p>
-                                {classroom.camera_status && (
+                                {(cameraStatuses[classroom.id] || classroom.camera_status) && (
                                   <span className={`inline-block mt-1 px-2 py-1 text-xs rounded-full ${
-                                    classroom.camera_status === 'online' ? 'bg-green-100 text-green-800' :
-                                    classroom.camera_status === 'offline' ? 'bg-red-100 text-red-800' :
+                                    (cameraStatuses[classroom.id] || classroom.camera_status) === 'online' ? 'bg-green-100 text-green-800' :
+                                    (cameraStatuses[classroom.id] || classroom.camera_status) === 'offline' ? 'bg-red-100 text-red-800' :
+                                    (cameraStatuses[classroom.id] || classroom.camera_status) === 'error' ? 'bg-red-100 text-red-800' :
                                     'bg-yellow-100 text-yellow-800'
                                   }`}>
-                                    {classroom.camera_status}
+                                    {cameraStatuses[classroom.id] || classroom.camera_status}
+                                    {testingCameraId === classroom.id && (
+                                      <span className="ml-1">
+                                        <div className="inline-block animate-spin rounded-full h-3 w-3 border border-current border-t-transparent"></div>
+                                      </span>
+                                    )}
                                   </span>
                                 )}
                               </div>
@@ -719,7 +844,11 @@ const ClassroomsPanel: React.FC = () => {
       {isCameraDiscoveryOpen && (
         <CameraDiscovery
           onCameraSelect={handleCameraSelect}
-          onClose={() => setIsCameraDiscoveryOpen(false)}
+          onClose={() => {
+            setIsCameraDiscoveryOpen(false);
+            setTargetClassroomForCamera(null);
+          }}
+          targetClassroom={targetClassroomForCamera}
         />
       )}
     </div>

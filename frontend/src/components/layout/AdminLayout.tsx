@@ -23,10 +23,11 @@ const AdminLayout: React.FC = () => {
         onToggleCollapse={setSidebarCollapsed} 
       />
       
-      {/* Main content area con margin dinamico */}
+      {/* Main content area - Dynamic margin */}
       <main className={`
-        min-h-screen overflow-auto relative z-10 transition-all duration-300 ease-in-out
-        ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'}
+        min-h-screen overflow-auto relative z-10 transition-all duration-300 ease-out
+        ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64 xl:ml-72'}
+        pt-16 lg:pt-0
       `}>
         <Outlet />
       </main>

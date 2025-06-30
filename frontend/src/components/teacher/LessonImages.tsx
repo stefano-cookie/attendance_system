@@ -152,9 +152,19 @@ const LessonImages: React.FC = () => {
                   </div>
                   
                   <div className="mt-2 text-xs text-gray-500">
-                    Fonte: {image.source === 'camera' ? 'Camera' : 'Upload'}
+                    Fonte: {image.source === 'camera' ? 'Camera originale' : 
+                            image.source === 'face_detection_report' ? 'Analisi con contorni' : 'Upload'}
                     {image.camera_ip && ` • ${image.camera_ip}`}
                   </div>
+                  
+                  {image.source === 'face_detection_report' && (
+                    <div className="mt-2 inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Con contorni rilevamento
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
