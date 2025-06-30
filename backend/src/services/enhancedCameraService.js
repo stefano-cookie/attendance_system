@@ -194,7 +194,7 @@ class EnhancedCameraService {
   }
 
   /**
-   * Test connessione base camera - VERSIONE CORRETTA
+   * Test connessione base camera - VERSIONE CON RTSP FALLBACK
    */
   async testCameraConnection(ip) {
     // ESCLUDI il MacBook dell'utente e altri IP noti
@@ -205,6 +205,7 @@ class EnhancedCameraService {
     
     console.log(`🔍 Test connessione camera: ${ip}`);
     
+    // FASE 1: Test HTTP
     const testPaths = [
       '/',
       '/tmpfs/snap.jpg',
@@ -215,7 +216,7 @@ class EnhancedCameraService {
     
     for (const testPath of testPaths) {
       try {
-        console.log(`📡 Test ${ip}${testPath}...`);
+        console.log(`📡 Test HTTP ${ip}${testPath}...`);
         
         const response = await axios({
           method: 'GET',
@@ -231,17 +232,41 @@ class EnhancedCameraService {
         
         // Camera raggiungibile se risponde con status < 500
         if (response.status < 500) {
-          console.log(`✅ Camera ${ip} raggiungibile (via ${testPath})`);
+          console.log(`✅ Camera ${ip} raggiungibile via HTTP (${testPath})`);
           return true;
         }
         
       } catch (error) {
-        console.log(`❌ ${testPath}: ${error.message}`);
+        console.log(`❌ HTTP ${testPath}: ${error.message}`);
         continue;
       }
     }
     
-    console.log(`❌ Camera ${ip} NON raggiungibile`);
+    // FASE 2: Se HTTP fallisce, prova RTSP
+    console.log(`⚠️ HTTP fallito per ${ip}, test RTSP fallback...`);
+    
+    try {
+      const rtspResult = await this.testRTSPConnection(ip, 'admin', 'Mannoli2025');
+      if (rtspResult.success) {
+        console.log(`✅ Camera ${ip} raggiungibile via RTSP`);
+        return true;
+      }
+    } catch (rtspError) {
+      console.log(`❌ RTSP fallito: ${rtspError.message}`);
+    }
+    
+    // FASE 3: Test con credenziali alternative
+    try {
+      const rtspResult2 = await this.testRTSPConnection(ip, 'admin', 'admin123');
+      if (rtspResult2.success) {
+        console.log(`✅ Camera ${ip} raggiungibile via RTSP (credenziali alternative)`);
+        return true;
+      }
+    } catch (rtspError) {
+      console.log(`❌ RTSP con credenziali alternative fallito`);
+    }
+    
+    console.log(`❌ Camera ${ip} NON raggiungibile (HTTP e RTSP falliti)`);
     return false;
   }
 

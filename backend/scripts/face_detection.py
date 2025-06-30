@@ -42,12 +42,14 @@ class FaceDetectionSystem:
         
         # Usa solo VGG-Face per velocità e stabilità
         self.model_name = "VGG-Face"
-        self.similarity_threshold = 0.60  # Soglia più permissiva per camera IP
+        self.similarity_threshold = 0.40  # Soglia più permissiva per camera IP
         
         # Directory per output
         self.project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.output_dir = os.path.join(self.project_root, "temp", "face_output")
+        self.debug_dir = os.path.join(self.project_root, "temp", "debug_detection")
         os.makedirs(self.output_dir, exist_ok=True)
+        os.makedirs(self.debug_dir, exist_ok=True)
         
         logger.info(f"📊 Config: Modello={self.model_name}, Soglia={self.similarity_threshold}")
         
@@ -132,13 +134,28 @@ class FaceDetectionSystem:
             )
             
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            # Prova parametri più bilanciati per rilevare volti reali
             faces = face_cascade.detectMultiScale(
                 gray, 
-                scaleFactor=1.2, 
-                minNeighbors=6,  # Più restrittivo per evitare false detection
-                minSize=(80, 80),  # Dimensione minima maggiore
-                maxSize=(400, 400)  # Evita detection troppo grandi
+                scaleFactor=1.1,  # Più sensibile per catturare più volti
+                minNeighbors=4,   # Bilanciato tra precisione e sensibilità
+                minSize=(40, 40), # Volti più piccoli accettati
+                maxSize=(500, 500)  # Volti più grandi accettati
             )
+            
+            logger.info(f"🔍 OpenCV ha rilevato {len(faces)} possibili volti")
+            
+            # Se non trova volti con parametri standard, prova parametri più aggressivi
+            if len(faces) == 0:
+                logger.info("🔄 Tentativo con parametri più aggressivi...")
+                faces = face_cascade.detectMultiScale(
+                    gray, 
+                    scaleFactor=1.05,  # Molto sensibile
+                    minNeighbors=3,    # Meno restrittivo
+                    minSize=(30, 30),  # Volti molto piccoli
+                    maxSize=(600, 600) # Volti molto grandi
+                )
+                logger.info(f"🔍 Tentativo aggressivo: {len(faces)} volti rilevati")
             
             face_data = []
             for i, (x, y, w, h) in enumerate(faces):
@@ -272,6 +289,12 @@ class FaceDetectionSystem:
             
             logger.info(f"✅ Immagine caricata: {image.shape}")
             
+            # Salva immagine originale per debug
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            debug_original = os.path.join(self.debug_dir, f"original_{timestamp}.jpg")
+            cv2.imwrite(debug_original, image)
+            logger.info(f"🔍 Immagine debug salvata: {debug_original}")
+            
             # 2. Carica studenti
             students = self.load_students()
             
@@ -286,7 +309,12 @@ class FaceDetectionSystem:
             # 5. Genera report
             report_path = ""
             if len(faces) > 0:
+                logger.info(f"🖼️ Generazione report per {len(faces)} volti...")
                 report_path = self.generate_report_image(image, faces, recognized)
+                logger.info(f"✅ Report generato: {report_path}")
+                logger.info(f"📁 File esiste: {os.path.exists(report_path) if report_path else 'NO PATH'}")
+            else:
+                logger.warning("⚠️ Nessun volto rilevato, nessun report generato")
             
             # 6. Risultato finale
             processing_time = time.time() - start_time
