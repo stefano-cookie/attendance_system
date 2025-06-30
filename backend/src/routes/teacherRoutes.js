@@ -6,6 +6,7 @@ const { Op } = require('sequelize');
 
 const enhancedCameraService = require('../services/enhancedCameraService');
 const faceDetectionService = require('../services/faceDetectionService');
+const emailService = require('../services/emailService');
 
 router.use(authenticate);
 
@@ -21,14 +22,7 @@ const isTeacher = (req, res, next) => {
 
 router.use(isTeacher);
 
-// ====================================
-// ENDPOINT BASE
-// ====================================
 
-/**
- * GET /api/teacher/test
- * Test endpoint
- */
 router.get('/test', (req, res) => {
     res.json({
         success: true,
@@ -42,10 +36,6 @@ router.get('/test', (req, res) => {
     });
 });
 
-/**
- * GET /api/teacher/dashboard
- * Dashboard principale teacher
- */
 router.get('/dashboard', async (req, res) => {
     try {
         const teacherId = req.user.id;
@@ -114,14 +104,7 @@ router.get('/dashboard', async (req, res) => {
     }
 });
 
-// ====================================
-// GESTIONE LEZIONI
-// ====================================
 
-/**
- * POST /api/teacher/lessons
- * Crea nuova lezione
- */
 router.post('/lessons', async (req, res) => {
     try {
         const teacherId = req.user.id;
@@ -165,6 +148,52 @@ router.post('/lessons', async (req, res) => {
         }
 
         console.log('📋 Dati lezione da creare:', lessonData);
+
+        const lessonDateTime = new Date(lesson_date);
+        const startTime = new Date(lessonDateTime);
+        const endTime = new Date(lessonDateTime);
+        endTime.setMinutes(endTime.getMinutes() + (lessonData.duration_minutes || 90));
+
+        console.log(`🔍 Checking classroom ${classroom_id} availability for ${startTime.toISOString()} - ${endTime.toISOString()}`);
+
+        const conflictingLessons = await Lesson.findAll({
+            where: {
+                classroom_id: parseInt(classroom_id),
+                lesson_date: {
+                    [Op.gte]: startTime,
+                    [Op.lt]: endTime
+                }
+            },
+            attributes: ['id', 'name', 'lesson_date', 'teacher_id'],
+            include: [
+                { model: Course, as: 'course', attributes: ['name'] }
+            ]
+        });
+
+        if (conflictingLessons.length > 0) {
+            const conflict = conflictingLessons[0];
+            
+            return res.status(409).json({
+                success: false,
+                error: 'Aula non disponibile nell\'orario selezionato',
+                details: {
+                    message: `L'aula è già occupata da una lezione del corso "${conflict.course?.name || 'Corso sconosciuto'}" alle ${conflict.lesson_date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`,
+                    conflicting_lesson: {
+                        id: conflict.id,
+                        name: conflict.name,
+                        date: conflict.lesson_date,
+                        course: conflict.course?.name,
+                        teacher_id: conflict.teacher_id
+                    },
+                    suggested_times: [
+                        new Date(endTime.getTime() + 15 * 60 * 1000).toISOString(),
+                        new Date(startTime.getTime() - 120 * 60 * 1000).toISOString()
+                    ]
+                }
+            });
+        }
+
+        console.log('✅ Classroom available, creating lesson');
 
         const lesson = await Lesson.create(lessonData);
 
@@ -216,10 +245,6 @@ router.post('/lessons', async (req, res) => {
     }
 });
 
-/**
- * GET /api/teacher/lessons/:id
- * Dettaglio lezione
- */
 router.get('/lessons/:id', async (req, res) => {
     try {
         const lessonId = req.params.id;
@@ -240,6 +265,14 @@ router.get('/lessons/:id', async (req, res) => {
             });
         }
 
+        if (!lesson.canAccess('teacher')) {
+            return res.status(403).json({
+                success: false,
+                error: 'Lezione completata - accesso non consentito',
+                message: 'Questa lezione è stata completata e non è più modificabile.'
+            });
+        }
+
         res.json({
             success: true,
             lesson
@@ -253,10 +286,6 @@ router.get('/lessons/:id', async (req, res) => {
     }
 });
 
-/**
- * GET /api/teacher/lessons/:id/attendance-report
- * Report presenze
- */
 router.get('/lessons/:id/attendance-report', async (req, res) => {
     try {
         const lessonId = req.params.id;
@@ -384,10 +413,6 @@ router.get('/lessons/:id/attendance-report', async (req, res) => {
     }
 });
 
-/**
- * POST /api/teacher/lessons/:id/capture-and-analyze
- * Scatta foto e analizza presenze
- */
 router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
     try {
         const lessonId = req.params.id;
@@ -409,6 +434,14 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
             return res.status(404).json({
                 success: false,
                 error: 'Lezione non trovata'
+            });
+        }
+
+        if (!lesson.canAccess('teacher')) {
+            return res.status(403).json({
+                success: false,
+                error: 'Lezione completata - operazione non consentita',
+                message: 'Questa lezione è stata completata e non è possibile scattare nuove foto.'
             });
         }
 
@@ -465,7 +498,16 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
                 analyzed_at: new Date()
             });
 
-            // Salva l'immagine report con i riquadri se disponibile
+            console.log(`\n💾 === SALVATAGGIO IMMAGINE REPORT ===`);
+            console.log(`📊 Has reportImageBlob: ${!!analysisResult.reportImageBlob}`);
+            if (analysisResult.reportImageBlob) {
+                console.log(`📊 ReportImageBlob size: ${analysisResult.reportImageBlob.length} bytes`);
+            }
+            console.log(`📊 Has reportImagePath: ${!!analysisResult.reportImagePath}`);
+            if (analysisResult.reportImagePath) {
+                console.log(`📂 ReportImagePath: ${analysisResult.reportImagePath}`);
+            }
+            
             if (analysisResult.reportImageBlob) {
                 try {
                     const reportImage = await LessonImage.create({
@@ -485,8 +527,11 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
                     
                     console.log(`✅ Immagine report salvata: ID ${reportImage.id}`);
                 } catch (reportError) {
-                    console.warn('⚠️ Errore salvataggio immagine report:', reportError.message);
+                    console.error('❌ Errore salvataggio immagine report:', reportError.message);
+                    console.error('❌ Stack:', reportError.stack);
                 }
+            } else {
+                console.warn('⚠️ Nessuna immagine report da salvare');
             }
 
         } catch (analysisError) {
@@ -511,9 +556,21 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
             console.warn('⚠️ Errore salvataggio screenshot:', e.message);
         }
 
+        let lessonCompleted = false;
+        if (!lesson.is_completed && analysisResult.success) {
+            try {
+                await lesson.markAsCompleted();
+                lessonCompleted = true;
+                console.log(`✅ Lezione ${lessonId} marcata come completata`);
+            } catch (completionError) {
+                console.warn('⚠️ Errore marcatura completamento:', completionError.message);
+            }
+        }
+
         res.json({
             success: true,
             message: 'Scatto e analisi completati',
+            lesson_completed: lessonCompleted,
             image_id: savedImage.id,
             analysis: {
                 detected_faces: analysisResult.detected_faces || 0,
@@ -539,10 +596,6 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
     }
 });
 
-/**
- * GET /api/teacher/lessons/:id/images
- * Lista immagini lezione
- */
 router.get('/lessons/:id/images', async (req, res) => {
     try {
         const lessonId = req.params.id;
@@ -577,15 +630,8 @@ router.get('/lessons/:id/images', async (req, res) => {
     }
 });
 
-// ====================================
-// DATI DI SUPPORTO
-// ====================================
 
-/**
- * GET /api/teacher/courses
- * Lista corsi
- */
-router.get('/courses', async (req, res) => {
+router.get('/courses', async (_req, res) => {
     try {
         const courses = await Course.findAll({
             attributes: ['id', 'name'],
@@ -605,11 +651,7 @@ router.get('/courses', async (req, res) => {
     }
 });
 
-/**
- * GET /api/teacher/classrooms
- * Lista aule
- */
-router.get('/classrooms', async (req, res) => {
+router.get('/classrooms', async (_req, res) => {
     try {
         const classrooms = await Classroom.findAll({
             attributes: ['id', 'name', 'camera_ip'],
@@ -633,10 +675,6 @@ router.get('/classrooms', async (req, res) => {
     }
 });
 
-/**
- * GET /api/teacher/subjects
- * Lista materie per corso
- */
 router.get('/subjects', async (req, res) => {
     try {
         const { course_id } = req.query;
@@ -665,13 +703,10 @@ router.get('/subjects', async (req, res) => {
     }
 });
 
-/**
- * GET /api/teacher/system-status
- * Verifica stato sistema
- */
-router.get('/system-status', async (req, res) => {
+router.get('/system-status', async (_req, res) => {
     try {
         const faceDetectionStatus = await faceDetectionService.checkStatus();
+        const emailStatus = await emailService.checkConfiguration();
         
         res.json({
             success: true,
@@ -680,7 +715,8 @@ router.get('/system-status', async (req, res) => {
                 camera: {
                     service: 'ready',
                     configured: true
-                }
+                },
+                email: emailStatus
             }
         });
     } catch (error) {
@@ -688,6 +724,130 @@ router.get('/system-status', async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Errore verifica sistema'
+        });
+    }
+});
+
+
+router.post('/lessons/:id/send-attendance-emails', async (req, res) => {
+    try {
+        const lessonId = req.params.id;
+        const teacherId = req.user.id;
+        
+        console.log(`📧 Invio email presenze per lezione ${lessonId} da teacher ${teacherId}`);
+        
+        const lesson = await Lesson.findOne({
+            where: { 
+                id: lessonId,
+                teacher_id: teacherId 
+            },
+            include: [
+                { model: Course, as: 'course', attributes: ['name'] },
+                { model: Classroom, as: 'classroom', attributes: ['name'] }
+            ]
+        });
+
+        if (!lesson) {
+            return res.status(404).json({
+                success: false,
+                error: 'Lezione non trovata o non autorizzata'
+            });
+        }
+
+        const analyzedImages = await LessonImage.count({
+            where: { 
+                lesson_id: lessonId,
+                is_analyzed: true
+            }
+        });
+
+        if (analyzedImages === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Nessuna analisi disponibile. Esegui prima "Scatta e Analizza"'
+            });
+        }
+
+        const result = await emailService.sendAttendanceReportToAllStudents(lessonId);
+        
+        if (result.success) {
+            console.log(`✅ Email inviate per lezione ${lessonId}: ${result.results.sent} successi, ${result.results.failed} fallimenti`);
+            
+            res.json({
+                success: true,
+                message: `Email inviate con successo a ${result.results.sent} studenti`,
+                details: {
+                    lesson: {
+                        name: lesson.name || `Lezione ${new Date(lesson.lesson_date).toLocaleDateString('it-IT')}`,
+                        course: lesson.course?.name,
+                        classroom: lesson.classroom?.name,
+                        date: lesson.lesson_date
+                    },
+                    email_results: result.results
+                }
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                error: 'Errore durante invio email',
+                details: result.error
+            });
+        }
+
+    } catch (error) {
+        console.error('❌ Errore invio email presenze:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Errore interno del server',
+            details: error.message
+        });
+    }
+});
+
+router.post('/lessons/:id/send-student-email/:studentId', async (req, res) => {
+    try {
+        const lessonId = req.params.id;
+        const studentId = req.params.studentId;
+        const teacherId = req.user.id;
+        
+        console.log(`📧 Invio email presenza studente ${studentId} per lezione ${lessonId}`);
+        
+        const lesson = await Lesson.findOne({
+            where: { 
+                id: lessonId,
+                teacher_id: teacherId 
+            }
+        });
+
+        if (!lesson) {
+            return res.status(404).json({
+                success: false,
+                error: 'Lezione non trovata o non autorizzata'
+            });
+        }
+
+        const result = await emailService.sendAttendanceReportToStudent(studentId, lessonId);
+        
+        if (result.success) {
+            res.json({
+                success: true,
+                message: `Email inviata con successo a ${result.studentEmail}`,
+                messageId: result.messageId
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                error: 'Errore durante invio email',
+                details: result.error
+            });
+        }
+
+    } catch (error) {
+        console.error('❌ Errore invio email studente:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Errore interno del server',
+            details: error.message
         });
     }
 });

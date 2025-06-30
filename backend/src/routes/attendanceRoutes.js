@@ -22,22 +22,18 @@ router.get('/', authenticate, async (req, res) => {
                 a.confidence,
                 a."imageFile",
                 a."screenshotId",
-                -- Dati studente
                 u.id as student_id,
                 u.name as student_name,
                 u.surname as student_surname,
                 u.email as student_email,
                 u.matricola as student_matricola,
                 u."courseId" as student_courseId,
-                -- Dati lezione
                 l.id as lesson_id,
                 l.name as lesson_name,
                 l.lesson_date as lesson_date,
                 l.course_id as lesson_courseId,
-                -- Dati corso
                 c.id as course_id,
                 c.name as course_name,
-                -- Dati materia
                 s.id as subject_id,
                 s.name as subject_name
             FROM "Attendances" a
@@ -46,6 +42,7 @@ router.get('/', authenticate, async (req, res) => {
             LEFT JOIN "Courses" c ON l.course_id = c.id
             LEFT JOIN "Subjects" s ON l.subject_id = s.id
             WHERE 1=1
+            AND u.role = 'student'
         `;
         
         const replacements = {};

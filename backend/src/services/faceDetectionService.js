@@ -1,4 +1,3 @@
-// backend/src/services/faceDetectionService.js
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -11,26 +10,21 @@ class FaceDetectionService {
         console.log('\n=== FACE DETECTION SERVICE v2.0 ===');
         console.log('===================================\n');
         
-        // Percorsi base
         this.backendDir = process.cwd();
         
-        // Directory temporanea
         this.tempDir = path.join(this.backendDir, 'temp', 'face_processing');
         this.tempImagesDir = path.join(this.tempDir, 'images');
         this.tempStudentsDir = path.join(this.tempDir, 'students');
         this.tempOutputDir = path.join(this.tempDir, 'output');
         
-        // Crea directory necessarie
         [this.tempDir, this.tempImagesDir, this.tempStudentsDir, this.tempOutputDir].forEach(dir => {
             if (!fs.existsSync(dir)) {
                 fs.mkdirSync(dir, { recursive: true });
             }
         });
         
-        // Script Python
         this.pythonScriptPath = path.join(this.backendDir, 'scripts', 'face_detection.py');
         
-        // Python executable
         this.pythonExecutable = this._findPythonExecutable();
         
         console.log(`📁 Backend dir: ${this.backendDir}`);
@@ -71,35 +65,30 @@ class FaceDetectionService {
         let tempStudentsJsonPath = null;
         let tempOutputPath = null;
         let tempStudentsDir = null;
+        let analysisResult = null;
         
         try {
-            // 1. Validazione BLOB
             if (!imageBlob || imageBlob.length === 0) {
                 throw new Error('BLOB immagine vuoto');
             }
             
-            // 2. Salva BLOB come file temporaneo
             tempImagePath = await this._saveBlobAsFile(imageBlob, sessionId);
             console.log(`✅ Immagine salvata: ${tempImagePath}`);
             
-            // 3. Ottieni info lezione
             const lessonInfo = await this._getLessonInfo(lessonId);
             if (!lessonInfo) {
                 throw new Error(`Lezione ${lessonId} non trovata`);
             }
             console.log(`📚 Corso: ${lessonInfo.course_name} (ID: ${lessonInfo.course_id})`);
             
-            // 4. Genera file studenti
             const studentsData = await this._generateStudentsData(lessonInfo.course_id, sessionId);
             tempStudentsJsonPath = studentsData.jsonPath;
             tempStudentsDir = studentsData.photosDir;
             console.log(`✅ Studenti generati: ${studentsData.count}`);
             
-            // 5. Prepara output path
             tempOutputPath = path.join(this.tempOutputDir, `result_${sessionId}.json`);
             
-            // 6. Esegui analisi Python
-            const analysisResult = await this._executePythonAnalysis({
+            analysisResult = await this._executePythonAnalysis({
                 imagePath: tempImagePath,
                 studentsPath: tempStudentsJsonPath,
                 outputPath: tempOutputPath,
@@ -108,19 +97,30 @@ class FaceDetectionService {
             
             console.log(`✅ Analisi completata: ${analysisResult.detected_faces} volti, ${analysisResult.recognized_students?.length || 0} riconosciuti`);
             
-            // 7. Salva risultati nel database
             if (analysisResult.recognized_students && analysisResult.recognized_students.length > 0) {
-                await this._saveAttendanceRecords(lessonId, analysisResult.recognized_students);
+                const uniqueStudents = this._removeDuplicateStudents(analysisResult.recognized_students);
+                console.log(`🔄 Eliminati duplicati: ${analysisResult.recognized_students.length} → ${uniqueStudents.length} studenti unici`);
+                await this._saveAttendanceRecords(lessonId, uniqueStudents);
+                analysisResult.recognized_students = uniqueStudents;
             }
             
-            // 8. Converti l'immagine report in BLOB se esiste
             let reportImageBlob = null;
+            console.log(`\n🖼️ === CONVERSIONE IMMAGINE REPORT ===`);
+            console.log(`📂 Report image path: ${analysisResult.report_image}`);
+            console.log(`📁 Path exists: ${analysisResult.report_image ? fs.existsSync(analysisResult.report_image) : 'false'}`);
+            
             if (analysisResult.report_image && fs.existsSync(analysisResult.report_image)) {
                 try {
                     reportImageBlob = fs.readFileSync(analysisResult.report_image);
                     console.log(`✅ Report immagine convertita: ${reportImageBlob.length} bytes`);
+                    console.log(`📊 File stats:`, fs.statSync(analysisResult.report_image));
                 } catch (error) {
                     console.warn(`⚠️ Errore lettura report immagine: ${error.message}`);
+                }
+            } else {
+                console.warn(`⚠️ Report immagine non trovata o path non valido`);
+                if (analysisResult.report_image) {
+                    console.warn(`   Path: ${analysisResult.report_image}`);
                 }
             }
             
@@ -128,7 +128,7 @@ class FaceDetectionService {
                 success: true,
                 sessionId,
                 reportImagePath: analysisResult.report_image,
-                reportImageBlob: reportImageBlob, // BLOB dell'immagine con riquadri
+                reportImageBlob: reportImageBlob,
                 ...analysisResult
             };
             
@@ -144,13 +144,17 @@ class FaceDetectionService {
             };
             
         } finally {
-            // Cleanup (esclude reportImagePath se esiste)
             const filesToCleanup = [
                 tempImagePath,
                 tempStudentsJsonPath,
                 tempOutputPath,
                 tempStudentsDir
             ];
+            
+            console.log(`🧹 File da pulire: ${filesToCleanup.filter(f => f).length}`);
+            if (analysisResult && analysisResult.report_image) {
+                console.log(`🖼️ Report image NON cancellata: ${analysisResult.report_image}`);
+            }
             
             this._cleanupTempFiles(filesToCleanup, sessionId);
         }
@@ -181,7 +185,7 @@ class FaceDetectionService {
     async _getLessonInfo(lessonId) {
         try {
             const [lesson] = await sequelize.query(`
-                SELECT l.id, l.course_id, c.name as course_name, c.code as course_code
+                SELECT l.id, l.course_id, c.name as course_name
                 FROM "Lessons" l
                 LEFT JOIN "Courses" c ON l.course_id = c.id
                 WHERE l.id = :lessonId
@@ -199,7 +203,6 @@ class FaceDetectionService {
 
     async _generateStudentsData(courseId, sessionId) {
         try {
-            // Query studenti del corso
             const students = await sequelize.query(`
                 SELECT id, name, surname, matricola, "photoPath", email
                 FROM "Users" 
@@ -217,12 +220,10 @@ class FaceDetectionService {
             const photosDir = path.join(this.tempStudentsDir, `session_${sessionId}`);
             fs.mkdirSync(photosDir, { recursive: true });
             
-            // Processa ogni studente
             const validStudents = [];
             
             for (const student of students) {
                 try {
-                    // Converti BLOB in file
                     let photoBuffer;
                     
                     if (Buffer.isBuffer(student.photoPath)) {
@@ -234,11 +235,9 @@ class FaceDetectionService {
                         continue;
                     }
                     
-                    // Salva foto temporanea
                     const photoPath = path.join(photosDir, `student_${student.id}.jpg`);
                     fs.writeFileSync(photoPath, photoBuffer);
                     
-                    // Aggiungi a studenti validi
                     validStudents.push({
                         id: student.id,
                         name: student.name,
@@ -253,8 +252,7 @@ class FaceDetectionService {
                 }
             }
             
-            // Salva JSON studenti
-            const jsonPath = path.join(this.tempStudentsDir, `students_${sessionId}.json`);
+                const jsonPath = path.join(this.tempStudentsDir, `students_${sessionId}.json`);
             fs.writeFileSync(jsonPath, JSON.stringify(validStudents, null, 2));
             
             return {
@@ -290,7 +288,6 @@ class FaceDetectionService {
             let stdout = '';
             let stderr = '';
             
-            // Timeout di 60 secondi
             const timeout = setTimeout(() => {
                 console.error('⏱️ Timeout Python - killing process');
                 pythonProcess.kill('SIGKILL');
@@ -306,7 +303,6 @@ class FaceDetectionService {
             pythonProcess.stderr.on('data', (data) => {
                 const text = data.toString();
                 stderr += text;
-                // Log solo se non è un warning di TensorFlow
                 if (!text.includes('tensorflow') && !text.includes('WARNING')) {
                     console.log(`[Python ERR] ${text.trim()}`);
                 }
@@ -327,14 +323,12 @@ class FaceDetectionService {
                     return;
                 }
                 
-                // Leggi risultato
                 try {
                     if (fs.existsSync(outputPath)) {
                         const resultData = fs.readFileSync(outputPath, 'utf8');
                         const result = JSON.parse(resultData);
                         resolve(result);
                     } else {
-                        // Prova a parsare dall'output stdout
                         const jsonMatch = stdout.match(/\{[\s\S]*\}/);
                         if (jsonMatch) {
                             resolve(JSON.parse(jsonMatch[0]));
@@ -359,51 +353,91 @@ class FaceDetectionService {
     }
 
     async _saveAttendanceRecords(lessonId, recognizedStudents) {
-        console.log(`💾 Salvataggio presenze per ${recognizedStudents.length} studenti...`);
+        console.log(`\n💾 === SALVATAGGIO PRESENZE ===`);
+        console.log(`📊 LessonId: ${lessonId} (type: ${typeof lessonId})`);
+        console.log(`👥 Students count: ${recognizedStudents.length}`);
+        console.log(`👥 Students data:`, JSON.stringify(recognizedStudents, null, 2));
+        
+        if (!recognizedStudents || recognizedStudents.length === 0) {
+            console.log('⚠️ Nessuno studente da salvare');
+            return;
+        }
         
         try {
             const { Attendance } = require('../models');
+            let savedCount = 0;
+            let errorCount = 0;
             
-            for (const student of recognizedStudents) {
+            for (const [index, student] of recognizedStudents.entries()) {
+                console.log(`\n🔄 Processing student ${index + 1}/${recognizedStudents.length}:`);
+                console.log(`   - userId: ${student.userId} (type: ${typeof student.userId})`);
+                console.log(`   - name: ${student.name} ${student.surname || ''}`);
+                console.log(`   - confidence: ${student.confidence}`);
+                
                 try {
-                    // Cerca presenza esistente
+                    if (!student.userId || isNaN(student.userId)) {
+                        throw new Error(`userId non valido: ${student.userId}`);
+                    }
+                    
                     let attendance = await Attendance.findOne({
                         where: { 
-                            userId: student.userId, 
-                            lessonId: lessonId 
+                            userId: parseInt(student.userId), 
+                            lessonId: parseInt(lessonId)
                         }
                     });
                     
+                    const attendanceData = {
+                        is_present: true,
+                        confidence: parseFloat(student.confidence),
+                        detection_method: 'face_recognition',
+                        timestamp: new Date()
+                    };
+                    
                     if (attendance) {
-                        // Aggiorna
-                        await attendance.update({
-                            is_present: true,
-                            confidence: student.confidence,
-                            detection_method: 'face_recognition',
-                            timestamp: new Date()
-                        });
+                        console.log(`   ➡️ Aggiornamento presenza esistente ID: ${attendance.id}`);
+                        await attendance.update(attendanceData);
+                        console.log(`   ✅ Presenza aggiornata`);
                     } else {
-                        // Crea nuova
-                        await Attendance.create({
-                            userId: student.userId,
-                            lessonId: lessonId,
-                            is_present: true,
-                            confidence: student.confidence,
-                            detection_method: 'face_recognition',
-                            timestamp: new Date()
+                        console.log(`   ➡️ Creazione nuova presenza`);
+                        const newAttendance = await Attendance.create({
+                            userId: parseInt(student.userId),
+                            lessonId: parseInt(lessonId),
+                            ...attendanceData
                         });
+                        console.log(`   ✅ Presenza creata con ID: ${newAttendance.id}`);
                     }
                     
-                    console.log(`✅ Presenza registrata per studente ${student.userId}`);
+                    savedCount++;
                     
                 } catch (error) {
-                    console.error(`❌ Errore salvataggio presenza per ${student.userId}:`, error.message);
+                    errorCount++;
+                    console.error(`   ❌ Errore salvataggio per ${student.userId}:`, error.message);
+                    console.error(`   ❌ Stack:`, error.stack);
                 }
             }
             
+            console.log(`\n📋 RIEPILOGO SALVATAGGIO:`);
+            console.log(`   ✅ Salvati: ${savedCount}`);
+            console.log(`   ❌ Errori: ${errorCount}`);
+            console.log(`   📊 Totale processati: ${recognizedStudents.length}`);
+            
         } catch (error) {
-            console.error('❌ Errore salvataggio presenze:', error);
+            console.error('❌ Errore generale salvataggio presenze:', error.message);
+            console.error('❌ Stack:', error.stack);
         }
+    }
+
+    _removeDuplicateStudents(recognizedStudents) {
+        const studentMap = new Map();
+        
+        recognizedStudents.forEach(student => {
+            const key = student.userId;
+            if (!studentMap.has(key) || studentMap.get(key).confidence < student.confidence) {
+                studentMap.set(key, student);
+            }
+        });
+        
+        return Array.from(studentMap.values());
     }
 
     _cleanupTempFiles(filePaths, sessionId) {

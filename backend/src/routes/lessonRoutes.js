@@ -8,25 +8,18 @@ const fs = require('fs');
 const { Lesson, Course } = require('../models');
 const fileAnalysisService = require('../services/fileAnalysisService');
 
-// ========================================
-// NUOVI IMPORTS PER CAMERA & UPLOAD SYSTEM
-// ========================================
 const multer = require('multer');
 const imageStorageService = require('../services/imageStorageService');
 const enhancedCameraService = require('../services/enhancedCameraService');
 
 const router = express.Router();
 
-// ========================================
-// CONFIGURAZIONE MULTER PER UPLOAD
-// ========================================
 const upload = multer({
     dest: 'temp/',
     limits: {
         fileSize: 10 * 1024 * 1024 // 10MB max
     },
     fileFilter: (req, file, cb) => {
-        // Accetta solo immagini
         if (file.mimetype.startsWith('image/')) {
             cb(null, true);
         } else {
@@ -41,9 +34,6 @@ if (!fs.existsSync(tempDir)) {
     console.log('📁 Directory temp creata:', tempDir);
 }
 
-// ========================================
-// ENDPOINT ESISTENTI (MANTENUTI)
-// ========================================
 
 router.get('/python-script-status', async (req, res) => {
     try {
@@ -72,9 +62,12 @@ router.get('/', authenticate, async (req, res) => {
     try {
         console.log('GET /lessons - Recupero lezioni');
         const { courseId, subjectId, classroomId, startDate, endDate } = req.query;
+        const userRole = req.user.role;
+        const userId = req.user.id;
         
         let query = `
-            SELECT l.id, l.name, l.lesson_date, l.course_id, l.subject_id, l.classroom_id,
+            SELECT l.id, l.name, l.lesson_date, l.course_id, l.subject_id, l.classroom_id, l.teacher_id,
+                   l.is_completed, l.completed_at,
                    c.name as course_name,
                    s.name as subject_name,
                    cl.name as classroom_name
@@ -86,6 +79,12 @@ router.get('/', authenticate, async (req, res) => {
         `;
         
         const replacements = {};
+        
+        if (userRole === 'teacher') {
+            query += ` AND l.teacher_id = :teacherId`;
+            replacements.teacherId = userId;
+            console.log(`🎓 Filtering lessons for teacher ID: ${userId}`);
+        }
         
         if (courseId) {
             query += ` AND l.course_id = :courseId`;
@@ -122,6 +121,9 @@ router.get('/', authenticate, async (req, res) => {
             course_id: lesson.course_id,
             subject_id: lesson.subject_id,
             classroom_id: lesson.classroom_id,
+            teacher_id: lesson.teacher_id,
+            is_completed: lesson.is_completed,
+            completed_at: lesson.completed_at,
             course: lesson.course_id ? {
                 id: lesson.course_id,
                 name: lesson.course_name
@@ -263,9 +265,11 @@ router.post('/create-directories/:id', authenticate, async (req, res) => {
 router.get('/:id', authenticate, async (req, res) => {
     try {
         const { id } = req.params;
+        const userRole = req.user.role;
+        const userId = req.user.id;
         
-        const [lesson] = await sequelize.query(`
-            SELECT l.id, l.name, l.lesson_date, l.course_id, l.subject_id, l.classroom_id,
+        let query = `
+            SELECT l.id, l.name, l.lesson_date, l.course_id, l.subject_id, l.classroom_id, l.teacher_id,
                    c.name as course_name,
                    s.name as subject_name,
                    cl.name as classroom_name
@@ -274,8 +278,17 @@ router.get('/:id', authenticate, async (req, res) => {
             LEFT JOIN "Subjects" s ON l.subject_id = s.id
             LEFT JOIN "Classrooms" cl ON l.classroom_id = cl.id
             WHERE l.id = :id
-        `, {
-            replacements: { id },
+        `;
+        
+        const replacements = { id };
+        
+        if (userRole === 'teacher') {
+            query += ` AND l.teacher_id = :teacherId`;
+            replacements.teacherId = userId;
+        }
+        
+        const [lesson] = await sequelize.query(query, {
+            replacements,
             type: QueryTypes.SELECT
         });
         
@@ -313,10 +326,10 @@ router.get('/:id', authenticate, async (req, res) => {
 
 router.post('/', authenticate, async (req, res) => {
     try {
-        const { name, lesson_date, course_id, subject_id, classroom_id } = req.body;
+        const { name, lesson_date, course_id, subject_id, classroom_id, teacher_id } = req.body;
         
         console.log('POST /lessons - Dati ricevuti:', { 
-            name, lesson_date, course_id, subject_id, classroom_id 
+            name, lesson_date, course_id, subject_id, classroom_id, teacher_id 
         });
         
         if (!name || !lesson_date || !course_id || !subject_id) {
@@ -326,13 +339,56 @@ router.post('/', authenticate, async (req, res) => {
         }
         
         const { Lesson, Course, Subject, Classroom } = require('../models');
+        const { Op } = require('sequelize');
+        
+        if (classroom_id) {
+            const lessonDateTime = new Date(lesson_date);
+            const startTime = new Date(lessonDateTime);
+            const endTime = new Date(lessonDateTime);
+            endTime.setMinutes(endTime.getMinutes() + 90);
+
+            console.log(`🔍 Checking classroom ${classroom_id} availability for ${startTime.toISOString()} - ${endTime.toISOString()}`);
+
+            const conflictingLessons = await Lesson.findAll({
+                where: {
+                    classroom_id: parseInt(classroom_id),
+                    lesson_date: {
+                        [Op.gte]: startTime,
+                        [Op.lt]: endTime
+                    }
+                },
+                attributes: ['id', 'name', 'lesson_date'],
+                include: [
+                    { model: Course, as: 'course', attributes: ['name'] }
+                ]
+            });
+
+            if (conflictingLessons.length > 0) {
+                const conflict = conflictingLessons[0];
+                
+                return res.status(409).json({
+                    success: false,
+                    message: 'Aula non disponibile nell\'orario selezionato',
+                    error: `L'aula è già occupata da una lezione del corso "${conflict.course?.name || 'Corso sconosciuto'}" alle ${conflict.lesson_date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`,
+                    conflicting_lesson: {
+                        id: conflict.id,
+                        name: conflict.name,
+                        date: conflict.lesson_date,
+                        course: conflict.course?.name
+                    }
+                });
+            }
+
+            console.log('✅ Classroom available, creating lesson');
+        }
         
         const newLesson = await Lesson.create({
             name,
             lesson_date,
             course_id,
             subject_id,
-            classroom_id: classroom_id || null
+            classroom_id: classroom_id || null,
+            teacher_id: teacher_id || null
         });
         
         console.log(`✅ Lezione creata con ID: ${newLesson.id}`);
@@ -496,6 +552,34 @@ router.delete('/:id', authenticate, async (req, res) => {
             return res.status(404).json({ message: 'Lezione non trovata' });
         }
         
+        console.log(`🗑️ Preservando dati correlati per lezione ${id}...`);
+        
+        try {
+            await sequelize.query(`
+                UPDATE "LessonImages" SET lesson_id = NULL WHERE lesson_id = :id
+            `, {
+                replacements: { id },
+                type: QueryTypes.UPDATE
+            });
+            console.log('✅ LessonImages aggiornate');
+        } catch (error) {
+            console.warn('⚠️ Impossibile aggiornare LessonImages:', error.message);
+        }
+        
+        try {
+            await sequelize.query(`
+                UPDATE "Screenshots" SET "lessonId" = NULL WHERE "lessonId" = :id
+            `, {
+                replacements: { id },
+                type: QueryTypes.UPDATE
+            });
+            console.log('✅ Screenshots aggiornati');
+        } catch (error) {
+            console.warn('⚠️ Impossibile aggiornare Screenshots:', error.message);
+        }
+        
+        console.log('📊 Attendance records saranno preservati automaticamente con lessonId = NULL');
+        
         await sequelize.query(`
             DELETE FROM "Lessons" WHERE id = :id
         `, {
@@ -503,7 +587,11 @@ router.delete('/:id', authenticate, async (req, res) => {
             type: QueryTypes.DELETE
         });
         
-        res.json({ message: 'Lezione eliminata con successo' });
+        console.log(`✅ Lezione ${id} eliminata, dati correlati preservati quando possibile`);
+        res.json({ 
+            message: 'Lezione eliminata con successo',
+            note: 'I report, screenshot e dati storici sono stati preservati' 
+        });
     } catch (error) {
         console.error('Errore nell\'eliminazione della lezione:', error);
         res.status(500).json({ message: error.message });
@@ -511,7 +599,6 @@ router.delete('/:id', authenticate, async (req, res) => {
 });
 
 // ========================================
-// ENDPOINT ANALISI (MODIFICATO PER MODALITÀ IBRIDA)
 // ========================================
 
 router.post('/:id/analyze', authenticate, async (req, res) => {
@@ -682,7 +769,6 @@ router.get('/:id/directories', authenticate, async (req, res) => {
 });
 
 // ========================================
-// NUOVI ENDPOINT: CAMERA & UPLOAD SYSTEM
 // ========================================
 
 router.post('/:id/upload-manual', authenticate, upload.single('image'), async (req, res) => {
@@ -884,7 +970,6 @@ router.delete('/:id/images/:imageId', authenticate, async (req, res) => {
 });
 
 // ========================================
-// DEBUG ENDPOINTS (MANTENUTI)
 // ========================================
 
 router.get('/debug/system-status', authenticate, async (req, res) => {

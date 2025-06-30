@@ -7,24 +7,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     name: {
       type: DataTypes.STRING(150),
-      allowNull: false,
-      comment: 'Nome/titolo della lezione'
-    },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-      comment: 'Descrizione dettagliata della lezione'
+      allowNull: false
     },
     lesson_date: {
       type: DataTypes.DATE,
-      allowNull: false,
-      comment: 'Data e ora della lezione'
-    },
-    duration_minutes: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      defaultValue: 90,
-      comment: 'Durata prevista in minuti'
+      allowNull: false
     },
     
     course_id: {
@@ -51,64 +38,54 @@ module.exports = (sequelize, DataTypes) => {
     status: {
       type: DataTypes.ENUM('draft', 'scheduled', 'active', 'completed', 'cancelled'),
       allowNull: false,
-      defaultValue: 'draft',
-      comment: 'Stato della lezione'
+      defaultValue: 'draft'
     },
     attendance_mode: {
       type: DataTypes.ENUM('manual', 'face_detection', 'qr_code', 'mixed'),
       allowNull: false,
-      defaultValue: 'face_detection',
-      comment: 'Modalità di rilevamento presenze'
+      defaultValue: 'face_detection'
     },
     
     face_detection_enabled: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
-      defaultValue: true,
-      comment: 'Face detection attivo per questa lezione'
-    },
-    auto_capture_interval: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      comment: 'Intervallo auto-scatto in minuti (null = manuale)'
+      defaultValue: true
     },
     
     total_students_expected: {
       type: DataTypes.INTEGER,
-      allowNull: true,
-      comment: 'Numero studenti attesi'
+      allowNull: true
     },
     total_students_present: {
       type: DataTypes.INTEGER,
-      allowNull: true,
-      comment: 'Numero studenti rilevati presenti'
+      allowNull: true
     },
     attendance_percentage: {
       type: DataTypes.DECIMAL(5, 2),
-      allowNull: true,
-      comment: 'Percentuale presenza calcolata'
+      allowNull: true
     },
     
     started_at: {
       type: DataTypes.DATE,
-      allowNull: true,
-      comment: 'Timestamp inizio effettivo lezione'
+      allowNull: true
     },
     ended_at: {
       type: DataTypes.DATE,
-      allowNull: true,
-      comment: 'Timestamp fine effettiva lezione'
+      allowNull: true
     },
     last_capture_at: {
       type: DataTypes.DATE,
-      allowNull: true,
-      comment: 'Ultimo scatto automatico camera'
+      allowNull: true
     },
     
-    lesson_config: {
-      type: DataTypes.JSONB,
-      allowNull: true,
-      comment: 'Configurazione specifica lezione (JSON)'
+    is_completed: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
+    completed_at: {
+      type: DataTypes.DATE,
+      allowNull: true
     }
   }, {
     tableName: 'Lessons',
@@ -143,7 +120,22 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Lesson.prototype.isCompleted = function() {
-    return this.status === 'completed';
+    return this.is_completed === true;
+  };
+
+  Lesson.prototype.canAccess = function(userRole) {
+    if (userRole === 'admin') return true;
+    
+    if (userRole === 'teacher' && this.is_completed) return false;
+    
+    return true;
+  };
+
+  Lesson.prototype.markAsCompleted = async function() {
+    this.is_completed = true;
+    this.completed_at = new Date();
+    this.status = 'completed';
+    return await this.save();
   };
 
   Lesson.prototype.canStart = function() {
@@ -156,7 +148,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Lesson.prototype.getDuration = function() {
     if (this.started_at && this.ended_at) {
-      return Math.round((new Date(this.ended_at) - new Date(this.started_at)) / (1000 * 60)); // minuti
+      return Math.round((new Date(this.ended_at) - new Date(this.started_at)) / (1000 * 60));
     }
     return this.duration_minutes || 90;
   };

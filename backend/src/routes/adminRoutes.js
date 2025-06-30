@@ -1,9 +1,12 @@
 const express = require('express');
-const { User, Course, Subject, Lesson, Attendance } = require('../models');
+const { User, Course, Subject, Lesson, Attendance, LessonImage, Screenshot, Classroom } = require('../models');
 const { authenticate } = require('../middleware/authMiddleware');
 const { isAdmin } = require('../middleware/roleMiddleware');
 const { sequelize } = require('../config/database');
 const { Op } = require('sequelize');
+
+const enhancedCameraService = require('../services/enhancedCameraService');
+const faceDetectionService = require('../services/faceDetectionService');
 
 const router = express.Router();
 
@@ -245,6 +248,181 @@ router.get('/lesson-image/:id', authenticate, isAdmin, async (req, res) => {
     } catch (error) {
         console.error('Errore nel recupero dell\'immagine lezione:', error);
         res.status(500).json({ message: error.message });
+    }
+});
+
+router.post('/lessons/:id/capture-and-analyze', authenticate, isAdmin, async (req, res) => {
+    try {
+        const lessonId = req.params.id;
+        
+        console.log(`\n📸 ADMIN CAPTURE AND ANALYZE per lezione ${lessonId}`);
+        
+        req.setTimeout(120000);
+        res.setTimeout(120000);
+
+        const lesson = await Lesson.findOne({
+            where: { id: lessonId },
+            include: [
+                { model: Course, as: 'course' },
+                { model: Classroom, as: 'classroom' }
+            ]
+        });
+
+        if (!lesson) {
+            return res.status(404).json({
+                success: false,
+                error: 'Lezione non trovata'
+            });
+        }
+
+        console.log('📸 Scatto da camera...');
+        const captureResult = await enhancedCameraService.captureImage(lesson.classroom_id);
+        
+        if (!captureResult.success) {
+            return res.status(500).json({
+                success: false,
+                error: 'Errore scatto camera',
+                details: captureResult.error
+            });
+        }
+
+        console.log(`✅ Scatto completato: ${(captureResult.imageData.length/1024).toFixed(1)}KB`);
+
+        const savedImage = await LessonImage.create({
+            lesson_id: lessonId,
+            image_data: captureResult.imageData,
+            file_size: captureResult.imageData.length,
+            mime_type: 'image/jpeg',
+            source: 'camera',
+            captured_at: new Date(),
+            camera_ip: lesson.classroom.camera_ip,
+            camera_method: captureResult.metadata.method,
+            is_analyzed: false,
+            processing_status: 'pending'
+        });
+
+        console.log(`💾 Immagine salvata: ID ${savedImage.id}`);
+
+        let analysisResult = {
+            success: false,
+            detected_faces: 0,
+            recognized_students: []
+        };
+
+        try {
+            console.log('🔍 Avvio analisi face detection...');
+            
+            analysisResult = await faceDetectionService.analyzeImageBlob(
+                captureResult.imageData,
+                lessonId,
+                { debugMode: true }
+            );
+
+            console.log(`✅ Analisi completata: ${analysisResult.detected_faces} volti, ${analysisResult.recognized_students?.length || 0} riconosciuti`);
+
+            await savedImage.update({
+                is_analyzed: true,
+                detected_faces: analysisResult.detected_faces || 0,
+                recognized_faces: analysisResult.recognized_students?.length || 0,
+                processing_status: analysisResult.success ? 'completed' : 'failed',
+                analyzed_at: new Date()
+            });
+
+                console.log(`\n💾 === SALVATAGGIO IMMAGINE REPORT ===`);
+            console.log(`📊 Has reportImageBlob: ${!!analysisResult.reportImageBlob}`);
+            if (analysisResult.reportImageBlob) {
+                console.log(`📊 ReportImageBlob size: ${analysisResult.reportImageBlob.length} bytes`);
+            }
+            console.log(`📊 Has reportImagePath: ${!!analysisResult.reportImagePath}`);
+            if (analysisResult.reportImagePath) {
+                console.log(`📂 ReportImagePath: ${analysisResult.reportImagePath}`);
+            }
+            
+            if (analysisResult.reportImageBlob) {
+                try {
+                    const reportImage = await LessonImage.create({
+                        lesson_id: lessonId,
+                        image_data: analysisResult.reportImageBlob,
+                        file_size: analysisResult.reportImageBlob.length,
+                        mime_type: 'image/jpeg',
+                        source: 'face_detection_report',
+                        captured_at: new Date(),
+                        camera_ip: lesson.classroom.camera_ip,
+                        is_analyzed: true,
+                        detected_faces: analysisResult.detected_faces || 0,
+                        recognized_faces: analysisResult.recognized_students?.length || 0,
+                        processing_status: 'completed',
+                        analyzed_at: new Date()
+                    });
+                    
+                    console.log(`✅ Immagine report salvata: ID ${reportImage.id}`);
+                } catch (reportError) {
+                    console.error('❌ Errore salvataggio immagine report:', reportError.message);
+                    console.error('❌ Stack:', reportError.stack);
+                }
+            } else {
+                console.warn('⚠️ Nessuna immagine report da salvare');
+            }
+
+        } catch (analysisError) {
+            console.error('❌ Errore face detection:', analysisError);
+            
+            await savedImage.update({
+                is_analyzed: true,
+                processing_status: 'error',
+                error_message: analysisError.message
+            });
+        }
+
+        try {
+            await Screenshot.create({
+                lessonId: lessonId,
+                image_data: captureResult.imageData,
+                timestamp: new Date(),
+                detectedFaces: analysisResult.detected_faces || 0,
+                source: 'camera_capture'
+            });
+        } catch (e) {
+            console.warn('⚠️ Errore salvataggio screenshot:', e.message);
+        }
+
+        let lessonCompleted = false;
+        if (!lesson.is_completed && analysisResult.success) {
+            try {
+                await lesson.markAsCompleted();
+                lessonCompleted = true;
+                console.log(`✅ Lezione ${lessonId} marcata come completata da admin`);
+            } catch (completionError) {
+                console.warn('⚠️ Errore marcatura completamento:', completionError.message);
+            }
+        }
+
+        res.json({
+            success: true,
+            message: 'Scatto e analisi completati',
+            lesson_completed: lessonCompleted,
+            image_id: savedImage.id,
+            analysis: {
+                detected_faces: analysisResult.detected_faces || 0,
+                recognized_students: analysisResult.recognized_students?.length || 0,
+                students: analysisResult.recognized_students || []
+            },
+            camera: {
+                method: captureResult.metadata.method,
+                file_size: captureResult.imageData.length
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ ERRORE admin capture-and-analyze:', error);
+        
+        if (!res.headersSent) {
+            res.status(500).json({
+                success: false,
+                error: 'Errore interno del server',
+                details: error.message
+            });
+        }
     }
 });
 
