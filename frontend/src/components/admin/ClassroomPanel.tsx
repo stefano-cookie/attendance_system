@@ -33,9 +33,6 @@ const ClassroomsPanel: React.FC = () => {
     id: undefined,
     name: '',
     code: '',
-    capacity: undefined,
-    floor: '',
-    building: '',
     has_projector: false,
     has_whiteboard: false,
     camera_ip: '',
@@ -109,9 +106,6 @@ const ClassroomsPanel: React.FC = () => {
       id: undefined,
       name: '',
       code: '',
-      capacity: undefined,
-      floor: '',
-      building: '',
       has_projector: false,
       has_whiteboard: false,
       camera_ip: '',
@@ -135,9 +129,6 @@ const ClassroomsPanel: React.FC = () => {
       id: classroom.id,
       name: classroom.name,
       code: classroom.code || '',
-      capacity: classroom.capacity,
-      floor: classroom.floor || '',
-      building: classroom.building || '',
       has_projector: classroom.has_projector || false,
       has_whiteboard: classroom.has_whiteboard || false,
       camera_ip: classroom.camera_ip || '',
@@ -167,7 +158,7 @@ const ClassroomsPanel: React.FC = () => {
     
     if (type === 'checkbox') {
       processedValue = (e.target as HTMLInputElement).checked;
-    } else if (name === 'capacity' || name === 'camera_port') {
+    } else if (name === 'camera_port') {
       processedValue = value ? parseInt(value, 10) : undefined;
     }
     
@@ -299,8 +290,7 @@ const ClassroomsPanel: React.FC = () => {
 
   // Calcola statistiche
   const classroomsWithCamera = classrooms.filter(classroom => classroom.camera_ip).length;
-  const totalCapacity = classrooms.reduce((sum, classroom) => sum + (classroom.capacity || 0), 0);
-  const averageCapacity = classrooms.length > 0 ? Math.round(totalCapacity / classrooms.length) : 0;
+  const totalClassrooms = classrooms.length;
   
   if (loading) {
     return (
@@ -413,20 +403,6 @@ const ClassroomsPanel: React.FC = () => {
             </div>
           </div>
           
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.classrooms.averageCapacity')}</p>
-                <p className="text-3xl font-bold text-gray-800">{averageCapacity}</p>
-                <p className="text-xs text-gray-500 mt-1">{t('admin.classrooms.seatsPerClassroom')}</p>
-              </div>
-              <div className="bg-orange-100 p-3 rounded-xl">
-                <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-            </div>
-          </div>
         </div>
         
         {/* Ricerca */}
@@ -610,27 +586,6 @@ const ClassroomsPanel: React.FC = () => {
                             </div>
                           )}
                           
-                          {classroom.capacity ? (
-                            <div className="flex items-center p-3 bg-blue-50 rounded-lg">
-                              <svg className="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                              </svg>
-                              <div>
-                                <p className="text-sm font-medium text-gray-700">{t('admin.classrooms.capacity')}</p>
-                                <p className="text-sm text-blue-700 font-semibold">{t('admin.classrooms.seats', { count: classroom.capacity })}</p>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                              <svg className="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              <div>
-                                <p className="text-sm font-medium text-gray-500">{t('admin.classrooms.capacity')}</p>
-                                <p className="text-sm text-gray-400">{t('admin.classrooms.notSpecified')}</p>
-                              </div>
-                            </div>
-                          )}
                           
                           <div className="flex items-center p-3 bg-purple-50 rounded-lg">
                             <svg className="w-5 h-5 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -735,22 +690,6 @@ const ClassroomsPanel: React.FC = () => {
                   </div>
                   
                   
-                  <div>
-                    <label htmlFor="capacity" className="block text-sm font-semibold text-gray-700 mb-2">
-                      {t('admin.classrooms.capacitySeats')}
-                    </label>
-                    <input
-                      type="number"
-                      id="capacity"
-                      name="capacity"
-                      value={currentClassroom.capacity || ''}
-                      onChange={handleInputChange}
-                      placeholder={t('admin.classrooms.capacityPlaceholder')}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      min="1"
-                    />
-                    <p className="text-sm text-gray-500 mt-1">{t('admin.classrooms.capacityDescription')}</p>
-                  </div>
                   
                   {error && (
                     <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">

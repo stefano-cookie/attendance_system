@@ -64,9 +64,6 @@ export interface Classroom {
   id: number;
   name: string;
   code?: string;
-  capacity?: number;
-  floor?: string;
-  building?: string;
   has_projector?: boolean;
   has_whiteboard?: boolean;
   camera_ip?: string;
@@ -98,12 +95,16 @@ export interface Lesson {
   classroom_id: number;
   course_id: number;
   subject_id?: number;
+  teacher_id?: number;
   status?: string;
   is_completed?: boolean;
   completed_at?: string;
-  Course?: Course;
-  Classroom?: Classroom;
-  Subject?: Subject;
+  planned_start_time?: string;
+  planned_end_time?: string;
+  course?: Course;
+  classroom?: Classroom;
+  subject?: Subject;
+  teacher?: User;
 }
 
 export interface Attendance {

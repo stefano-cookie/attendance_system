@@ -11,6 +11,8 @@ import {
   getTeachers
 } from '../../services/api';
 import type { Lesson, Course, Subject, Classroom, User } from '../../services/api';
+import LessonsCalendar from './LessonsCalendar';
+import LessonModal from './LessonModal';
 
 interface ExtendedLesson extends Lesson {
   teacher_id?: number;
@@ -28,6 +30,12 @@ const LessonsPanel: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('calendar');
+  const [isLessonModalOpen, setIsLessonModalOpen] = useState<boolean>(false);
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [defaultDate, setDefaultDate] = useState<Date | undefined>(undefined);
+  const [defaultHour, setDefaultHour] = useState<number>(9);
   
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -180,6 +188,42 @@ const LessonsPanel: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleLessonClick = (lesson: Lesson) => {
+    setSelectedLesson(lesson);
+    setIsLessonModalOpen(true);
+  };
+
+  const handleTimeSlotClick = (date: Date, hour: number) => {
+    setSelectedLesson(null);
+    setDefaultDate(date);
+    setDefaultHour(hour);
+    setIsLessonModalOpen(true);
+  };
+
+  const handleSaveLesson = async (lessonData: any) => {
+    try {
+      if (lessonData.id) {
+        await updateLesson(lessonData.id, lessonData);
+        setInfo('Lezione aggiornata con successo');
+      } else {
+        await createLesson(lessonData);
+        setInfo('Lezione creata con successo');
+      }
+      await fetchData();
+      setIsLessonModalOpen(false);
+    } catch (error: any) {
+      console.error('Errore nel salvataggio della lezione:', error);
+      setError(error.response?.data?.message || 'Errore nel salvataggio della lezione');
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsLessonModalOpen(false);
+    setSelectedLesson(null);
+    setDefaultDate(undefined);
+    setDefaultHour(9);
   };
   
   const handleAddLesson = () => {
@@ -799,9 +843,48 @@ const LessonsPanel: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Toggle visualizzazione */}
+        <div className="flex justify-center mb-6">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-1">
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                viewMode === 'calendar'
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'text-gray-600 hover:text-blue-500'
+              }`}
+            >
+              📅 Calendario
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                viewMode === 'list'
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'text-gray-600 hover:text-blue-500'
+              }`}
+            >
+              📋 Lista
+            </button>
+          </div>
+        </div>
+
+        {/* Vista Calendario */}
+        {viewMode === 'calendar' && (
+          <div className="mb-8">
+            <LessonsCalendar
+              lessons={lessons}
+              onLessonClick={handleLessonClick}
+              onTimeSlotClick={handleTimeSlotClick}
+              onCreateLesson={handleSaveLesson}
+            />
+          </div>
+        )}
       
         {/* Lista lezioni */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
+        {viewMode === 'list' && (
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -998,7 +1081,7 @@ const LessonsPanel: React.FC = () => {
             )}
           </div>
         </div>
-      </div>
+        )}
       
       {/* Modal Form Lezione */}
       {isFormOpen && (
@@ -1941,6 +2024,21 @@ const LessonsPanel: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Modal Lezione */}
+      <LessonModal
+        isOpen={isLessonModalOpen}
+        onClose={handleCloseModal}
+        onSave={handleSaveLesson}
+        lesson={selectedLesson}
+        courses={courses}
+        subjects={subjects}
+        classrooms={classrooms}
+        teachers={teachers}
+        defaultDate={defaultDate}
+        defaultHour={defaultHour}
+      />
+      </div>
     </div>
   );
 };

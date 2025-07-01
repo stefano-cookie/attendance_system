@@ -6,6 +6,55 @@ import api from '../../services/api';
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 
+// Component per l'avatar dello studente
+interface StudentAvatarProps {
+  student: Student;
+  isPresent: boolean;
+  size?: 'sm' | 'md' | 'lg';
+}
+
+const StudentAvatar: React.FC<StudentAvatarProps> = ({ student, isPresent, size = 'md' }) => {
+  const sizeClasses = {
+    sm: 'h-8 w-8 text-xs',
+    md: 'h-10 w-10 text-sm',
+    lg: 'h-12 w-12 text-base'
+  };
+
+  const photoUrl = student.hasPhoto ? `http://localhost:4321/api/users/students/${student.id}/photo` : null;
+
+  if (photoUrl) {
+    return (
+      <div className={`${sizeClasses[size]} rounded-full overflow-hidden border-2 ${
+        isPresent ? 'border-green-500' : 'border-red-500'
+      } bg-gray-200`}>
+        <img
+          src={photoUrl}
+          alt={`${student.name} ${student.surname}`}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            // Fallback alle iniziali se l'immagine non carica
+            const target = e.target as HTMLImageElement;
+            const parent = target.parentElement;
+            if (parent) {
+              const bgColor = isPresent ? 'bg-green-500' : 'bg-red-500';
+              parent.innerHTML = `<div class="w-full h-full flex items-center justify-center text-white font-medium ${bgColor}">${student.name.charAt(0)}${student.surname.charAt(0)}</div>`;
+            }
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Fallback alle iniziali se non c'è foto
+  return (
+    <div className={`${sizeClasses[size]} rounded-full flex items-center justify-center text-white font-medium ${
+      isPresent ? 'bg-green-500' : 'bg-red-500'
+    }`}>
+      {student.name.charAt(0)}{student.surname.charAt(0)}
+    </div>
+  );
+};
+
 // TypeScript interfaces
 interface Student {
   id: number;
@@ -14,6 +63,8 @@ interface Student {
   email: string;
   matricola: string;
   courseId?: number;
+  photoPath?: string;
+  hasPhoto?: boolean;
 }
 
 interface Lesson {
@@ -881,11 +932,11 @@ const AttendancePanel: React.FC = () => {
                           >
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
-                                <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white font-medium ${
-                                  attendance.is_present ? 'bg-green-500' : 'bg-red-500'
-                                }`}>
-                                  {attendance.student.name.charAt(0)}{attendance.student.surname.charAt(0)}
-                                </div>
+                                <StudentAvatar 
+                                  student={attendance.student} 
+                                  isPresent={attendance.is_present}
+                                  size="md"
+                                />
                                 <div className="ml-4">
                                   <div className="text-sm font-medium text-gray-900">
                                     {attendance.student.name} {attendance.student.surname}
@@ -1027,11 +1078,11 @@ const AttendancePanel: React.FC = () => {
                         <div className="p-6">
                           <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center">
-                              <div className={`h-12 w-12 rounded-full flex items-center justify-center text-white font-medium ${
-                                attendance.is_present ? 'bg-green-500' : 'bg-red-500'
-                              }`}>
-                                {attendance.student.name.charAt(0)}{attendance.student.surname.charAt(0)}
-                              </div>
+                              <StudentAvatar 
+                                student={attendance.student} 
+                                isPresent={attendance.is_present}
+                                size="lg"
+                              />
                               <div className="ml-3">
                                 <p className="text-sm font-bold text-gray-900">
                                   {attendance.student.name} {attendance.student.surname}
