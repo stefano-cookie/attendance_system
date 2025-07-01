@@ -975,9 +975,12 @@ router.delete('/:id/images/:imageId', authenticate, async (req, res) => {
 router.get('/debug/system-status', authenticate, async (req, res) => {
     try {
         const faceDetectionService = require('../services/faceDetectionService');
-        const fileAnalysisService = require('../services/fileAnalysisService');        
+        const fileAnalysisService = require('../services/fileAnalysisService');
+        const emailService = require('../services/emailService');
+        
         const faceDetectionStatus = await faceDetectionService.checkStatus();
         const recognitionSystemStatus = await fileAnalysisService.checkRecognitionSystem();
+        const emailStatus = await emailService.checkConfiguration();
         
         const [studentsCount] = await sequelize.query(`
             SELECT COUNT(*) as count FROM "Users" WHERE role = 'student'
@@ -1003,6 +1006,7 @@ router.get('/debug/system-status', authenticate, async (req, res) => {
         res.json({
             faceDetection: faceDetectionStatus,
             recognitionSystem: recognitionSystemStatus,
+            email: emailStatus,
             database: {
                 students: studentsCount.count,
                 studentsWithPhotos: studentsWithPhotos.count,
@@ -1017,9 +1021,13 @@ router.get('/debug/system-status', authenticate, async (req, res) => {
             },
             summary: {
                 ready: faceDetectionStatus.ready && recognitionSystemStatus.ready,
+                emailReady: emailStatus.success,
                 message: faceDetectionStatus.ready && recognitionSystemStatus.ready ? 
                     'Sistema completamente operativo' : 
-                    'Sistema non pronto - controlla i dettagli'
+                    'Sistema non pronto - controlla i dettagli',
+                emailMessage: emailStatus.success ? 
+                    'Email configurate' : 
+                    'Email non configurate - optional'
             }
         });
     } catch (error) {
@@ -1243,6 +1251,42 @@ router.get('/debug/list-files/:lessonId', authenticate, async (req, res) => {
         console.error('Errore list files:', error);
         res.status(500).json({ 
             error: error.message
+        });
+    }
+});
+
+router.get('/debug/email-config-test', authenticate, async (req, res) => {
+    try {
+        const emailService = require('../services/emailService');
+        const result = await emailService.checkConfiguration();
+        
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+router.get('/debug/test-email/:lessonId', authenticate, async (req, res) => {
+    try {
+        const { lessonId } = req.params;
+        const emailService = require('../services/emailService');
+        
+        const result = await emailService.sendAttendanceReportToAllStudents(lessonId);
+        
+        res.json({
+            success: result.success,
+            message: result.success ? 'Email inviate con successo' : 'Errore invio email',
+            results: result.results || null,
+            error: result.error || null
+        });
+    } catch (error) {
+        console.error('Errore test email:', error);
+        res.status(500).json({ 
+            success: false,
+            error: error.message 
         });
     }
 });

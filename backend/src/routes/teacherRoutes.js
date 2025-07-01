@@ -562,6 +562,18 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
                 await lesson.markAsCompleted();
                 lessonCompleted = true;
                 console.log(`✅ Lezione ${lessonId} marcata come completata`);
+                
+                try {
+                    const emailService = require('../services/emailService');
+                    const emailResult = await emailService.sendAttendanceReportToAllStudents(lessonId);
+                    if (emailResult.success) {
+                        console.log(`📧 Email report inviate: ${emailResult.results.sent} successi, ${emailResult.results.failed} fallimenti`);
+                    } else {
+                        console.warn('⚠️ Errore invio email report:', emailResult.error);
+                    }
+                } catch (emailError) {
+                    console.warn('⚠️ Errore servizio email:', emailError.message);
+                }
             } catch (completionError) {
                 console.warn('⚠️ Errore marcatura completamento:', completionError.message);
             }
