@@ -28,11 +28,16 @@ class EmailService {
 
   async testConnection() {
     try {
-      await this.transporter.verify();
+      const result = await Promise.race([
+        this.transporter.verify(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 5000))
+      ]);
       console.log('✅ Email service configurato correttamente');
+      return { success: true };
     } catch (error) {
       console.warn('⚠️ Email service non configurato:', error.message);
       console.warn('📧 Per abilitare le email, configura le variabili SMTP_* nel .env');
+      return { success: false, error: error.message };
     }
   }
 
@@ -277,7 +282,10 @@ class EmailService {
    */
   async checkConfiguration() {
     try {
-      await this.transporter.verify();
+      const result = await Promise.race([
+        this.transporter.verify(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 5000))
+      ]);
       return { 
         success: true, 
         message: 'Configurazione email corretta' 
