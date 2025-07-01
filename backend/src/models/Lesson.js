@@ -86,6 +86,15 @@ module.exports = (sequelize, DataTypes) => {
     completed_at: {
       type: DataTypes.DATE,
       allowNull: true
+    },
+    
+    planned_start_time: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    planned_end_time: {
+      type: DataTypes.DATE,
+      allowNull: true
     }
   }, {
     tableName: 'Lessons',
@@ -147,6 +156,9 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Lesson.prototype.getDuration = function() {
+    if (this.planned_start_time && this.planned_end_time) {
+      return Math.round((new Date(this.planned_end_time) - new Date(this.planned_start_time)) / (1000 * 60));
+    }
     if (this.started_at && this.ended_at) {
       return Math.round((new Date(this.ended_at) - new Date(this.started_at)) / (1000 * 60));
     }

@@ -16,21 +16,6 @@ module.exports = (sequelize, DataTypes) => {
       comment: 'Codice identificativo dell\'aula'
     },
     
-    capacity: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      comment: 'Capacità massima studenti'
-    },
-    floor: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      comment: 'Piano dell\'aula'
-    },
-    building: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      comment: 'Edificio dell\'aula'
-    },
     has_projector: {
       type: DataTypes.BOOLEAN,
       allowNull: true,

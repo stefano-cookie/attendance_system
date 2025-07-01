@@ -28,6 +28,7 @@ router.get('/', authenticate, async (req, res) => {
                 u.email as student_email,
                 u.matricola as student_matricola,
                 u."courseId" as student_courseId,
+                CASE WHEN u."photoPath" IS NOT NULL THEN true ELSE false END as "student_hasPhoto",
                 l.id as lesson_id,
                 l.name as lesson_name,
                 l.lesson_date as lesson_date,
@@ -91,7 +92,8 @@ router.get('/', authenticate, async (req, res) => {
                     surname: record.student_surname,
                     email: record.student_email,
                     matricola: record.student_matricola,
-                    courseId: record.student_courseId
+                    courseId: record.student_courseId,
+                    hasPhoto: record["student_hasPhoto"]
                 } : null,
                 lesson: record.lesson_id ? {
                     id: record.lesson_id,
@@ -115,6 +117,7 @@ router.get('/', authenticate, async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 router.get('/debug', authenticate, async (req, res) => {
     try {
@@ -275,6 +278,7 @@ router.get('/lesson/:lessonId/complete', authenticate, async (req, res) => {
         
         const students = await sequelize.query(`
             SELECT u.id, u.name, u.surname, u.email, u.matricola,
+                   CASE WHEN u."photoPath" IS NOT NULL THEN true ELSE false END as "hasPhoto",
                    a.id as attendance_id,
                    a.is_present,
                    a.timestamp,
@@ -305,7 +309,8 @@ router.get('/lesson/:lessonId/complete', authenticate, async (req, res) => {
                 name: student.name,
                 surname: student.surname,
                 email: student.email,
-                matricola: student.matricola
+                matricola: student.matricola,
+                hasPhoto: student["hasPhoto"]
             },
             lesson: {
                 id: lessonInfo.id,
@@ -366,6 +371,7 @@ router.get('/course/:courseId/complete', authenticate, async (req, res) => {
                 u.surname as student_surname,
                 u.matricola,
                 u.email,
+                CASE WHEN u."photoPath" IS NOT NULL THEN true ELSE false END as "student_hasPhoto",
                 l.id as lesson_id,
                 l.name as lesson_name,
                 l.lesson_date,
@@ -411,6 +417,7 @@ router.get('/course/:courseId/complete', authenticate, async (req, res) => {
                 surname: record.student_surname,
                 matricola: record.matricola,
                 email: record.email,
+                hasPhoto: record["student_hasPhoto"],
                 is_present: record.is_present !== null ? record.is_present : false,
                 timestamp: record.timestamp,
                 confidence: record.confidence || 0

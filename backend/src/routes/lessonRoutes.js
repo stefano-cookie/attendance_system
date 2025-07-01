@@ -326,10 +326,10 @@ router.get('/:id', authenticate, async (req, res) => {
 
 router.post('/', authenticate, async (req, res) => {
     try {
-        const { name, lesson_date, course_id, subject_id, classroom_id, teacher_id } = req.body;
+        const { name, lesson_date, course_id, subject_id, classroom_id, teacher_id, planned_start_time, planned_end_time } = req.body;
         
         console.log('POST /lessons - Dati ricevuti:', { 
-            name, lesson_date, course_id, subject_id, classroom_id, teacher_id 
+            name, lesson_date, course_id, subject_id, classroom_id, teacher_id, planned_start_time, planned_end_time 
         });
         
         if (!name || !lesson_date || !course_id || !subject_id) {
@@ -342,22 +342,43 @@ router.post('/', authenticate, async (req, res) => {
         const { Op } = require('sequelize');
         
         if (classroom_id) {
-            const lessonDateTime = new Date(lesson_date);
-            const startTime = new Date(lessonDateTime);
-            const endTime = new Date(lessonDateTime);
-            endTime.setMinutes(endTime.getMinutes() + 90);
+            let startTime, endTime;
+            
+            if (planned_start_time && planned_end_time) {
+                const lessonDate = new Date(lesson_date).toISOString().split('T')[0];
+                startTime = new Date(`${lessonDate}T${planned_start_time}`);
+                endTime = new Date(`${lessonDate}T${planned_end_time}`);
+            } else {
+                const lessonDateTime = new Date(lesson_date);
+                startTime = new Date(lessonDateTime);
+                endTime = new Date(lessonDateTime);
+                endTime.setMinutes(endTime.getMinutes() + 90);
+            }
 
             console.log(`🔍 Checking classroom ${classroom_id} availability for ${startTime.toISOString()} - ${endTime.toISOString()}`);
 
             const conflictingLessons = await Lesson.findAll({
                 where: {
                     classroom_id: parseInt(classroom_id),
-                    lesson_date: {
-                        [Op.gte]: startTime,
-                        [Op.lt]: endTime
-                    }
+                    [Op.or]: [
+                        {
+                            planned_start_time: {
+                                [Op.lt]: endTime
+                            },
+                            planned_end_time: {
+                                [Op.gt]: startTime
+                            }
+                        },
+                        {
+                            planned_start_time: null,
+                            lesson_date: {
+                                [Op.gte]: startTime,
+                                [Op.lt]: endTime
+                            }
+                        }
+                    ]
                 },
-                attributes: ['id', 'name', 'lesson_date'],
+                attributes: ['id', 'name', 'lesson_date', 'planned_start_time', 'planned_end_time'],
                 include: [
                     { model: Course, as: 'course', attributes: ['name'] }
                 ]
@@ -382,14 +403,22 @@ router.post('/', authenticate, async (req, res) => {
             console.log('✅ Classroom available, creating lesson');
         }
         
-        const newLesson = await Lesson.create({
+        const lessonData = {
             name,
             lesson_date,
             course_id,
             subject_id,
             classroom_id: classroom_id || null,
             teacher_id: teacher_id || null
-        });
+        };
+
+        if (planned_start_time && planned_end_time) {
+            const lessonDate = new Date(lesson_date).toISOString().split('T')[0];
+            lessonData.planned_start_time = new Date(`${lessonDate}T${planned_start_time}`);
+            lessonData.planned_end_time = new Date(`${lessonDate}T${planned_end_time}`);
+        }
+
+        const newLesson = await Lesson.create(lessonData);
         
         console.log(`✅ Lezione creata con ID: ${newLesson.id}`);
         

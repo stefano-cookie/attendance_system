@@ -10,7 +10,7 @@ router.get('/', authenticate, async (req, res) => {
         
         const classrooms = await Classroom.findAll({
             attributes: [
-                'id', 'name', 'capacity', 'camera_ip', 'camera_status', 
+                'id', 'name', 'camera_ip', 'camera_status', 
                 'camera_model', 'is_active', 'createdAt', 'updatedAt'
             ],
             order: [['name', 'ASC']]
@@ -21,7 +21,6 @@ router.get('/', authenticate, async (req, res) => {
         const formattedClassrooms = classrooms.map(classroom => ({
             id: classroom.id,
             name: classroom.name,
-            capacity: classroom.capacity,
             camera_id: classroom.camera_ip,
             camera_ip: classroom.camera_ip,
             camera_status: classroom.camera_status || 'unknown',
@@ -53,7 +52,7 @@ router.get('/:id', authenticate, async (req, res) => {
         
         const classroom = await Classroom.findByPk(id, {
             attributes: [
-                'id', 'name', 'capacity', 'camera_ip', 'camera_status', 
+                'id', 'name', 'camera_ip', 'camera_status', 
                 'camera_model', 'is_active', 'createdAt', 'updatedAt'
             ]
         });
@@ -68,7 +67,6 @@ router.get('/:id', authenticate, async (req, res) => {
         const formattedClassroom = {
             id: classroom.id,
             name: classroom.name,
-            capacity: classroom.capacity,
             camera_id: classroom.camera_ip,
             camera_ip: classroom.camera_ip,
             camera_status: classroom.camera_status || 'unknown',
@@ -95,7 +93,7 @@ router.get('/:id', authenticate, async (req, res) => {
 
 router.post('/', authenticate, async (req, res) => {
     try {
-        const { name, capacity, camera_ip } = req.body;
+        const { name, camera_ip } = req.body;
         
         if (!name) {
             return res.status(400).json({ 
@@ -106,7 +104,6 @@ router.post('/', authenticate, async (req, res) => {
         
         const classroom = await Classroom.create({
             name,
-            capacity: capacity || null,
             camera_ip: camera_ip || null,
             is_active: true
         });
@@ -114,7 +111,6 @@ router.post('/', authenticate, async (req, res) => {
         const formattedClassroom = {
             id: classroom.id,
             name: classroom.name,
-            capacity: classroom.capacity,
             camera_id: classroom.camera_ip,
             camera_ip: classroom.camera_ip,
             camera_status: 'unknown',
@@ -142,7 +138,7 @@ router.post('/', authenticate, async (req, res) => {
 router.put('/:id', authenticate, async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, capacity, camera_ip } = req.body;
+        const { name, camera_ip } = req.body;
         
         if (!name) {
             return res.status(400).json({ 
@@ -162,14 +158,12 @@ router.put('/:id', authenticate, async (req, res) => {
         
         await classroom.update({
             name,
-            capacity: capacity || null,
             camera_ip: camera_ip || null
         });
         
         const formattedClassroom = {
             id: classroom.id,
             name: classroom.name,
-            capacity: classroom.capacity,
             camera_id: classroom.camera_ip,
             camera_ip: classroom.camera_ip,
             camera_status: classroom.camera_status || 'unknown',
