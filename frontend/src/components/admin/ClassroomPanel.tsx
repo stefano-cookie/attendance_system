@@ -69,8 +69,9 @@ const ClassroomsPanel: React.FC = () => {
       // Inizializza stati camera dai dati del database
       const initialStatuses: Record<number, string> = {};
       classroomsData.forEach(classroom => {
-        if (classroom.camera_ip && classroom.camera_status) {
-          initialStatuses[classroom.id] = classroom.camera_status;
+        if (classroom.camera_ip) {
+          // Usa lo stato del database se disponibile, altrimenti 'unknown'
+          initialStatuses[classroom.id] = classroom.camera_status || 'unknown';
         }
       });
       setCameraStatuses(initialStatuses);
@@ -236,7 +237,7 @@ const ClassroomsPanel: React.FC = () => {
       setError(null);
       console.log(`🎯 Assegnazione diretta camera ${camera.ip} a aula ${classroom.name}`);
       
-      await assignCameraToClassroom(classroom.id, camera);
+      await assignCameraToClassroom(classroom.id, camera, classroom.name);
       
       // Aggiorna la lista delle aule
       await fetchData();

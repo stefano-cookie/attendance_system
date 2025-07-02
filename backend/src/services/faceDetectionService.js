@@ -75,7 +75,9 @@ class FaceDetectionService {
             tempImagePath = await this._saveBlobAsFile(imageBlob, sessionId);
             console.log(`✅ Immagine salvata: ${tempImagePath}`);
             
+            console.log(`🔍 DEBUG: Cercando info per lessonId=${lessonId}`);
             const lessonInfo = await this._getLessonInfo(lessonId);
+            console.log(`🔍 DEBUG: lessonInfo result:`, lessonInfo);
             if (!lessonInfo) {
                 throw new Error(`Lezione ${lessonId} non trovata`);
             }
@@ -114,6 +116,14 @@ class FaceDetectionService {
                     reportImageBlob = fs.readFileSync(analysisResult.report_image);
                     console.log(`✅ Report immagine convertita: ${reportImageBlob.length} bytes`);
                     console.log(`📊 File stats:`, fs.statSync(analysisResult.report_image));
+                    
+                    // Cancella il file temporaneo dopo la lettura
+                    try {
+                        fs.unlinkSync(analysisResult.report_image);
+                        console.log(`🧹 File report temporaneo cancellato: ${analysisResult.report_image}`);
+                    } catch (cleanupError) {
+                        console.warn(`⚠️ Errore cancellazione file report: ${cleanupError.message}`);
+                    }
                 } catch (error) {
                     console.warn(`⚠️ Errore lettura report immagine: ${error.message}`);
                 }
@@ -386,11 +396,19 @@ class FaceDetectionService {
                         }
                     });
                     
+                    // Verifica soglia di confidenza rigorosa per evitare falsi positivi
+                    const confidence = parseFloat(student.confidence);
+                    if (confidence < 0.45) {
+                        console.log(`   ⚠️ Confidenza troppo bassa per ${student.name}: ${confidence.toFixed(3)} < 0.45 - SCARTATO`);
+                        continue;
+                    }
+                    
                     const attendanceData = {
                         is_present: true,
-                        confidence: parseFloat(student.confidence),
+                        confidence: confidence,
                         detection_method: 'face_recognition',
-                        timestamp: new Date()
+                        timestamp: new Date(),
+                        verified_by_teacher: false  // Richiede verifica manuale per alta confidenza
                     };
                     
                     if (attendance) {

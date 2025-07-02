@@ -345,7 +345,7 @@ router.post('/lessons/:id/capture-and-analyze', authenticate, isAdmin, async (re
                         image_data: analysisResult.reportImageBlob,
                         file_size: analysisResult.reportImageBlob.length,
                         mime_type: 'image/jpeg',
-                        source: 'face_detection_report',
+                        source: 'report',
                         captured_at: new Date(),
                         camera_ip: lesson.classroom.camera_ip,
                         is_analyzed: true,

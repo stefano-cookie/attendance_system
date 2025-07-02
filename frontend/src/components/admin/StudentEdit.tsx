@@ -29,9 +29,9 @@ const StudentEdit: React.FC = () => {
         // Carica lo studente usando il nuovo endpoint
         const response = await api.get(`/users/students/${id}`);
         const studentData = response.data;
+        
         setStudent(studentData);
         
-        // Inizializza il form con i dati dello studente
         setName(studentData.name || '');
         setSurname(studentData.surname || '');
         setEmail(studentData.email || '');
@@ -55,31 +55,42 @@ const StudentEdit: React.FC = () => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setSuccessMessage(null);
     
-    if (!id || !name || !surname || !email) {
+    if (!id || !name.trim() || !surname.trim() || !email.trim()) {
       setError('Nome, cognome ed email sono campi obbligatori');
+      return;
+    }
+    
+    if (!matricola.trim()) {
+      setError('La matricola è obbligatoria');
       return;
     }
     
     try {
       const updatedData = {
-        name,
-        surname,
-        email,
-        matricola,
+        name: name.trim(),
+        surname: surname.trim(),
+        email: email.trim(),
+        matricola: matricola.trim(),
         courseId
       };
       
-      // Usa l'endpoint di aggiornamento appena aggiunto
-      await api.put(`/users/students/${id}`, updatedData);
+      console.log('Sending update data:', updatedData);
+      
+      // Usa l'endpoint di aggiornamento
+      const response = await api.put(`/users/students/${id}`, updatedData);
+      console.log('Update response:', response.data);
       
       setSuccessMessage('Studente aggiornato con successo!');
       setTimeout(() => {
         navigate('/admin/students');
       }, 1500);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Errore durante l\'aggiornamento dello studente:', err);
-      setError('Si è verificato un errore durante l\'aggiornamento. Riprova più tardi.');
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || 'Si è verificato un errore durante l\'aggiornamento. Riprova più tardi.';
+      setError(errorMessage);
     }
   };
   
@@ -116,10 +127,23 @@ const StudentEdit: React.FC = () => {
       )}
       
       <div className="bg-white rounded-lg shadow-md p-6">
+        {student && (
+          <div className="bg-blue-50 p-4 rounded-lg mb-6">
+            <h3 className="font-semibold text-blue-800 mb-2">Studente in modifica:</h3>
+            <p className="text-blue-700">{student.name} {student.surname} ({student.matricola})</p>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit}>
+          <p className="text-sm text-gray-600 mb-4">
+            I campi contrassegnati con <span className="text-red-500">*</span> sono obbligatori
+          </p>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-gray-700 mb-2" htmlFor="name">Nome</label>
+              <label className="block text-gray-700 mb-2" htmlFor="name">
+                Nome <span className="text-red-500">*</span>
+              </label>
               <input
                 id="name"
                 type="text"
@@ -127,11 +151,14 @@ const StudentEdit: React.FC = () => {
                 onChange={(e) => setName(e.target.value)}
                 className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
+                placeholder="Inserisci il nome"
               />
             </div>
             
             <div>
-              <label className="block text-gray-700 mb-2" htmlFor="surname">Cognome</label>
+              <label className="block text-gray-700 mb-2" htmlFor="surname">
+                Cognome <span className="text-red-500">*</span>
+              </label>
               <input
                 id="surname"
                 type="text"
@@ -139,11 +166,14 @@ const StudentEdit: React.FC = () => {
                 onChange={(e) => setSurname(e.target.value)}
                 className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
+                placeholder="Inserisci il cognome"
               />
             </div>
             
             <div>
-              <label className="block text-gray-700 mb-2" htmlFor="email">Email</label>
+              <label className="block text-gray-700 mb-2" htmlFor="email">
+                Email <span className="text-red-500">*</span>
+              </label>
               <input
                 id="email"
                 type="email"
@@ -151,17 +181,22 @@ const StudentEdit: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
+                placeholder="inserisci.email@esempio.com"
               />
             </div>
             
             <div>
-              <label className="block text-gray-700 mb-2" htmlFor="matricola">Matricola</label>
+              <label className="block text-gray-700 mb-2" htmlFor="matricola">
+                Matricola <span className="text-red-500">*</span>
+              </label>
               <input
                 id="matricola"
                 type="text"
                 value={matricola}
                 onChange={(e) => setMatricola(e.target.value)}
                 className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+                placeholder="Es: ABC123456"
               />
             </div>
             

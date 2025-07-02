@@ -36,12 +36,20 @@ class EnhancedCameraService {
         // Ignora errori parsing capabilities
       }
       
-      if (!bypassHTTPTest) {
+      // Test connessione prioritario per RTSP cameras
+      const isRTSPCamera = cameraConfig.model?.includes('RTSP') || 
+                          cameraConfig.manufacturer === 'Generic' ||
+                          cameraConfig.capabilities?.rtsp;
+      
+      if (!bypassHTTPTest && !isRTSPCamera) {
+        // Test connessione HTTP solo per camere non-RTSP
         const isOnline = await this.testCameraConnection(cameraConfig.ip);
         if (!isOnline) {
           throw new Error(`Camera ${cameraConfig.ip} non raggiungibile`);
         }
         console.log(`✅ Camera ${cameraConfig.ip} raggiungibile`);
+      } else if (isRTSPCamera) {
+        console.log(`📺 Camera RTSP rilevata (${cameraConfig.model}), salto test HTTP e vado diretto ad RTSP`);
       }
       
       // 4. Tenta scatto con metodi multipli
@@ -49,14 +57,16 @@ class EnhancedCameraService {
       let method = 'unknown';
       let lastError = null;
       
-      // Metodo 1: RTSP se disponibile (priorità per RTSP cameras)
-      if (cameraConfig.capabilities?.rtsp || bypassHTTPTest) {
+      // Metodo 1: RTSP PRIORITARIO per camere RTSP
+      // Prova RTSP per primo se è una camera RTSP nota
+      if (isRTSPCamera || bypassHTTPTest || cameraConfig.capabilities?.rtsp) {
         try {
           console.log(`📺 Tentativo scatto RTSP...`);
           const result = await this.captureViaRTSP(cameraConfig);
           imageBuffer = result.imageBuffer;
           method = result.method;
-          console.log(`✅ Scatto RTSP riuscito`);
+          console.log(`✅ Scatto RTSP riuscito - saltando HTTP/ONVIF`);
+          // RTSP ha avuto successo, non provare altri metodi
         } catch (rtspError) {
           lastError = rtspError;
           console.warn(`⚠️ RTSP fallito: ${rtspError.message}`);

@@ -73,9 +73,10 @@ class EmailService {
         where: { userId: studentId, lessonId: lessonId }
       });
 
+      // Con il nuovo sistema automatico, ogni studente dovrebbe avere un record
       const attendanceStatus = attendance ? 
         (attendance.is_present ? 'PRESENTE' : 'ASSENTE') : 
-        'NON RILEVATA';
+        'ASSENTE'; // Default ad ASSENTE se non trovato record
 
       const confidenceInfo = attendance?.confidence ? 
         ` (Confidenza: ${Math.round(attendance.confidence * 100)}%)` : 
@@ -191,11 +192,9 @@ class EmailService {
    * Genera HTML per email presenze
    */
   generateAttendanceEmailHTML({ studentName, lessonName, courseName, classroomName, lessonDate, attendanceStatus, confidenceInfo, detectionMethod }) {
-    const statusColor = attendanceStatus === 'PRESENTE' ? '#10B981' : 
-                       attendanceStatus === 'ASSENTE' ? '#EF4444' : '#6B7280';
+    const statusColor = attendanceStatus === 'PRESENTE' ? '#10B981' : '#EF4444';
     
-    const statusIcon = attendanceStatus === 'PRESENTE' ? '✅' : 
-                      attendanceStatus === 'ASSENTE' ? '❌' : '❓';
+    const statusIcon = attendanceStatus === 'PRESENTE' ? '✅' : '❌';
 
     return `
     <!DOCTYPE html>
@@ -256,9 +255,7 @@ class EmailService {
             
             ${attendanceStatus === 'PRESENTE' ? 
                 '<p style="color: #10B981;">🎉 <strong>Ottimo!</strong> La tua presenza è stata registrata correttamente.</p>' :
-                attendanceStatus === 'ASSENTE' ? 
-                '<p style="color: #EF4444;">⚠️ <strong>Attenzione:</strong> Non sei stato rilevato durante la lezione. Se ritieni ci sia stato un errore, contatta il docente.</p>' :
-                '<p style="color: #6B7280;">❓ La tua presenza non è stata rilevata automaticamente. Contatta il docente per chiarimenti.</p>'
+                '<p style="color: #EF4444;">⚠️ <strong>Attenzione:</strong> Sei risultato ASSENTE durante la lezione. Se ritieni ci sia stato un errore, contatta il docente.</p>'
             }
             
             <p style="margin-top: 30px; font-size: 14px; color: #666;">
@@ -297,6 +294,137 @@ class EmailService {
         suggestion: 'Verifica le variabili SMTP_HOST, SMTP_USER, SMTP_PASSWORD nel file .env'
       };
     }
+  }
+
+  /**
+   * Invia notifica di assenza a uno studente
+   */
+  async sendAbsenceNotification(student, lesson) {
+    try {
+      console.log(`📧 Invio email assenza a ${student.email} per lezione ${lesson.id}`);
+
+      const subject = '⚠️ Assenza Rilevata - Contattare la Segreteria';
+      const html = this.generateAbsenceEmailTemplate(student, lesson);
+
+      const mailOptions = {
+        from: process.env.SMTP_FROM || 'attendance@unicantemir.it',
+        to: student.email,
+        subject: subject,
+        html: html
+      };
+
+      const result = await this.transporter.sendMail(mailOptions);
+      
+      console.log(`✅ Email assenza inviata a ${student.email}: ${result.messageId}`);
+      
+      return {
+        success: true,
+        messageId: result.messageId,
+        studentEmail: student.email
+      };
+
+    } catch (error) {
+      console.error(`❌ Errore invio email assenza a ${student.email}:`, error);
+      return {
+        success: false,
+        error: error.message,
+        studentEmail: student.email
+      };
+    }
+  }
+
+  generateAbsenceEmailTemplate(student, lesson) {
+    const studentName = `${student.name} ${student.surname}`;
+    const courseName = lesson.course?.name || 'Corso';
+    const lessonName = lesson.name || `Lezione del ${new Date(lesson.lesson_date).toLocaleDateString('it-IT')}`;
+    const lessonDate = new Date(lesson.lesson_date).toLocaleDateString('it-IT', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    const classroomName = lesson.classroom?.name || 'Aula';
+
+    return `
+    <!DOCTYPE html>
+    <html lang="it">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Notifica Assenza</title>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
+            .warning-card { background: #fff3cd; border-left: 5px solid #ffc107; padding: 20px; margin: 20px 0; border-radius: 5px; }
+            .info-row { display: flex; justify-content: space-between; margin: 10px 0; padding: 8px 0; border-bottom: 1px solid #eee; }
+            .info-label { font-weight: bold; color: #555; }
+            .footer { text-align: center; margin-top: 30px; padding: 20px; color: #666; font-size: 12px; border-top: 1px solid #eee; }
+            .action-box { background: #e7f3ff; border: 2px solid #0066cc; padding: 20px; margin: 20px 0; border-radius: 10px; text-align: center; }
+            .urgent { color: #dc3545; font-weight: bold; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>⚠️ Notifica di Assenza</h1>
+            <p>Sistema Automatico di Rilevamento Presenze</p>
+        </div>
+        
+        <div class="content">
+            <h2>Ciao ${studentName}!</h2>
+            <p>Il nostro sistema di rilevamento automatico ha registrato la tua <span class="urgent">ASSENZA</span> per la seguente lezione:</p>
+            
+            <div class="warning-card">
+                <div class="info-row">
+                    <span class="info-label">Corso:</span>
+                    <span>${courseName}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Lezione:</span>
+                    <span>${lessonName}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Data e Ora:</span>
+                    <span>${lessonDate}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Aula:</span>
+                    <span>${classroomName}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Stato:</span>
+                    <span class="urgent">❌ ASSENTE</span>
+                </div>
+            </div>
+
+            <div class="action-box">
+                <h3>🏢 Azione Richiesta</h3>
+                <p><strong>Se ritieni che questa notifica sia un errore o se eri presente alla lezione, ti preghiamo di contattare immediatamente la segreteria per i chiarimenti necessari.</strong></p>
+                <p>📞 <strong>Contatti Segreteria:</strong><br>
+                Email: segreteria@unicantemir.it<br>
+                Telefono: [Inserire numero]<br>
+                Orari: Lunedì-Venerdì 9:00-17:00</p>
+            </div>
+
+            <p><strong>Nota importante:</strong> Questo sistema utilizza il riconoscimento facciale automatico per registrare le presenze. Se non sei stato riconosciuto dal sistema, potrebbero esserci diverse ragioni:</p>
+            <ul>
+                <li>Posizione non ottimale rispetto alla camera</li>
+                <li>Illuminazione insufficiente</li>
+                <li>Aggiornamento necessario della foto profilo</li>
+                <li>Effettiva assenza dalla lezione</li>
+            </ul>
+        </div>
+        
+        <div class="footer">
+            <p>📧 Questa email è stata generata automaticamente dal Sistema di Rilevamento Presenze</p>
+            <p>🏫 Università Cantemiroğlu - Sistema Automatico</p>
+            <p>Per problemi tecnici contatta: supporto.tecnico@unicantemir.it</p>
+        </div>
+    </body>
+    </html>
+    `;
   }
 }
 

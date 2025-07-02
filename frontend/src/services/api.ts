@@ -433,8 +433,16 @@ export const discoverCameras = async (): Promise<any> => {
   return response.data;
 };
 
-export const assignCameraToClassroom = async (classroomId: number, cameraData: any): Promise<any> => {
+export const assignCameraToClassroom = async (classroomId: number, cameraData: any, classroomName?: string): Promise<any> => {
+  // Se non abbiamo il nome, lo recuperiamo prima
+  let name = classroomName;
+  if (!name) {
+    const classroomResponse: AxiosResponse = await api.get(`/classrooms/${classroomId}`);
+    name = classroomResponse.data.name;
+  }
+  
   const response: AxiosResponse = await api.put(`/classrooms/${classroomId}`, {
+    name, // Campo obbligatorio richiesto dal backend
     camera_ip: cameraData.ip,
     camera_username: cameraData.workingCredentials?.username || 'admin',
     camera_password: cameraData.workingCredentials?.password || 'Mannoli2025',

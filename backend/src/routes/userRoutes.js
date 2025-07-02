@@ -111,7 +111,9 @@ router.get('/students', authenticate, async (req, res) => {
 
     const { courseId } = req.query;
     
-    let whereClause = { role: 'student' };
+    let whereClause = { 
+      role: 'student'
+    };
     
     if (courseId) {
       whereClause.courseId = courseId;
@@ -160,10 +162,14 @@ router.get('/students', authenticate, async (req, res) => {
 
 // GET /api/users/students/:id (dettaglio studente)
 router.get('/students/:id', authenticate, async (req, res) => {
+  console.log(`📋 GET /students/${req.params.id} - Caricamento singolo studente`);
+  
   try {
     const studentId = req.params.id;
+    console.log(`🔍 Richiesta dettaglio studente ID: ${studentId}`);
     
     if (req.user.role !== 'admin' && req.user.id !== parseInt(studentId)) {
+      console.log(`❌ Accesso negato: ruolo ${req.user.role}, user ID ${req.user.id}`);
       return res.status(403).json({
         success: false,
         error: 'Non autorizzato'
@@ -177,31 +183,36 @@ router.get('/students/:id', authenticate, async (req, res) => {
       },
       attributes: [
         'id', 'name', 'surname', 'email', 'matricola', 'courseId', 
-        'birth_date', 'is_active', 'createdAt', 'updatedAt'
+        'is_active', 'createdAt', 'updatedAt'
       ],
       include: [{
         model: Course,
         as: 'course',
-        attributes: ['id', 'name']
+        attributes: ['id', 'name'],
+        required: false  // LEFT JOIN invece di INNER JOIN per gestire courseId NULL
       }]
     });
 
     if (!student) {
+      console.log(`❌ Studente ${studentId} non trovato nel database`);
       return res.status(404).json({
         success: false,
         error: 'Studente non trovato'
       });
     }
 
-    const hasPhoto = !!(student.photoPath || student.photo_data);
+    console.log(`✅ Studente trovato: ${student.name} ${student.surname} (${student.email})`);
+    
+    const hasPhoto = !!(student.photoPath && student.photoPath.length > 0);
+    
+    const responseData = {
+      ...student.toJSON(),
+      hasPhoto: hasPhoto
+    };
+    
+    console.log(`📤 Invio dati studente:`, responseData);
 
-    res.json({
-      success: true,
-      student: {
-        ...student.toJSON(),
-        hasPhoto: hasPhoto
-      }
-    });
+    res.json(responseData);
   } catch (error) {
     console.error('Errore caricamento studente:', error);
     res.status(500).json({
@@ -213,6 +224,11 @@ router.get('/students/:id', authenticate, async (req, res) => {
 
 // POST /api/users/register-student (registrazione nuovo studente)
 router.post('/register-student', authenticate, upload.single('photo'), async (req, res) => {
+  console.log('🚀 POST /register-student - Richiesta ricevuta');
+  console.log('👤 User:', req.user ? `${req.user.name} (${req.user.role})` : 'Non autenticato');
+  console.log('📁 Body keys:', Object.keys(req.body));
+  console.log('📎 File:', req.file ? 'presente' : 'mancante');
+  
   try {
     console.log('📝 Registrazione nuovo studente...');
     
@@ -228,11 +244,24 @@ router.post('/register-student', authenticate, upload.single('photo'), async (re
 
     console.log('📋 Dati ricevuti:', { name, surname, matricola, email, courseId });
     console.log('📷 Foto ricevuta:', photoFile ? `${photoFile.originalname} (${photoFile.size} bytes)` : 'Nessuna');
+    console.log('📝 Controllo campi obbligatori:');
+    console.log(`   - name: "${name}" (${typeof name})`);
+    console.log(`   - surname: "${surname}" (${typeof surname})`);
+    console.log(`   - matricola: "${matricola}" (${typeof matricola})`);
+    console.log(`   - email: "${email}" (${typeof email})`);
+    console.log(`   - photoFile: ${photoFile ? 'presente' : 'mancante'}`);
 
     if (!name || !surname || !matricola || !email) {
+      console.log('❌ Campi mancanti rilevati');
       return res.status(400).json({
         success: false,
-        error: 'Nome, cognome, matricola ed email sono obbligatori'
+        error: 'Nome, cognome, matricola ed email sono obbligatori',
+        details: {
+          name: !name ? 'mancante' : 'ok',
+          surname: !surname ? 'mancante' : 'ok', 
+          matricola: !matricola ? 'mancante' : 'ok',
+          email: !email ? 'mancante' : 'ok'
+        }
       });
     }
 
@@ -244,13 +273,17 @@ router.post('/register-student', authenticate, upload.single('photo'), async (re
     }
 
     const existingStudent = await User.findOne({
-      where: { matricola: matricola.trim() }
+      where: { 
+        matricola: matricola.trim()
+      }
     });
 
     if (existingStudent) {
+      console.log(`❌ Matricola ${matricola} già esistente per utente ID ${existingStudent.id}`);
       return res.status(400).json({
         success: false,
-        error: 'Matricola già esistente'
+        error: 'Matricola già esistente',
+        details: `Uno studente con matricola ${matricola} è già registrato`
       });
     }
 
@@ -336,8 +369,12 @@ router.post('/register-student', authenticate, upload.single('photo'), async (re
 
 // PUT /api/users/students/:id (aggiorna studente)
 router.put('/students/:id', authenticate, async (req, res) => {
+  console.log(`🔄 PUT /students/${req.params.id} - Update studente`);
+  console.log(`📋 Dati ricevuti:`, req.body);
+  
   try {
     if (req.user.role !== 'admin') {
+      console.log(`❌ Accesso negato: ruolo ${req.user.role}`);
       return res.status(403).json({
         success: false,
         error: 'Non autorizzato'
@@ -345,10 +382,15 @@ router.put('/students/:id', authenticate, async (req, res) => {
     }
 
     const studentId = req.params.id;
-    const { name, surname, email, matricola, courseId, birth_date, is_active } = req.body;
+    const { name, surname, email, matricola, courseId, is_active } = req.body;
+    
+    console.log(`🔍 Aggiornamento studente ID: ${studentId}`);
 
     const student = await User.findOne({
-      where: { id: studentId, role: 'student' }
+      where: { 
+        id: studentId, 
+        role: 'student'
+      }
     });
 
     if (!student) {
@@ -396,24 +438,30 @@ router.put('/students/:id', authenticate, async (req, res) => {
     if (email !== undefined) updateData.email = email.trim().toLowerCase();
     if (matricola !== undefined) updateData.matricola = matricola.trim();
     if (courseId !== undefined) updateData.courseId = courseId;
-    if (birth_date !== undefined) updateData.birth_date = birth_date;
     if (is_active !== undefined) updateData.is_active = is_active;
 
+    console.log(`💾 Dati da aggiornare:`, updateData);
     await student.update(updateData);
+    
+    // Ricarica lo studente per ottenere i dati aggiornati
+    await student.reload();
+    
+    const updatedStudent = {
+      id: student.id,
+      name: student.name,
+      surname: student.surname,
+      email: student.email,
+      matricola: student.matricola,
+      courseId: student.courseId,
+      is_active: student.is_active
+    };
+    
+    console.log(`✅ Studente aggiornato:`, updatedStudent);
 
     res.json({
       success: true,
       message: 'Studente aggiornato con successo',
-      student: {
-        id: student.id,
-        name: student.name,
-        surname: student.surname,
-        email: student.email,
-        matricola: student.matricola,
-        courseId: student.courseId,
-        birth_date: student.birth_date,
-        is_active: student.is_active
-      }
+      student: updatedStudent
     });
 
   } catch (error) {
@@ -438,7 +486,10 @@ router.delete('/students/:id', authenticate, async (req, res) => {
     const studentId = req.params.id;
 
     const student = await User.findOne({
-      where: { id: studentId, role: 'student' }
+      where: { 
+        id: studentId, 
+        role: 'student'
+      }
     });
 
     if (!student) {
@@ -448,11 +499,12 @@ router.delete('/students/:id', authenticate, async (req, res) => {
       });
     }
 
-    await student.update({ is_active: false });
+    // VERA eliminazione dal database
+    await student.destroy();
 
     res.json({
       success: true,
-      message: 'Studente disattivato con successo'
+      message: 'Studente eliminato definitivamente dal database'
     });
 
   } catch (error) {
@@ -533,7 +585,10 @@ router.post('/students/:id/photo', authenticate, upload.single('photo'), async (
     }
 
     const student = await User.findOne({
-      where: { id: studentId, role: 'student' }
+      where: { 
+        id: studentId, 
+        role: 'student'
+      }
     });
 
     if (!student) {

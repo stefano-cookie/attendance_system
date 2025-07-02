@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/authMiddleware');
-const { Lesson, Course, Subject, Classroom, User, Attendance, LessonImage, Screenshot, sequelize } = require('../models');
+const { Lesson, Course, Subject, Classroom, User, Attendance, LessonImage, Screenshot, StudentSubject, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
 const enhancedCameraService = require('../services/enhancedCameraService');
@@ -419,8 +419,8 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
         
         console.log(`\n📸 CAPTURE AND ANALYZE per lezione ${lessonId}`);
         
-        req.setTimeout(120000);
-        res.setTimeout(120000);
+        req.setTimeout(45000);   // 45 secondi
+        res.setTimeout(45000);   // 45 secondi
 
         const lesson = await Lesson.findOne({
             where: { id: lessonId },
@@ -449,6 +449,9 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
         const captureResult = await enhancedCameraService.captureImage(lesson.classroom_id);
         
         if (!captureResult.success) {
+            // Aggiorna stato camera come errore dopo scatto fallito
+            await lesson.classroom.update({ camera_status: 'error' });
+            
             return res.status(500).json({
                 success: false,
                 error: 'Errore scatto camera',
@@ -457,6 +460,9 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
         }
 
         console.log(`✅ Scatto completato: ${(captureResult.imageData.length/1024).toFixed(1)}KB`);
+
+        // Aggiorna stato camera come online dopo scatto riuscito
+        await lesson.classroom.update({ camera_status: 'online' });
 
         const savedImage = await LessonImage.create({
             lesson_id: lessonId,
@@ -478,6 +484,8 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
             detected_faces: 0,
             recognized_students: []
         };
+        
+        let reportImageId = null;
 
         try {
             console.log('🔍 Avvio analisi face detection...');
@@ -515,7 +523,7 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
                         image_data: analysisResult.reportImageBlob,
                         file_size: analysisResult.reportImageBlob.length,
                         mime_type: 'image/jpeg',
-                        source: 'face_detection_report',
+                        source: 'report',
                         captured_at: new Date(),
                         camera_ip: lesson.classroom.camera_ip,
                         is_analyzed: true,
@@ -525,6 +533,7 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
                         analyzed_at: new Date()
                     });
                     
+                    reportImageId = reportImage.id;
                     console.log(`✅ Immagine report salvata: ID ${reportImage.id}`);
                 } catch (reportError) {
                     console.error('❌ Errore salvataggio immagine report:', reportError.message);
@@ -556,9 +565,19 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
             console.warn('⚠️ Errore salvataggio screenshot:', e.message);
         }
 
+        // Genera record di presenza/assenza per tutti gli studenti
+        try {
+            console.log(`📊 Generazione record attendance per lezione ${lessonId}...`);
+            await generateAbsenteeRecords(lesson, analysisResult.recognized_students || []);
+            console.log(`✅ Record attendance generati per lezione ${lessonId}`);
+        } catch (attendanceError) {
+            console.error('❌ Errore generazione record attendance:', attendanceError.message);
+        }
+
         let lessonCompleted = false;
-        if (!lesson.is_completed && analysisResult.success) {
+        if (!lesson.is_completed) {
             try {
+                
                 await lesson.markAsCompleted();
                 lessonCompleted = true;
                 console.log(`✅ Lezione ${lessonId} marcata come completata`);
@@ -584,6 +603,7 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
             message: 'Scatto e analisi completati',
             lesson_completed: lessonCompleted,
             image_id: savedImage.id,
+            report_image_id: reportImageId,
             analysis: {
                 detected_faces: analysisResult.detected_faces || 0,
                 recognized_students: analysisResult.recognized_students?.length || 0,
@@ -863,5 +883,108 @@ router.post('/lessons/:id/send-student-email/:studentId', async (req, res) => {
         });
     }
 });
+
+/**
+ * Genera record di assenza per studenti non riconosciuti nella face detection
+ */
+async function generateAbsenteeRecords(lesson, recognizedStudents) {
+    try {
+        console.log(`📝 Generazione record assenze per lezione ${lesson.id}`);
+        
+        // Ottieni tutti gli studenti iscritti al corso
+        const enrolledStudents = await sequelize.query(`
+            SELECT u.id, u.name, u.surname, u.email, u.matricola
+            FROM "Users" u 
+            WHERE u."courseId" = :courseId AND u.role = 'student' AND u.is_active = true
+        `, {
+            replacements: { courseId: lesson.course_id },
+            type: sequelize.QueryTypes.SELECT
+        });
+        
+        console.log(`👥 Studenti iscritti al corso: ${enrolledStudents.length}`);
+        
+        // IDs degli studenti riconosciuti 
+        const recognizedIds = (recognizedStudents || []).map(s => parseInt(s.userId)).filter(id => !isNaN(id));
+        console.log(`✅ Studenti riconosciuti: [${recognizedIds.join(', ')}]`);
+        
+        const absentStudents = [];
+        
+        // Crea record di presenza/assenza per tutti gli studenti
+        for (const student of enrolledStudents) {
+            const existingAttendance = await Attendance.findOne({
+                where: {
+                    userId: student.id,
+                    lessonId: lesson.id
+                }
+            });
+            
+            if (!existingAttendance) {
+                const isPresent = recognizedIds.includes(student.id);
+                
+                await Attendance.create({
+                    userId: student.id,
+                    lessonId: lesson.id,
+                    is_present: isPresent,
+                    detection_method: isPresent ? 'face_recognition' : 'manual',
+                    confidence: isPresent ? 0.8 : 0.0,
+                    timestamp: new Date()
+                });
+                
+                console.log(`📋 ${isPresent ? '✅ Presente' : '❌ Assente'}: ${student.name} ${student.surname} (ID: ${student.id})`);
+                
+                // Aggiungi studenti assenti alla lista per email
+                if (!isPresent) {
+                    absentStudents.push(student);
+                }
+            }
+        }
+        
+        // RIMOSSO: Non inviare email qui per evitare duplicati
+        // Le email vengono inviate tutte insieme dopo con sendAttendanceReportToAllStudents
+        if (absentStudents.length > 0) {
+            console.log(`📧 ${absentStudents.length} studenti assenti - email verranno inviate nel report finale`);
+            // await sendAbsenceEmails(lesson, absentStudents); // COMMENTATO per evitare duplicati
+        }
+        
+        console.log(`✅ Record di presenza/assenza generati per lezione ${lesson.id}`);
+        
+    } catch (error) {
+        console.error('❌ Errore generazione record assenze:', error);
+        throw error;
+    }
+}
+
+/**
+ * Invia email di assenza agli studenti che non sono stati riconosciuti
+ */
+async function sendAbsenceEmails(lesson, absentStudents) {
+    try {
+        console.log(`📧 Invio ${absentStudents.length} email di assenza...`);
+        
+        let sentCount = 0;
+        let errorCount = 0;
+        
+        for (const student of absentStudents) {
+            try {
+                const emailResult = await emailService.sendAbsenceNotification(student, lesson);
+                if (emailResult.success) {
+                    sentCount++;
+                    console.log(`✅ Email assenza inviata a ${student.email}`);
+                } else {
+                    errorCount++;
+                    console.error(`❌ Errore invio email a ${student.email}: ${emailResult.error}`);
+                }
+            } catch (emailError) {
+                errorCount++;
+                console.error(`❌ Errore invio email a ${student.email}:`, emailError.message);
+            }
+        }
+        
+        console.log(`📧 Email assenze completate: ${sentCount} inviate, ${errorCount} errori`);
+        
+    } catch (error) {
+        console.error('❌ Errore generale invio email assenze:', error);
+    }
+}
 
 module.exports = router;

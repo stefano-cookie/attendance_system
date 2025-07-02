@@ -24,6 +24,7 @@ router.get('/lesson/:imageId', async (req, res) => {
     const { imageId } = req.params;
     
     console.log(`📸 Richiesta immagine lezione ID: ${imageId}`);
+    console.log(`📸 User-Agent: ${req.get('User-Agent')}`);
     
     const image = await LessonImage.findByPk(imageId);
     
@@ -32,20 +33,43 @@ router.get('/lesson/:imageId', async (req, res) => {
       return res.status(404).json({ error: 'Immagine non trovata' });
     }
     
-    if (!image.image_data) {
-      console.log(`❌ LessonImage ${imageId} trovata ma senza dati BLOB`);
+    // Se questa è un'immagine originale, cerca se esiste una versione report
+    let imageToServe = image;
+    if (image.source === 'camera') {
+      console.log(`🔍 Cercando immagine report per lezione ${image.lesson_id}...`);
+      
+      const reportImage = await LessonImage.findOne({
+        where: {
+          lesson_id: image.lesson_id,
+          source: 'report'
+        },
+        order: [['createdAt', 'DESC']] // Prendi la più recente
+      });
+      
+      if (reportImage && reportImage.image_data) {
+        console.log(`✅ Trovata immagine report ID ${reportImage.id}, usando quella invece dell'originale`);
+        imageToServe = reportImage;
+      } else {
+        console.log(`ℹ️ Nessuna immagine report trovata, usando originale`);
+      }
+    }
+    
+    if (!imageToServe.image_data) {
+      console.log(`❌ LessonImage ${imageToServe.id} trovata ma senza dati BLOB`);
       return res.status(404).json({ error: 'Dati immagine non disponibili' });
     }
 
-    console.log(`✅ Serving LessonImage ${imageId}: ${image.image_data.length} bytes`);
+    console.log(`✅ Serving LessonImage ${imageToServe.id} (${imageToServe.source}): ${imageToServe.image_data.length} bytes`);
 
     res.set({
-      'Content-Type': image.mime_type || 'image/jpeg',
-      'Content-Length': image.image_data.length,
-      'Cache-Control': 'public, max-age=3600'
+      'Content-Type': imageToServe.mime_type || 'image/jpeg',
+      'Content-Length': imageToServe.image_data.length,
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
     });
 
-    res.send(image.image_data);
+    res.send(imageToServe.image_data);
   } catch (error) {
     console.error('❌ Errore nel servire immagine:', error);
     res.status(500).json({ error: 'Errore interno del server' });

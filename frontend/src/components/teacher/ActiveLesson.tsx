@@ -35,6 +35,20 @@ const ActiveLesson: React.FC = () => {
       
       setLesson(lessonData);
       setAttendanceReport(reportData);
+      
+      // Se la lezione è completata, carica l'ID dell'immagine report
+      if (lessonData.is_completed) {
+        try {
+          const images = await teacherService.getLessonImages(parseInt(id));
+          const reportImage = images.find((img: any) => img.source === 'report');
+          if (reportImage) {
+            setReportImageId(reportImage.id);
+          }
+        } catch (imgError) {
+          console.error('Errore caricamento immagini:', imgError);
+        }
+      }
+      
       setError(null);
     } catch (err: any) {
       setError(err.response?.data?.error || t('teacher.lessons.errorLoading'));
@@ -51,43 +65,30 @@ const ActiveLesson: React.FC = () => {
       setError(null);
       setEmailSuccess(null);
       
-      const result = await teacherService.captureAndAnalyze(parseInt(id));
+      // Timeout client-side dopo 45 secondi
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: operazione troppo lenta')), 45000)
+      );
+      
+      const result = await Promise.race([
+        teacherService.captureAndAnalyze(parseInt(id)),
+        timeoutPromise
+      ]);
       
       if (result.success) {
         if (result.lesson_completed) {
-          const mockReport: AttendanceReport = {
-            lesson: {
-              id: parseInt(id),
-              name: lesson?.name || 'Lezione',
-              date: lesson?.lesson_date || new Date().toISOString(),
-              course: lesson?.course?.name || '',
-              classroom: lesson?.classroom?.name || ''
-            },
-            attendance: {
-              students: (result.analysis?.students || []).map((student: any, index: number) => ({
-                student_id: student.id || index + 1,
-                student_name: student.name || `Studente ${index + 1}`,
-                student_surname: student.surname || '',
-                matricola: student.matricola || `MAT${index + 1}`,
-                is_present: true,
-                confidence: student.confidence || 0.8,
-                detection_method: 'face_detection'
-              })),
-              summary: {
-                total: result.analysis?.students?.length || 0,
-                present: result.analysis?.students?.length || 0,
-                absent: 0,
-                percentage: 100
-              },
-              last_updated: new Date().toISOString()
-            }
-          };
-          
-          setAttendanceReport(mockReport);
-          setEmailSuccess('Analisi completata con successo! La lezione è stata marcata come completata.');
-          
-          setLesson((prev: any) => prev ? {...prev, is_completed: true} : null);
-          setReportImageId(result.image_id);
+          // Ricarica il report reale dal backend invece di usare un mock
+          try {
+            const realReport = await teacherService.getAttendanceReport(parseInt(id));
+            setAttendanceReport(realReport);
+            setEmailSuccess('Analisi completata con successo! La lezione è stata marcata come completata.');
+            setLesson((prev: any) => prev ? {...prev, is_completed: true} : null);
+            setReportImageId(result.report_image_id || result.image_id);
+          } catch (reportError) {
+            console.error('Errore caricamento report:', reportError);
+            // Fallback al comportamento precedente se il report non si carica
+            setEmailSuccess('Analisi completata ma errore nel caricamento report.');
+          }
         } else {
           await loadLessonData();
         }
