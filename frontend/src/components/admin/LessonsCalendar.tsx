@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Lesson } from '../../services/api';
+import { useTranslation } from 'react-i18next';
 
 interface LessonsCalendarProps {
   lessons: Lesson[];
@@ -14,6 +15,7 @@ const LessonsCalendar: React.FC<LessonsCalendarProps> = ({
   onTimeSlotClick,
   onCreateLesson
 }) => {
+  const { t } = useTranslation();
   const [currentWeek, setCurrentWeek] = useState(new Date());
 
   const getWeekDays = (date: Date) => {
@@ -76,19 +78,19 @@ const LessonsCalendar: React.FC<LessonsCalendarProps> = ({
             onClick={() => navigateWeek('prev')}
             className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
-            &#8249; Precedente
+            &#8249; {t('admin.lessons.calendar.previous')}
           </button>
           <button
             onClick={goToToday}
             className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
           >
-            Oggi
+            {t('admin.lessons.calendar.today')}
           </button>
           <button
             onClick={() => navigateWeek('next')}
             className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
-            Successivo &#8250;
+            {t('admin.lessons.calendar.next')} &#8250;
           </button>
         </div>
         <h2 className="text-xl font-semibold">
@@ -99,7 +101,7 @@ const LessonsCalendar: React.FC<LessonsCalendarProps> = ({
 
       <div className="calendar-grid">
         <div className="grid grid-cols-6 gap-1">
-          <div className="time-column bg-gray-50 p-2 font-semibold text-center">Ora</div>
+          <div className="time-column bg-gray-50 p-2 font-semibold text-center">{t('admin.lessons.calendar.hour')}</div>
           {weekDays.map(day => (
             <div key={day.toISOString()} className="day-header bg-gray-50 p-2 font-semibold text-center">
               <div>{day.toLocaleDateString('it-IT', { weekday: 'short' })}</div>
@@ -134,7 +136,7 @@ const LessonsCalendar: React.FC<LessonsCalendarProps> = ({
                       <div className="lesson-card bg-blue-500 text-white p-2 rounded m-1 text-xs">
                         <div className="font-semibold truncate">{lesson.name}</div>
                         <div className="text-blue-100 truncate">
-                          {lesson.course?.name || 'Corso non specificato'}
+                          {lesson.course?.name || t('admin.lessons.calendar.courseNotSpecified')}
                         </div>
                         {lesson.classroom?.name && (
                           <div className="text-blue-200 text-[10px] truncate">

@@ -22,7 +22,12 @@
     "all": "Tutti",
     "none": "Nessuno",
     "noData": "Nessun dato disponibile",
-    "logout": "Esci"
+    "logout": "Esci",
+    "confirmDeleteModal": {
+      "confirmMessage": "Sei sicuro di voler eliminare {{itemType}} {{itemName}}?",
+      "cannotBeUndone": "⚠️ Questa azione non può essere annullata.",
+      "deleting": "Eliminando..."
+    }
   },
   "auth": {
     "login": "Accesso",
@@ -143,7 +148,37 @@
       "loadingSubtext": "Preparazione dei dati in corso...",
       "refreshing": "Aggiornando...",
       "errorLoadingStudents": "Si è verificato un errore nel caricamento degli studenti. Riprova più tardi.",
-      "errorDeletingStudent": "Impossibile eliminare lo studente. Riprova più tardi."
+      "errorDeletingStudent": "Impossibile eliminare lo studente. Riprova più tardi.",
+      "studentEdit": {
+        "title": "Modifica Studente",
+        "backToList": "Torna all'elenco",
+        "studentBeingEdited": "Studente in modifica",
+        "requiredFieldsNote": "I campi contrassegnati con * sono obbligatori",
+        "saveChanges": "Salva modifiche",
+        "fields": {
+          "firstName": "Nome",
+          "lastName": "Cognome",
+          "email": "Email",
+          "studentId": "Matricola",
+          "course": "Corso"
+        },
+        "placeholders": {
+          "firstName": "Inserisci il nome",
+          "lastName": "Inserisci il cognome",
+          "email": "inserisci.email@esempio.com",
+          "studentId": "Es: ABC123456",
+          "selectCourse": "Seleziona un corso"
+        },
+        "errors": {
+          "loadingData": "Si è verificato un errore nel caricamento dei dati. Riprova più tardi.",
+          "requiredFields": "Nome, cognome ed email sono campi obbligatori",
+          "studentIdRequired": "La matricola è obbligatoria",
+          "updateFailed": "Si è verificato un errore durante l'aggiornamento. Riprova più tardi."
+        },
+        "messages": {
+          "updateSuccess": "Studente aggiornato con successo!"
+        }
+      }
     },
     "classrooms": {
       "title": "Gestione Aule",
@@ -167,6 +202,54 @@
       "errorLoading": "Impossibile caricare le aule. Riprova più tardi.",
       "refreshing": "Aggiornando...",
       "searchCameras": "Cerca Camere",
+      "cameraDiscovery": {
+        "title": "Ricerca Camere IP",
+        "searching": "Ricerca in corso... (mostra TUTTI i dispositivi)",
+        "startSearch": "Avvia Ricerca Automatica",
+        "noDevicesFound": "Nessuna camera trovata",
+        "confirmedCameras": "Camere confermate",
+        "potentialCameras": "Possibili camere - richiedono configurazione",
+        "select": "Seleziona",
+        "testCredentials": "Testa Credenziali",
+        "close": "Chiudi",
+        "protocols": "Protocolli",
+        "username": "Username",
+        "password": "Password",
+        "testCamera": "Testa Camera",
+        "directAssignment": "Assegnazione diretta per",
+        "scanDescription": "Il sistema eseguirà una scansione automatica completa della rete locale",
+        "smartDiscoveryInfo": "Discovery intelligente range 1-50 con auto-test credenziali (30-35 secondi)...",
+        "smartDiscoveryInProgress": "Discovery intelligente in corso...",
+        "scanningRange": "Scansione range 1-50 + auto-test credenziali",
+        "autoConfirmCameras": "Conferma automaticamente le camere funzionanti",
+        "noDevicesHint": "Prova a modificare il range di rete o verifica che le camere siano accese",
+        "endpoint": "Endpoint",
+        "imageSize": "Dimensione immagine",
+        "credentials": "Credenziali",
+        "reason": "Motivo",
+        "openPorts": "Porte aperte",
+        "suggestion": "Suggerimento",
+        "testing": "Test...",
+        "testCameraTitle": "Test Camera",
+        "detecting": "Rilevazione...",
+        "usernamePlaceholder": "admin",
+        "passwordPlaceholder": "password",
+        "rtspSupported": "RTSP supportato - Ottimo per streaming!",
+        "devicesFound": "Trovati {{count}} dispositivi sulla rete",
+        "camerasAutoConfirmed": "{{count}} camere confermate automaticamente!",
+        "howToConfigure": "Come configurare una camera potenziale",
+        "configStep1": "Apri l'app della camera (es. IMOU Life)",
+        "configStep2": "Vai nelle impostazioni della camera",
+        "configStep3": "Abilita \"HTTP Service\" o \"Web Service\"",
+        "configStep4": "Imposta username e password (es. admin/Mannoli2025)",
+        "configStep5": "Clicca \"Configura Manualmente\" per aggiungere la camera",
+        "errors": {
+          "timeout": "Ricerca interrotta per timeout. La rete potrebbe essere lenta o congestionata.",
+          "searchError": "Errore durante la ricerca delle camere",
+          "testFailed": "Test fallito",
+          "credentialsTestFailed": "Test credenziali fallito"
+        }
+      },
       "totalClassrooms": "Aule Totali",
       "searchResults": "Risultati Ricerca",
       "withCamera": "Con Telecamera",
@@ -375,22 +458,68 @@
         "editTitle": "Modifica Lezione",
         "newTitle": "Nuova Lezione",
         "nameLabel": "Nome Lezione *",
-        "namePlaceholder": "Es. Introduzione al calcolo differenziale",
+        "namePlaceholder": "Inserisci il nome della lezione",
+        "dateLabel": "Data *",
         "dateTimeLabel": "Data e Ora *",
+        "startTimeLabel": "Ora Inizio *",
+        "endTimeLabel": "Ora Fine *",
         "courseLabel": "Corso *",
         "selectCourse": "Seleziona un corso",
-        "subjectLabel": "Materia *",
+        "subjectLabel": "Materia",
         "selectSubject": "Seleziona una materia",
         "classroomLabel": "Aula *",
         "selectClassroom": "Seleziona un'aula",
+        "teacherLabel": "Docente",
+        "selectTeacher": "Seleziona un docente",
         "updateLesson": "Aggiorna Lezione",
-        "createLesson": "Crea Lezione"
+        "createLesson": "Crea Lezione",
+        "saving": "Salvataggio...",
+        "update": "Aggiorna",
+        "create": "Crea",
+        "validation": {
+          "nameRequired": "Il nome della lezione è obbligatorio",
+          "dateRequired": "La data è obbligatoria",
+          "startTimeRequired": "L'ora di inizio è obbligatoria",
+          "endTimeRequired": "L'ora di fine è obbligatoria",
+          "courseRequired": "Il corso è obbligatorio",
+          "classroomRequired": "L'aula è obbligatoria",
+          "endTimeAfterStart": "L'ora di fine deve essere successiva all'ora di inizio"
+        }
       },
       "deleteConfirmation": {
         "title": "Conferma Eliminazione",
         "message": "Sei sicuro di voler eliminare la lezione {{lessonName}}?",
         "warning": "⚠️ Questa azione non può essere annullata.",
         "deleteButton": "Elimina Definitivamente"
+      },
+      "calendar": {
+        "previous": "Precedente",
+        "today": "Oggi",
+        "next": "Successivo",
+        "hour": "Ora",
+        "courseNotSpecified": "Corso non specificato",
+        "completed": "Completata"
+      },
+      "viewModes": {
+        "calendar": "📅 Calendario",
+        "list": "📋 Lista"
+      },
+      "status": {
+        "completed": "Completata",
+        "lessonCompleted": "✅ Lezione Completata"
+      },
+      "actions": {
+        "newLesson": "Nuova Lezione",
+        "editLesson": "Modifica lezione",
+        "deleteLesson": "Elimina lezione",
+        "captureAndAnalyze": "Scatta e Analizza",
+        "viewImages": "Immagini",
+        "captureAndAnalyzeRealtime": "Scatta e Analizza in tempo reale"
+      },
+      "messages": {
+        "lessonUpdated": "Lezione aggiornata con successo",
+        "lessonCreated": "Lezione creata con successo",
+        "errorSaving": "Errore nel salvataggio della lezione"
       },
       "directory": {
         "title": "Directory della Lezione",
@@ -464,7 +593,12 @@
         "directoryInfoRetrievalError": "Errore nel recupero delle info sulle directory",
         "noImagesInDirectory": "Non ci sono immagini nella directory: {{path}}. Carica delle immagini prima di avviare l'analisi.",
         "analysisCompletionError": "Errore {{status}}: Impossibile completare l'analisi",
-        "attendanceAnalysisError": "Errore durante l'analisi delle presenze:"
+        "attendanceAnalysisError": "Errore durante l'analisi delle presenze:",
+        "loadingImagesError": "Errore caricamento immagini: {{status}}",
+        "unknownErrorDuringImageLoad": "Errore sconosciuto durante caricamento immagini",
+        "errorDuringCaptureAnalysis": "Errore durante scatto e analisi: {{status}}",
+        "unknownErrorDuringCaptureAnalysis": "Errore sconosciuto durante scatto e analisi",
+        "invalidServerResponse": "Risposta non valida dal server"
       },
       "unknownCourse": "Corso sconosciuto",
       "noSubject": "Nessuna materia",
@@ -476,7 +610,42 @@
       "responseStatus": "Stato risposta: {{status}} {{statusText}}",
       "errorResponse": "Risposta di errore:",
       "dataReceived": "Dati ricevuti:",
-      "startingAttendanceAnalysis": "Avvio analisi presenze per lezione ID: {{lessonId}}"
+      "startingAttendanceAnalysis": "Avvio analisi presenze per lezione ID: {{lessonId}}",
+      "images": {
+        "title": "Immagini della Lezione",
+        "loading": "Caricamento immagini...",
+        "noImagesAvailable": "Nessuna immagine disponibile",
+        "noImagesMessage": "Non sono ancora state scattate immagini per questa lezione",
+        "captureFirstImage": "Scatta Prima Immagine",
+        "analysisWithContours": "Analisi con contorni",
+        "upload": "Upload",
+        "close": "Chiudi"
+      },
+      "captureAnalysis": {
+        "captureInProgress": "Scatto in corso...",
+        "error": "Errore",
+        "captureCompleted": "Scatto completato",
+        "captureAnalysisInProgress": "Scatto e analisi in corso",
+        "waitMessage": "Attendere mentre la camera scatta la foto e il sistema analizza i volti...",
+        "errorDuringCapture": "Errore durante lo scatto",
+        "captureSuccessful": "✅ Scatto completato con successo",
+        "imageAcquiredMessage": "Immagine acquisita e analisi face detection completata",
+        "facesDetected": "Volti rilevati",
+        "studentsRecognized": "Studenti riconosciuti",
+        "recognizedStudentsList": "Studenti riconosciuti:",
+        "confidence": "sicurezza",
+        "reportImageWithDetections": "📸 Report Immagine con Rilevamenti",
+        "facesDetectedCount": "Volti rilevati: {{count}}",
+        "lessonCompleted": "🎓 Lezione Completata",
+        "wait": "Attendere...",
+        "close": "Chiudi",
+        "source": "Fonte",
+        "originalCamera": "Camera originale",
+        "withGreenFrames": "Con riquadri verdi",
+        "viewDetailedReport": "Visualizza Report Dettagliato",
+        "lessonCompletedMessage": "Questa lezione è stata marcata come completata. Non sarà più possibile effettuare nuovi scatti.",
+        "greenFramesIndicateRecognized": "I riquadri verdi indicano i volti riconosciuti, quelli rossi i volti non identificati."
+      }
     },
     "attendance": {
       "title": "Gestione Presenze",

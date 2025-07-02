@@ -882,7 +882,7 @@ const AttendancePanel: React.FC = () => {
                 </h3>
               </div>
               <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-medium">
-                {filteredAttendances.length} {t('admin.attendance.recordCount', { count: filteredAttendances.length })}
+                {t('admin.attendance.recordCount', { count: filteredAttendances.length })}
               </span>
             </div>
           </div>

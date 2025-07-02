@@ -22,7 +22,12 @@
     "all": "All",
     "none": "None",
     "noData": "No data available",
-    "logout": "Logout"
+    "logout": "Logout",
+    "confirmDeleteModal": {
+      "confirmMessage": "Are you sure you want to delete {{itemType}} {{itemName}}?",
+      "cannotBeUndone": "⚠️ This action cannot be undone.",
+      "deleting": "Deleting..."
+    }
   },
   "auth": {
     "login": "Login",
@@ -143,7 +148,37 @@
       "loadingSubtext": "Preparing data...",
       "refreshing": "Refreshing...",
       "errorLoadingStudents": "An error occurred while loading students. Please try again later.",
-      "errorDeletingStudent": "Unable to delete student. Please try again later."
+      "errorDeletingStudent": "Unable to delete student. Please try again later.",
+      "studentEdit": {
+        "title": "Edit Student",
+        "backToList": "Back to list",
+        "studentBeingEdited": "Student being edited",
+        "requiredFieldsNote": "Fields marked with * are required",
+        "saveChanges": "Save changes",
+        "fields": {
+          "firstName": "First Name",
+          "lastName": "Last Name",
+          "email": "Email",
+          "studentId": "Student ID",
+          "course": "Course"
+        },
+        "placeholders": {
+          "firstName": "Enter first name",
+          "lastName": "Enter last name",
+          "email": "email@example.com",
+          "studentId": "E.g. ABC123456",
+          "selectCourse": "Select a course"
+        },
+        "errors": {
+          "loadingData": "An error occurred while loading data. Please try again later.",
+          "requiredFields": "First name, last name and email are required fields",
+          "studentIdRequired": "Student ID is required",
+          "updateFailed": "An error occurred during the update. Please try again later."
+        },
+        "messages": {
+          "updateSuccess": "Student updated successfully!"
+        }
+      }
     },
     "classrooms": {
       "title": "Classroom Management",
@@ -167,6 +202,54 @@
       "errorLoading": "Unable to load classrooms. Please try again later.",
       "refreshing": "Refreshing...",
       "searchCameras": "Search Cameras",
+      "cameraDiscovery": {
+        "title": "IP Camera Search",
+        "searching": "Searching... (showing ALL devices)",
+        "startSearch": "Start Automatic Search",
+        "noDevicesFound": "No devices found",
+        "confirmedCameras": "Confirmed cameras",
+        "potentialCameras": "Potential cameras - require configuration",
+        "select": "Select",
+        "testCredentials": "Test Credentials",
+        "close": "Close",
+        "protocols": "Protocols",
+        "username": "Username",
+        "password": "Password",
+        "testCamera": "Test Camera",
+        "directAssignment": "Direct assignment for",
+        "scanDescription": "The system will perform a complete automatic scan of the local network",
+        "smartDiscoveryInfo": "Smart discovery range 1-50 with auto-test credentials (30-35 seconds)...",
+        "smartDiscoveryInProgress": "Smart discovery in progress...",
+        "scanningRange": "Scanning range 1-50 + auto-test credentials",
+        "autoConfirmCameras": "Automatically confirms working cameras",
+        "noDevicesHint": "Try modifying the network range or verify that cameras are powered on",
+        "endpoint": "Endpoint",
+        "imageSize": "Image size",
+        "credentials": "Credentials",
+        "reason": "Reason",
+        "openPorts": "Open ports",
+        "suggestion": "Suggestion",
+        "testing": "Testing...",
+        "testCameraTitle": "Test Camera",
+        "detecting": "Detecting...",
+        "usernamePlaceholder": "admin",
+        "passwordPlaceholder": "password",
+        "rtspSupported": "RTSP supported - Great for streaming!",
+        "devicesFound": "Found {{count}} devices on the network",
+        "camerasAutoConfirmed": "{{count}} cameras confirmed automatically!",
+        "howToConfigure": "How to configure a potential camera",
+        "configStep1": "Open the camera app (e.g. IMOU Life)",
+        "configStep2": "Go to camera settings",
+        "configStep3": "Enable \"HTTP Service\" or \"Web Service\"",
+        "configStep4": "Set username and password (e.g. admin/Mannoli2025)",
+        "configStep5": "Click \"Configure Manually\" to add the camera",
+        "errors": {
+          "timeout": "Search interrupted due to timeout. The network may be slow or congested.",
+          "searchError": "Error during camera search",
+          "testFailed": "Test failed",
+          "credentialsTestFailed": "Credentials test failed"
+        }
+      },
       "totalClassrooms": "Total Classrooms",
       "searchResults": "Search Results",
       "withCamera": "With Camera",
@@ -375,22 +458,68 @@
         "editTitle": "Edit Lesson",
         "newTitle": "New Lesson",
         "nameLabel": "Lesson Name *",
-        "namePlaceholder": "E.g. Introduction to differential calculus",
+        "namePlaceholder": "Enter the lesson name",
+        "dateLabel": "Date *",
         "dateTimeLabel": "Date and Time *",
+        "startTimeLabel": "Start Time *",
+        "endTimeLabel": "End Time *",
         "courseLabel": "Course *",
         "selectCourse": "Select a course",
-        "subjectLabel": "Subject *",
+        "subjectLabel": "Subject",
         "selectSubject": "Select a subject",
         "classroomLabel": "Classroom *",
         "selectClassroom": "Select a classroom",
+        "teacherLabel": "Teacher",
+        "selectTeacher": "Select a teacher",
         "updateLesson": "Update Lesson",
-        "createLesson": "Create Lesson"
+        "createLesson": "Create Lesson",
+        "saving": "Saving...",
+        "update": "Update",
+        "create": "Create",
+        "validation": {
+          "nameRequired": "Lesson name is required",
+          "dateRequired": "Date is required",
+          "startTimeRequired": "Start time is required",
+          "endTimeRequired": "End time is required",
+          "courseRequired": "Course is required",
+          "classroomRequired": "Classroom is required",
+          "endTimeAfterStart": "End time must be after start time"
+        }
       },
       "deleteConfirmation": {
         "title": "Confirm Deletion",
         "message": "Are you sure you want to delete the lesson {{lessonName}}?",
         "warning": "⚠️ This action cannot be undone.",
         "deleteButton": "Delete Permanently"
+      },
+      "calendar": {
+        "previous": "Previous",
+        "today": "Today",
+        "next": "Next",
+        "hour": "Hour",
+        "courseNotSpecified": "Course not specified",
+        "completed": "Completed"
+      },
+      "viewModes": {
+        "calendar": "📅 Calendar",
+        "list": "📋 List"
+      },
+      "status": {
+        "completed": "Completed",
+        "lessonCompleted": "✅ Lesson Completed"
+      },
+      "actions": {
+        "newLesson": "New Lesson",
+        "editLesson": "Edit lesson",
+        "deleteLesson": "Delete lesson",
+        "captureAndAnalyze": "Capture and Analyze",
+        "viewImages": "Images",
+        "captureAndAnalyzeRealtime": "Capture and Analyze in real time"
+      },
+      "messages": {
+        "lessonUpdated": "Lesson updated successfully",
+        "lessonCreated": "Lesson created successfully",
+        "errorSaving": "Error saving lesson"
       },
       "directory": {
         "title": "Lesson Directory",
@@ -464,7 +593,12 @@
         "directoryInfoRetrievalError": "Error retrieving directory info",
         "noImagesInDirectory": "There are no images in the directory: {{path}}. Upload images before starting analysis.",
         "analysisCompletionError": "Error {{status}}: Unable to complete analysis",
-        "attendanceAnalysisError": "Error during attendance analysis:"
+        "attendanceAnalysisError": "Error during attendance analysis:",
+        "loadingImagesError": "Error loading images: {{status}}",
+        "unknownErrorDuringImageLoad": "Unknown error during image loading",
+        "errorDuringCaptureAnalysis": "Error during capture and analysis: {{status}}",
+        "unknownErrorDuringCaptureAnalysis": "Unknown error during capture and analysis",
+        "invalidServerResponse": "Invalid response from server"
       },
       "unknownCourse": "Unknown course",
       "noSubject": "No subject",
@@ -476,7 +610,42 @@
       "responseStatus": "Response status: {{status}} {{statusText}}",
       "errorResponse": "Error response:",
       "dataReceived": "Data received:",
-      "startingAttendanceAnalysis": "Starting attendance analysis for lesson ID: {{lessonId}}"
+      "startingAttendanceAnalysis": "Starting attendance analysis for lesson ID: {{lessonId}}",
+      "images": {
+        "title": "Lesson Images",
+        "loading": "Loading images...",
+        "noImagesAvailable": "No images available",
+        "noImagesMessage": "No images have been captured for this lesson yet",
+        "captureFirstImage": "Capture First Image",
+        "analysisWithContours": "Analysis with contours",
+        "upload": "Upload",
+        "close": "Close"
+      },
+      "captureAnalysis": {
+        "captureInProgress": "Capture in progress...",
+        "error": "Error",
+        "captureCompleted": "Capture completed",
+        "captureAnalysisInProgress": "Capture and analysis in progress",
+        "waitMessage": "Please wait while the camera captures the photo and the system analyzes the faces...",
+        "errorDuringCapture": "Error during capture",
+        "captureSuccessful": "✅ Capture completed successfully",
+        "imageAcquiredMessage": "Image acquired and face detection analysis completed",
+        "facesDetected": "Faces detected",
+        "studentsRecognized": "Students recognized",
+        "recognizedStudentsList": "Recognized students:",
+        "confidence": "confidence",
+        "reportImageWithDetections": "📸 Image Report with Detections",
+        "facesDetectedCount": "Faces detected: {{count}}",
+        "lessonCompleted": "🎓 Lesson Completed",
+        "wait": "Wait...",
+        "close": "Close",
+        "source": "Source",
+        "originalCamera": "Original camera",
+        "withGreenFrames": "With green frames",
+        "viewDetailedReport": "View Detailed Report",
+        "lessonCompletedMessage": "This lesson has been marked as completed. No new captures can be made.",
+        "greenFramesIndicateRecognized": "Green frames indicate recognized faces, red ones indicate unidentified faces."
+      }
     },
     "attendance": {
       "title": "Attendance Management",

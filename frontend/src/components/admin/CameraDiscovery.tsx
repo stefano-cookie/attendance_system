@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:4321/api',
@@ -46,6 +47,7 @@ interface CameraDiscoveryProps {
 }
 
 const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClose, targetClassroom }) => {
+  const { t } = useTranslation();
   const [discovering, setDiscovering] = useState(false);
   const [confirmedCameras, setConfirmedCameras] = useState<DiscoveredCamera[]>([]);
   const [potentialCameras, setPotentialCameras] = useState<DiscoveredCamera[]>([]);
@@ -73,17 +75,17 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
       
       // Mostra messaggio se trova dispositivi
       if (result.total > 0) {
-        console.log(`✅ Trovati ${result.total} dispositivi sulla rete`);
+        console.log(`✅ ${t('admin.classrooms.cameraDiscovery.devicesFound', { count: result.total })}`);
         if (result.confirmed && result.confirmed.length > 0) {
-          console.log(`🎉 ${result.confirmed.length} camere confermate automaticamente!`);
+          console.log(`🎉 ${t('admin.classrooms.cameraDiscovery.camerasAutoConfirmed', { count: result.confirmed.length })}`);
         }
       }
       
     } catch (err: any) {
       if (err.code === 'ECONNABORTED') {
-        setError('Ricerca interrotta per timeout. La rete potrebbe essere lenta o congestionata.');
+        setError(t('admin.classrooms.cameraDiscovery.errors.timeout'));
       } else {
-        setError(err.response?.data?.error || 'Errore durante la ricerca delle camere');
+        setError(err.response?.data?.error || t('admin.classrooms.cameraDiscovery.errors.searchError'));
       }
     } finally {
       setDiscovering(false);
@@ -95,7 +97,7 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
       const response = await api.post('/cameras/test', { ip });
       return response.data;
     } catch (err) {
-      return { success: false, error: 'Test fallito' };
+      return { success: false, error: t('admin.classrooms.cameraDiscovery.errors.testFailed') };
     }
   };
 
@@ -134,7 +136,7 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
     } catch (err: any) {
       return { 
         success: false, 
-        error: err.response?.data?.message || 'Test credenziali fallito' 
+        error: err.response?.data?.message || t('admin.classrooms.cameraDiscovery.errors.credentialsTestFailed') 
       };
     } finally {
       setTestingCamera(null);
@@ -172,10 +174,10 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">Ricerca Camere IP</h3>
+                  <h3 className="text-2xl font-bold text-gray-900">{t('admin.classrooms.cameraDiscovery.title')}</h3>
                   {targetClassroom && (
                     <p className="text-sm text-purple-600 mt-1">
-                      Assegnazione diretta per: <span className="font-semibold">{targetClassroom.name}</span>
+                      {t('admin.classrooms.cameraDiscovery.directAssignment')}: <span className="font-semibold">{targetClassroom.name}</span>
                     </p>
                   )}
                 </div>
@@ -194,7 +196,7 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
             <div className="mb-6">
               <div className="text-center">
                 <p className="text-gray-600 mb-4">
-                  Il sistema eseguirà una scansione automatica completa della rete locale
+                  {t('admin.classrooms.cameraDiscovery.scanDescription')}
                 </p>
                 <button
                   onClick={discoverCameras}
@@ -204,20 +206,20 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
                   {discovering ? (
                     <div className="flex items-center space-x-2">
                       <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                      <span>Ricerca in corso... (mostra TUTTI i dispositivi)</span>
+                      <span>{t('admin.classrooms.cameraDiscovery.searching')}</span>
                     </div>
                   ) : (
                     <div className="flex items-center space-x-2">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
-                      <span>Avvia Ricerca Automatica</span>
+                      <span>{t('admin.classrooms.cameraDiscovery.startSearch')}</span>
                     </div>
                   )}
                 </button>
                 {discovering && (
                   <p className="text-sm text-gray-500 mt-2">
-                    Discovery intelligente range 1-50 con auto-test credenziali (30-35 secondi)...
+                    {t('admin.classrooms.cameraDiscovery.smartDiscoveryInfo')}
                   </p>
                 )}
               </div>
@@ -239,9 +241,9 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
               {discovering && (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent mx-auto mb-4"></div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-2">Discovery intelligente in corso...</h4>
-                  <p className="text-gray-500">Scansione range 1-50 + auto-test credenziali</p>
-                  <p className="text-sm text-gray-400 mt-2">Conferma automaticamente le camere funzionanti</p>
+                  <h4 className="text-lg font-medium text-gray-900 mb-2">{t('admin.classrooms.cameraDiscovery.smartDiscoveryInProgress')}</h4>
+                  <p className="text-gray-500">{t('admin.classrooms.cameraDiscovery.scanningRange')}</p>
+                  <p className="text-sm text-gray-400 mt-2">{t('admin.classrooms.cameraDiscovery.autoConfirmCameras')}</p>
                 </div>
               )}
 
@@ -252,8 +254,8 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-2">Nessuna camera trovata</h4>
-                  <p className="text-gray-500">Prova a modificare il range di rete o verifica che le camere siano accese</p>
+                  <h4 className="text-lg font-medium text-gray-900 mb-2">{t('admin.classrooms.cameraDiscovery.noDevicesFound')}</h4>
+                  <p className="text-gray-500">{t('admin.classrooms.cameraDiscovery.noDevicesHint')}</p>
                 </div>
               )}
 
@@ -264,7 +266,7 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
                     <svg className="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
-                    Camere confermate ({confirmedCameras.length})
+                    {t('admin.classrooms.cameraDiscovery.confirmedCameras')} ({confirmedCameras.length})
                   </h4>
                   
                   <div className="grid gap-4">
@@ -285,14 +287,14 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
                             
                             <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
                               <div>
-                                <span className="font-medium">Endpoint:</span> {camera.workingEndpoint}
+                                <span className="font-medium">{t('admin.classrooms.cameraDiscovery.endpoint')}:</span> {camera.workingEndpoint}
                               </div>
                               <div>
-                                <span className="font-medium">Dimensione immagine:</span> {camera.imageSize ? (camera.imageSize / 1024).toFixed(1) + 'KB' : 'N/A'}
+                                <span className="font-medium">{t('admin.classrooms.cameraDiscovery.imageSize')}:</span> {camera.imageSize ? (camera.imageSize / 1024).toFixed(1) + 'KB' : 'N/A'}
                               </div>
                               {camera.workingCredentials && (
                                 <div className="col-span-2">
-                                  <span className="font-medium">Credenziali:</span> {camera.workingCredentials.username}:{camera.workingCredentials.password || 'empty'}
+                                  <span className="font-medium">{t('admin.classrooms.cameraDiscovery.credentials')}:</span> {camera.workingCredentials.username}:{camera.workingCredentials.password || 'empty'}
                                 </div>
                               )}
                             </div>
@@ -302,7 +304,7 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
                             onClick={() => onCameraSelect(camera)}
                             className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-medium hover:shadow-lg hover:scale-105 transition-all duration-200"
                           >
-                            Seleziona
+                            {t('admin.classrooms.cameraDiscovery.select')}
                           </button>
                         </div>
                       </div>
@@ -318,7 +320,7 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
                     <svg className="w-5 h-5 text-amber-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
-                    Possibili camere - richiedono configurazione ({potentialCameras.length})
+                    {t('admin.classrooms.cameraDiscovery.potentialCameras')} ({potentialCameras.length})
                   </h4>
                   
                   <div className="grid gap-4">
@@ -339,16 +341,16 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
                             
                             <div className="text-sm text-gray-600 space-y-1">
                               <div>
-                                <span className="font-medium">Motivo:</span> {camera.reason}
+                                <span className="font-medium">{t('admin.classrooms.cameraDiscovery.reason')}:</span> {camera.reason}
                               </div>
                               {camera.openPorts && camera.openPorts.length > 0 && (
                                 <div>
-                                  <span className="font-medium">Porte aperte:</span> {camera.openPorts.join(', ')}
+                                  <span className="font-medium">{t('admin.classrooms.cameraDiscovery.openPorts')}:</span> {camera.openPorts.join(', ')}
                                 </div>
                               )}
                               {camera.suggestion && (
                                 <div className="bg-amber-100 border border-amber-200 rounded p-2 mt-2">
-                                  <span className="font-medium text-amber-800">💡 Suggerimento:</span> {camera.suggestion}
+                                  <span className="font-medium text-amber-800">💡 {t('admin.classrooms.cameraDiscovery.suggestion')}:</span> {camera.suggestion}
                                 </div>
                               )}
                             </div>
@@ -362,10 +364,10 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
                             {testingCamera === camera.ip ? (
                               <div className="flex items-center space-x-2">
                                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                                <span>Test...</span>
+                                <span>{t('admin.classrooms.cameraDiscovery.testing')}</span>
                               </div>
                             ) : (
-                              'Testa Credenziali'
+                              t('admin.classrooms.cameraDiscovery.testCredentials')
                             )}
                           </button>
                         </div>
@@ -379,13 +381,13 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                       </svg>
                       <div>
-                        <h5 className="font-medium text-blue-800 mb-1">Come configurare una camera potenziale:</h5>
+                        <h5 className="font-medium text-blue-800 mb-1">{t('admin.classrooms.cameraDiscovery.howToConfigure')}:</h5>
                         <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
-                          <li>Apri l'app della camera (es. IMOU Life)</li>
-                          <li>Vai nelle impostazioni della camera</li>
-                          <li>Abilita "HTTP Service" o "Web Service"</li>
-                          <li>Imposta username e password (es. admin/Mannoli2025)</li>
-                          <li>Clicca "Configura Manualmente" per aggiungere la camera</li>
+                          <li>{t('admin.classrooms.cameraDiscovery.configStep1')}</li>
+                          <li>{t('admin.classrooms.cameraDiscovery.configStep2')}</li>
+                          <li>{t('admin.classrooms.cameraDiscovery.configStep3')}</li>
+                          <li>{t('admin.classrooms.cameraDiscovery.configStep4')}</li>
+                          <li>{t('admin.classrooms.cameraDiscovery.configStep5')}</li>
                         </ol>
                       </div>
                     </div>
@@ -399,7 +401,7 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
                 onClick={onClose}
                 className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
               >
-                Chiudi
+                {t('admin.classrooms.cameraDiscovery.close')}
               </button>
             </div>
           </div>
@@ -411,7 +413,7 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
         <div className="fixed inset-0 z-60 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900">Test Camera</h3>
+              <h3 className="text-lg font-bold text-gray-900">{t('admin.classrooms.cameraDiscovery.testCameraTitle')}</h3>
               <button
                 onClick={() => setShowCredentialsModal(null)}
                 className="p-2 bg-gray-100 text-gray-500 rounded-lg hover:bg-gray-200"
@@ -429,7 +431,7 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
                   <p className="font-medium text-blue-900">{showCredentialsModal.ip}</p>
                   <p className="text-sm text-blue-700">{showCredentialsModal.model}</p>
                   <p className="text-xs text-blue-600">
-                    Protocolli: {showCredentialsModal.supportedProtocols?.join(', ') || 'Rilevazione...'}
+                    {t('admin.classrooms.cameraDiscovery.protocols')}: {showCredentialsModal.supportedProtocols?.join(', ') || t('admin.classrooms.cameraDiscovery.detecting')}
                   </p>
                 </div>
               </div>
@@ -437,24 +439,24 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin.classrooms.cameraDiscovery.username')}</label>
                 <input
                   type="text"
                   value={credentials.username}
                   onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="admin"
+                  placeholder={t('admin.classrooms.cameraDiscovery.usernamePlaceholder')}
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin.classrooms.cameraDiscovery.password')}</label>
                 <input
                   type="password"
                   value={credentials.password}
                   onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="password"
+                  placeholder={t('admin.classrooms.cameraDiscovery.passwordPlaceholder')}
                 />
               </div>
             </div>
@@ -465,7 +467,7 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
                   <svg className="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-sm text-green-800 font-medium">RTSP supportato - Ottimo per streaming!</span>
+                  <span className="text-sm text-green-800 font-medium">{t('admin.classrooms.cameraDiscovery.rtspSupported')}</span>
                 </div>
               </div>
             )}
@@ -475,7 +477,7 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
                 onClick={() => setShowCredentialsModal(null)}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"
               >
-                Annulla
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleCredentialsSubmit}
@@ -485,10 +487,10 @@ const CameraDiscovery: React.FC<CameraDiscoveryProps> = ({ onCameraSelect, onClo
                 {testingCamera === showCredentialsModal.ip ? (
                   <div className="flex items-center justify-center space-x-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                    <span>Test...</span>
+                    <span>{t('admin.classrooms.cameraDiscovery.testing')}</span>
                   </div>
                 ) : (
-                  'Testa Camera'
+                  t('admin.classrooms.cameraDiscovery.testCamera')
                 )}
               </button>
             </div>

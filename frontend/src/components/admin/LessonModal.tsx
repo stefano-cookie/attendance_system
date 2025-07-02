@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Lesson, Course, Subject, Classroom, User } from '../../services/api';
+import { useTranslation } from 'react-i18next';
 
 interface LessonData {
   id?: number;
@@ -38,6 +39,7 @@ const LessonModal: React.FC<LessonModalProps> = ({
   defaultDate,
   defaultHour = 9
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<LessonData>({
     name: '',
     lesson_date: '',
@@ -108,17 +110,17 @@ const LessonModal: React.FC<LessonModalProps> = ({
     setErrors([]);
 
     const validationErrors = [];
-    if (!formData.name.trim()) validationErrors.push('Il nome della lezione è obbligatorio');
-    if (!formData.lesson_date) validationErrors.push('La data è obbligatoria');
-    if (!formData.planned_start_time) validationErrors.push('L\'ora di inizio è obbligatoria');
-    if (!formData.planned_end_time) validationErrors.push('L\'ora di fine è obbligatoria');
-    if (!formData.course_id) validationErrors.push('Il corso è obbligatorio');
-    if (!formData.classroom_id) validationErrors.push('L\'aula è obbligatoria');
+    if (!formData.name.trim()) validationErrors.push(t('admin.lessons.form.validation.nameRequired'));
+    if (!formData.lesson_date) validationErrors.push(t('admin.lessons.form.validation.dateRequired'));
+    if (!formData.planned_start_time) validationErrors.push(t('admin.lessons.form.validation.startTimeRequired'));
+    if (!formData.planned_end_time) validationErrors.push(t('admin.lessons.form.validation.endTimeRequired'));
+    if (!formData.course_id) validationErrors.push(t('admin.lessons.form.validation.courseRequired'));
+    if (!formData.classroom_id) validationErrors.push(t('admin.lessons.form.validation.classroomRequired'));
 
     const startTime = new Date(`${formData.lesson_date}T${formData.planned_start_time}`);
     const endTime = new Date(`${formData.lesson_date}T${formData.planned_end_time}`);
     if (endTime <= startTime) {
-      validationErrors.push('L\'ora di fine deve essere successiva all\'ora di inizio');
+      validationErrors.push(t('admin.lessons.form.validation.endTimeAfterStart'));
     }
 
     if (validationErrors.length > 0) {
@@ -131,7 +133,7 @@ const LessonModal: React.FC<LessonModalProps> = ({
       await onSave(formData);
       onClose();
     } catch (error) {
-      setErrors(['Errore durante il salvataggio della lezione']);
+      setErrors([t('admin.lessons.messages.errorSaving')]);
     } finally {
       setIsSubmitting(false);
     }
@@ -165,7 +167,7 @@ const LessonModal: React.FC<LessonModalProps> = ({
       <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">
-            {lesson ? 'Modifica Lezione' : 'Nuova Lezione'}
+            {lesson ? t('admin.lessons.form.editTitle') : t('admin.lessons.form.newTitle')}
           </h2>
           <button
             onClick={onClose}
@@ -185,18 +187,18 @@ const LessonModal: React.FC<LessonModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Nome Lezione *</label>
+            <label className="block text-sm font-medium mb-1">{t('admin.lessons.form.nameLabel')}</label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
               className="w-full p-2 border border-gray-300 rounded"
-              placeholder="Inserisci il nome della lezione"
+              placeholder={t('admin.lessons.form.namePlaceholder')}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Data *</label>
+            <label className="block text-sm font-medium mb-1">{t('admin.lessons.form.dateLabel')}</label>
             <input
               type="date"
               value={formData.lesson_date}
@@ -207,7 +209,7 @@ const LessonModal: React.FC<LessonModalProps> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Ora Inizio *</label>
+              <label className="block text-sm font-medium mb-1">{t('admin.lessons.form.startTimeLabel')}</label>
               <input
                 type="time"
                 value={formData.planned_start_time}
@@ -216,7 +218,7 @@ const LessonModal: React.FC<LessonModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Ora Fine *</label>
+              <label className="block text-sm font-medium mb-1">{t('admin.lessons.form.endTimeLabel')}</label>
               <input
                 type="time"
                 value={formData.planned_end_time}
@@ -227,13 +229,13 @@ const LessonModal: React.FC<LessonModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Corso *</label>
+            <label className="block text-sm font-medium mb-1">{t('admin.lessons.form.courseLabel')}</label>
             <select
               value={formData.course_id}
               onChange={(e) => handleInputChange('course_id', parseInt(e.target.value))}
               className="w-full p-2 border border-gray-300 rounded"
             >
-              <option value={0}>Seleziona un corso</option>
+              <option value={0}>{t('admin.lessons.form.selectCourse')}</option>
               {courses.map(course => (
                 <option key={course.id} value={course.id}>
                   {course.name}
@@ -243,7 +245,7 @@ const LessonModal: React.FC<LessonModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Materia</label>
+            <label className="block text-sm font-medium mb-1">{t('admin.lessons.form.subjectLabel')}</label>
             <select
               value={formData.subject_id || 0}
               onChange={(e) => {
@@ -253,7 +255,7 @@ const LessonModal: React.FC<LessonModalProps> = ({
               className="w-full p-2 border border-gray-300 rounded"
               disabled={!formData.course_id}
             >
-              <option value={0}>Seleziona una materia</option>
+              <option value={0}>{t('admin.lessons.form.selectSubject')}</option>
               {filteredSubjects.map(subject => (
                 <option key={subject.id} value={subject.id}>
                   {subject.name}
@@ -263,13 +265,13 @@ const LessonModal: React.FC<LessonModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Aula *</label>
+            <label className="block text-sm font-medium mb-1">{t('admin.lessons.form.classroomLabel')}</label>
             <select
               value={formData.classroom_id}
               onChange={(e) => handleInputChange('classroom_id', parseInt(e.target.value))}
               className="w-full p-2 border border-gray-300 rounded"
             >
-              <option value={0}>Seleziona un'aula</option>
+              <option value={0}>{t('admin.lessons.form.selectClassroom')}</option>
               {classrooms.map(classroom => (
                 <option key={classroom.id} value={classroom.id}>
                   {classroom.name}
@@ -279,7 +281,7 @@ const LessonModal: React.FC<LessonModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Docente</label>
+            <label className="block text-sm font-medium mb-1">{t('admin.lessons.form.teacherLabel')}</label>
             <select
               value={formData.teacher_id || 0}
               onChange={(e) => {
@@ -288,7 +290,7 @@ const LessonModal: React.FC<LessonModalProps> = ({
               }}
               className="w-full p-2 border border-gray-300 rounded"
             >
-              <option value={0}>Seleziona un docente</option>
+              <option value={0}>{t('admin.lessons.form.selectTeacher')}</option>
               {teachers.map(teacher => (
                 <option key={teacher.id} value={teacher.id}>
                   {teacher.name} {teacher.surname}
@@ -304,14 +306,14 @@ const LessonModal: React.FC<LessonModalProps> = ({
               className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
               disabled={isSubmitting}
             >
-              Annulla
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Salvataggio...' : (lesson ? 'Aggiorna' : 'Crea')}
+              {isSubmitting ? t('admin.lessons.form.saving') : (lesson ? t('admin.lessons.form.update') : t('admin.lessons.form.create'))}
             </button>
           </div>
         </form>

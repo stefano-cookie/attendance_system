@@ -206,16 +206,16 @@ const LessonsPanel: React.FC = () => {
     try {
       if (lessonData.id) {
         await updateLesson(lessonData.id, lessonData);
-        setInfo('Lezione aggiornata con successo');
+        setInfo(t('admin.lessons.messages.lessonUpdated'));
       } else {
         await createLesson(lessonData);
-        setInfo('Lezione creata con successo');
+        setInfo(t('admin.lessons.messages.lessonCreated'));
       }
       await fetchData();
       setIsLessonModalOpen(false);
     } catch (error: any) {
-      console.error('Errore nel salvataggio della lezione:', error);
-      setError(error.response?.data?.message || 'Errore nel salvataggio della lezione');
+      console.error(t('admin.lessons.errors.savingError'), error);
+      setError(error.response?.data?.message || t('admin.lessons.errors.lessonSavingError'));
     }
   };
 
@@ -356,7 +356,7 @@ const LessonsPanel: React.FC = () => {
       const backendUrl = 'http://localhost:4321';
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('Token di autenticazione mancante');
+        setError(t('admin.lessons.errors.authTokenMissing'));
         setLoadingImages(false);
         return;
       }
@@ -369,18 +369,18 @@ const LessonsPanel: React.FC = () => {
       });
       
       if (!response.ok) {
-        throw new Error(`Errore caricamento immagini: ${response.status}`);
+        throw new Error(t('admin.lessons.errors.loadingImagesError', { status: response.status }));
       }
       
       const data = await response.json();
       setLessonImages(data.images || []);
       
     } catch (err: unknown) {
-      console.error('❌ Errore caricamento immagini:', err);
+      console.error(`❌ ${t('admin.lessons.errors.loadingImagesError', { status: '' })}`, err);
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('Errore sconosciuto durante caricamento immagini');
+        setError(t('admin.lessons.errors.unknownErrorDuringImageLoad'));
       }
     } finally {
       setLoadingImages(false);
@@ -395,7 +395,7 @@ const LessonsPanel: React.FC = () => {
       setLessonToAnalyze(lesson);
       setIsCaptureAnalysisModalOpen(true);
       
-      console.log(`📸 Scatto e analisi per lezione ${lesson.id}`);
+      console.log(`📸 ${t('admin.lessons.captureAnalysis.captureAnalysisInProgress')} ${lesson.id}`);
       
       const backendUrl = 'http://localhost:4321';
       const token = localStorage.getItem('token');
@@ -416,17 +416,17 @@ const LessonsPanel: React.FC = () => {
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Errore response:', errorText);
-        throw new Error(`Errore durante scatto e analisi: ${response.status}`);
+        console.error(`❌ ${t('admin.lessons.errors.invalidServerResponse')}:`, errorText);
+        throw new Error(t('admin.lessons.errors.errorDuringCaptureAnalysis', { status: response.status }));
       }
       
       try {
         const data = await response.json();
         setCaptureAnalysisResult(data);
         
-        let message = `✅ Scatto completato: ${data.analysis.detected_faces} volti, ${data.analysis.recognized_students} riconosciuti`;
+        let message = `✅ ${t('admin.lessons.captureAnalysis.captureCompleted')}: ${data.analysis.detected_faces} ${t('admin.lessons.captureAnalysis.facesDetected').toLowerCase()}, ${data.analysis.recognized_students} ${t('admin.lessons.captureAnalysis.studentsRecognized').toLowerCase()}`;
         if (data.lesson_completed) {
-          message += '. Lezione marcata come completata.';
+          message += `. ${t('admin.lessons.captureAnalysis.lessonCompleted')}`;
         }
         setInfo(message);
         
@@ -434,15 +434,15 @@ const LessonsPanel: React.FC = () => {
           fetchData(); // Ricarica la lista delle lezioni
         }
       } catch (jsonError) {
-        console.error('❌ Errore parsing JSON:', jsonError);
-        throw new Error('Risposta non valida dal server');
+        console.error(`❌ ${t('admin.lessons.errors.jsonParsingError')}`, jsonError);
+        throw new Error(t('admin.lessons.errors.invalidServerResponse'));
       }
     } catch (err: unknown) {
-      console.error('❌ Errore scatto e analisi:', err);
+      console.error(`❌ ${t('admin.lessons.errors.errorDuringCaptureAnalysis', { status: '' })}`, err);
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('Errore sconosciuto durante scatto e analisi');
+        setError(t('admin.lessons.errors.unknownErrorDuringCaptureAnalysis'));
       }
     } finally {
       setIsCaptureAnalyzing(false);
@@ -855,7 +855,7 @@ const LessonsPanel: React.FC = () => {
                   : 'text-gray-600 hover:text-blue-500'
               }`}
             >
-              📅 Calendario
+              {t('admin.lessons.viewModes.calendar')}
             </button>
             <button
               onClick={() => setViewMode('list')}
@@ -865,7 +865,7 @@ const LessonsPanel: React.FC = () => {
                   : 'text-gray-600 hover:text-blue-500'
               }`}
             >
-              📋 Lista
+              {t('admin.lessons.viewModes.list')}
             </button>
           </div>
         </div>
@@ -985,13 +985,13 @@ const LessonsPanel: React.FC = () => {
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            ✅ Lezione Completata
+                            {t('admin.lessons.status.lessonCompleted')}
                           </div>
                         ) : (
                           <button
                             onClick={() => handleCaptureAndAnalyze(lesson)}
                             className="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-200 text-sm font-semibold"
-                            title="Scatta e Analizza in tempo reale"
+                            title={t('admin.lessons.actions.captureAndAnalyzeRealtime')}
                           >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -1011,7 +1011,7 @@ const LessonsPanel: React.FC = () => {
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                            Immagini
+                            {t('admin.lessons.actions.viewImages')}
                           </button>
                           
                           <button
@@ -1696,7 +1696,7 @@ const LessonsPanel: React.FC = () => {
                       </svg>
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900">
-                      Immagini della Lezione
+                      {t('admin.lessons.images.title')}
                     </h3>
                   </div>
                   <button
@@ -1713,7 +1713,7 @@ const LessonsPanel: React.FC = () => {
                   {loadingImages ? (
                     <div className="text-center py-8">
                       <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-500 border-t-transparent mx-auto mb-4"></div>
-                      <h3 className="text-lg font-semibold text-gray-700 mb-2">Caricamento immagini...</h3>
+                      <h3 className="text-lg font-semibold text-gray-700 mb-2">{t('admin.lessons.images.loading')}</h3>
                     </div>
                   ) : lessonImages.length > 0 ? (
                     <div>
@@ -1781,8 +1781,8 @@ const LessonsPanel: React.FC = () => {
                               </div>
                               
                               <div className="text-xs text-gray-500">
-                                Fonte: {image.source === 'camera' ? 'Camera originale' : 
-                                        image.source === 'face_detection_report' ? 'Analisi con contorni' : 'Upload'}
+                                {t('admin.lessons.captureAnalysis.source')}: {image.source === 'camera' ? t('admin.lessons.captureAnalysis.originalCamera') : 
+                                        image.source === 'face_detection_report' ? t('admin.lessons.images.analysisWithContours') : t('admin.lessons.images.upload')}
                                 {image.camera_ip && ` • ${image.camera_ip}`}
                               </div>
                               
@@ -1791,7 +1791,7 @@ const LessonsPanel: React.FC = () => {
                                   <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                   </svg>
-                                  Con riquadri verdi
+                                  {t('admin.lessons.captureAnalysis.withGreenFrames')}
                                 </div>
                               )}
                             </div>
@@ -1806,8 +1806,8 @@ const LessonsPanel: React.FC = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                       </div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Nessuna immagine disponibile</h3>
-                      <p className="text-gray-600 mb-6">Non sono ancora state scattate immagini per questa lezione</p>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('admin.lessons.images.noImagesAvailable')}</h3>
+                      <p className="text-gray-600 mb-6">{t('admin.lessons.images.noImagesMessage')}</p>
                       <button 
                         onClick={() => {
                           setIsImagesModalOpen(false);
@@ -1817,7 +1817,7 @@ const LessonsPanel: React.FC = () => {
                         }}
                         className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700"
                       >
-                        Scatta Prima Immagine
+                        {t('admin.lessons.images.captureFirstImage')}
                       </button>
                     </div>
                   )}
@@ -1828,7 +1828,7 @@ const LessonsPanel: React.FC = () => {
                     onClick={() => setIsImagesModalOpen(false)}
                     className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
                   >
-                    Chiudi
+                    {t('admin.lessons.images.close')}
                   </button>
                 </div>
               </div>
@@ -1865,7 +1865,7 @@ const LessonsPanel: React.FC = () => {
                       )}
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900">
-                      {isCaptureAnalyzing ? 'Scatto in corso...' : error ? 'Errore' : 'Scatto completato'}
+                      {isCaptureAnalyzing ? t('admin.lessons.captureAnalysis.captureInProgress') : error ? t('admin.lessons.captureAnalysis.error') : t('admin.lessons.captureAnalysis.captureCompleted')}
                     </h3>
                   </div>
                   <button
@@ -1883,21 +1883,21 @@ const LessonsPanel: React.FC = () => {
                   {isCaptureAnalyzing ? (
                     <div className="text-center py-8">
                       <div className="animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent mx-auto mb-4"></div>
-                      <h3 className="text-lg font-semibold text-gray-700 mb-2">Scatto e analisi in corso</h3>
+                      <h3 className="text-lg font-semibold text-gray-700 mb-2">{t('admin.lessons.captureAnalysis.captureAnalysisInProgress')}</h3>
                       <p className="text-gray-600">
-                        Attendere mentre la camera scatta la foto e il sistema analizza i volti...
+                        {t('admin.lessons.captureAnalysis.waitMessage')}
                       </p>
                     </div>
                   ) : error ? (
                     <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
-                      <h3 className="text-lg font-medium text-red-800 mb-2">Errore durante lo scatto</h3>
+                      <h3 className="text-lg font-medium text-red-800 mb-2">{t('admin.lessons.captureAnalysis.errorDuringCapture')}</h3>
                       <p className="text-red-700">{error}</p>
                     </div>
                   ) : captureAnalysisResult ? (
                     <div className="space-y-4">
                       <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
-                        <h3 className="text-lg font-medium text-green-800 mb-2">✅ Scatto completato con successo</h3>
-                        <p className="text-green-700">Immagine acquisita e analisi face detection completata</p>
+                        <h3 className="text-lg font-medium text-green-800 mb-2">{t('admin.lessons.captureAnalysis.captureSuccessful')}</h3>
+                        <p className="text-green-700">{t('admin.lessons.captureAnalysis.imageAcquiredMessage')}</p>
                       </div>
                       
                       <div className="grid grid-cols-2 gap-4">
@@ -1905,26 +1905,26 @@ const LessonsPanel: React.FC = () => {
                           <div className="text-2xl font-bold text-blue-600">
                             {captureAnalysisResult.analysis.detected_faces}
                           </div>
-                          <div className="text-sm text-gray-600">Volti rilevati</div>
+                          <div className="text-sm text-gray-600">{t('admin.lessons.captureAnalysis.facesDetected')}</div>
                         </div>
                         
                         <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
                           <div className="text-2xl font-bold text-green-600">
                             {captureAnalysisResult.analysis.recognized_students}
                           </div>
-                          <div className="text-sm text-gray-600">Studenti riconosciuti</div>
+                          <div className="text-sm text-gray-600">{t('admin.lessons.captureAnalysis.studentsRecognized')}</div>
                         </div>
                       </div>
                       
                       {captureAnalysisResult.analysis.students && captureAnalysisResult.analysis.students.length > 0 && (
                         <div className="bg-white border border-gray-200 rounded-lg p-4">
-                          <h4 className="font-semibold mb-3">Studenti riconosciuti:</h4>
+                          <h4 className="font-semibold mb-3">{t('admin.lessons.captureAnalysis.recognizedStudentsList')}</h4>
                           <div className="space-y-2">
                             {captureAnalysisResult.analysis.students.map((student: any, index: number) => (
                               <div key={index} className="flex items-center justify-between p-2 bg-green-50 rounded">
                                 <span className="font-medium">{student.name} {student.surname}</span>
                                 <span className="text-sm text-green-600">
-                                  {Math.round(student.confidence * 100)}% sicurezza
+                                  {Math.round(student.confidence * 100)}% {t('admin.lessons.captureAnalysis.confidence')}
                                 </span>
                               </div>
                             ))}
@@ -1935,32 +1935,32 @@ const LessonsPanel: React.FC = () => {
                       {/* Mostra l'immagine del report se disponibile */}
                       {captureAnalysisResult.image_id && (
                         <div className="bg-white border border-gray-200 rounded-lg p-4">
-                          <h4 className="font-semibold mb-3 text-gray-900">📸 Report Immagine con Rilevamenti</h4>
+                          <h4 className="font-semibold mb-3 text-gray-900">{t('admin.lessons.captureAnalysis.reportImageWithDetections')}</h4>
                           <div className="relative bg-gray-50 rounded-lg overflow-hidden">
                             <img 
                               src={`http://localhost:4321/api/images/lesson/${captureAnalysisResult.image_id}`}
                               alt="Report con volti rilevati"
                               className="w-full h-auto max-h-96 object-contain"
                               onError={(e) => {
-                                console.warn('Errore caricamento immagine report');
+                                console.warn(t('admin.lessons.errors.loadingImagesError', { status: 'report' }));
                                 (e.target as HTMLImageElement).style.display = 'none';
                               }}
                             />
                             <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
-                              Volti rilevati: {captureAnalysisResult.analysis.detected_faces}
+                              {t('admin.lessons.captureAnalysis.facesDetectedCount', { count: captureAnalysisResult.analysis.detected_faces })}
                             </div>
                           </div>
                           <p className="text-sm text-gray-600 mt-2">
-                            I riquadri verdi indicano i volti riconosciuti, quelli rossi i volti non identificati.
+                            {t('admin.lessons.captureAnalysis.greenFramesIndicateRecognized')}
                           </p>
                         </div>
                       )}
                       
                       {captureAnalysisResult.lesson_completed && (
                         <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-lg">
-                          <h4 className="font-semibold text-amber-800 mb-2">🎓 Lezione Completata</h4>
+                          <h4 className="font-semibold text-amber-800 mb-2">{t('admin.lessons.captureAnalysis.lessonCompleted')}</h4>
                           <p className="text-amber-700">
-                            Questa lezione è stata marcata come completata. Non sarà più possibile effettuare nuovi scatti.
+                            {t('admin.lessons.captureAnalysis.lessonCompletedMessage')}
                           </p>
                         </div>
                       )}
@@ -2003,7 +2003,7 @@ const LessonsPanel: React.FC = () => {
                       disabled={isCaptureAnalyzing}
                       className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
                     >
-                      {isCaptureAnalyzing ? 'Attendere...' : 'Chiudi'}
+                      {isCaptureAnalyzing ? t('admin.lessons.captureAnalysis.wait') : t('admin.lessons.captureAnalysis.close')}
                     </button>
                     
                     {captureAnalysisResult && !isCaptureAnalyzing && (
@@ -2014,7 +2014,7 @@ const LessonsPanel: React.FC = () => {
                         }}
                         className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
                       >
-                        Visualizza Report Dettagliato
+                        {t('admin.lessons.captureAnalysis.viewDetailedReport')}
                       </button>
                     )}
                   </div>

@@ -22,7 +22,12 @@
     "all": "Toate",
     "none": "Niciunul",
     "noData": "Nu există date",
-    "logout": "Deconectare"
+    "logout": "Deconectare",
+    "confirmDeleteModal": {
+      "confirmMessage": "Ești sigur că vrei să ștergi {{itemType}} {{itemName}}?",
+      "cannotBeUndone": "⚠️ Această acțiune nu poate fi anulată.",
+      "deleting": "Se șterge..."
+    }
   },
   "auth": {
     "login": "Autentificare",
@@ -143,7 +148,37 @@
       "loadingSubtext": "Se pregătesc datele...",
       "refreshing": "Se reîmprospătează...",
       "errorLoadingStudents": "A apărut o eroare la încărcarea studenților. Vă rugăm încercați din nou mai târziu.",
-      "errorDeletingStudent": "Nu s-a putut șterge studentul. Vă rugăm încercați din nou mai târziu."
+      "errorDeletingStudent": "Nu s-a putut șterge studentul. Vă rugăm încercați din nou mai târziu.",
+      "studentEdit": {
+        "title": "Editează Student",
+        "backToList": "Înapoi la listă",
+        "studentBeingEdited": "Student în editare",
+        "requiredFieldsNote": "Câmpurile marcate cu * sunt obligatorii",
+        "saveChanges": "Salvează modificările",
+        "fields": {
+          "firstName": "Prenume",
+          "lastName": "Nume",
+          "email": "Email",
+          "studentId": "Matricol",
+          "course": "Curs"
+        },
+        "placeholders": {
+          "firstName": "Introdu prenumele",
+          "lastName": "Introdu numele",
+          "email": "email@exemplu.com",
+          "studentId": "Ex: ABC123456",
+          "selectCourse": "Selectează un curs"
+        },
+        "errors": {
+          "loadingData": "A apărut o eroare la încărcarea datelor. Vă rugăm încercați din nou mai târziu.",
+          "requiredFields": "Prenume, nume și email sunt câmpuri obligatorii",
+          "studentIdRequired": "Matricola este obligatorie",
+          "updateFailed": "A apărut o eroare în timpul actualizării. Vă rugăm încercați din nou mai târziu."
+        },
+        "messages": {
+          "updateSuccess": "Student actualizat cu succes!"
+        }
+      }
     },
     "classrooms": {
       "title": "Gestionare Săli de Clasă",
@@ -167,6 +202,54 @@
       "errorLoading": "Nu s-au putut încărca sălile. Vă rugăm încercați din nou mai târziu.",
       "refreshing": "Se reîmprospătează...",
       "searchCameras": "Caută Camere",
+      "cameraDiscovery": {
+        "title": "Căutare Camere IP",
+        "searching": "Căutare în curs... (afișează TOATE dispozitivele)",
+        "startSearch": "Pornește Căutarea Automată",
+        "noDevicesFound": "Nicio cameră găsită",
+        "confirmedCameras": "Camere confirmate",
+        "potentialCameras": "Camere potențiale - necesită configurare",
+        "select": "Selectează",
+        "testCredentials": "Testează Credențiale",
+        "close": "Închide",
+        "protocols": "Protocoale",
+        "username": "Nume utilizator",
+        "password": "Parolă",
+        "testCamera": "Testează Camera",
+        "directAssignment": "Atribuire directă pentru",
+        "scanDescription": "Sistemul va efectua o scanare automată completă a rețelei locale",
+        "smartDiscoveryInfo": "Descoperire inteligentă interval 1-50 cu testare automată credențiale (30-35 secunde)...",
+        "smartDiscoveryInProgress": "Descoperire inteligentă în curs...",
+        "scanningRange": "Scanare interval 1-50 + testare automată credențiale",
+        "autoConfirmCameras": "Confirmă automat camerele funcționale",
+        "noDevicesHint": "Încercați să modificați intervalul de rețea sau verificați dacă camerele sunt pornite",
+        "endpoint": "Endpoint",
+        "imageSize": "Dimensiune imagine",
+        "credentials": "Credențiale",
+        "reason": "Motiv",
+        "openPorts": "Porturi deschise",
+        "suggestion": "Sugestie",
+        "testing": "Se testează...",
+        "testCameraTitle": "Testare Cameră",
+        "detecting": "Se detectează...",
+        "usernamePlaceholder": "admin",
+        "passwordPlaceholder": "parolă",
+        "rtspSupported": "RTSP suportat - Excelent pentru streaming!",
+        "devicesFound": "Găsite {{count}} dispozitive în rețea",
+        "camerasAutoConfirmed": "{{count}} camere confirmate automat!",
+        "howToConfigure": "Cum să configurezi o cameră potențială",
+        "configStep1": "Deschide aplicația camerei (ex. IMOU Life)",
+        "configStep2": "Mergi la setările camerei",
+        "configStep3": "Activează \"HTTP Service\" sau \"Web Service\"",
+        "configStep4": "Setează nume utilizator și parolă (ex. admin/Mannoli2025)",
+        "configStep5": "Apasă \"Configurează Manual\" pentru a adăuga camera",
+        "errors": {
+          "timeout": "Căutare întreruptă din cauza timeout-ului. Rețeaua poate fi lentă sau congestionată.",
+          "searchError": "Eroare în timpul căutării camerelor",
+          "testFailed": "Test eșuat",
+          "credentialsTestFailed": "Test credențiale eșuat"
+        }
+      },
       "totalClassrooms": "Total Săli",
       "searchResults": "Rezultate Căutare",
       "withCamera": "Cu Cameră",
@@ -375,22 +458,68 @@
         "editTitle": "Editează Lecția",
         "newTitle": "Lecție Nouă",
         "nameLabel": "Nume Lecție *",
-        "namePlaceholder": "Ex. Introducere în calculul diferențial",
+        "namePlaceholder": "Introdu numele lecției",
+        "dateLabel": "Data *",
         "dateTimeLabel": "Data și Ora *",
+        "startTimeLabel": "Ora de Început *",
+        "endTimeLabel": "Ora de Sfârșit *",
         "courseLabel": "Curs *",
         "selectCourse": "Selectează un curs",
-        "subjectLabel": "Materia *",
+        "subjectLabel": "Materia",
         "selectSubject": "Selectează o materie",
         "classroomLabel": "Sala *",
         "selectClassroom": "Selectează o sală",
+        "teacherLabel": "Profesor",
+        "selectTeacher": "Selectează un profesor",
         "updateLesson": "Actualizează Lecția",
-        "createLesson": "Creează Lecția"
+        "createLesson": "Creează Lecția",
+        "saving": "Se salvează...",
+        "update": "Actualizează",
+        "create": "Creează",
+        "validation": {
+          "nameRequired": "Numele lecției este obligatoriu",
+          "dateRequired": "Data este obligatorie",
+          "startTimeRequired": "Ora de început este obligatorie",
+          "endTimeRequired": "Ora de sfârșit este obligatorie",
+          "courseRequired": "Cursul este obligatoriu",
+          "classroomRequired": "Sala este obligatorie",
+          "endTimeAfterStart": "Ora de sfârșit trebuie să fie după ora de început"
+        }
       },
       "deleteConfirmation": {
         "title": "Confirmare Ștergere",
         "message": "Ești sigur că vrei să ștergi lecția {{lessonName}}?",
         "warning": "⚠️ Această acțiune nu poate fi anulată.",
         "deleteButton": "Șterge Definitiv"
+      },
+      "calendar": {
+        "previous": "Anterior",
+        "today": "Astăzi",
+        "next": "Următor",
+        "hour": "Oră",
+        "courseNotSpecified": "Curs nespecificat",
+        "completed": "Completat"
+      },
+      "viewModes": {
+        "calendar": "📅 Calendar",
+        "list": "📋 Listă"
+      },
+      "status": {
+        "completed": "Completat",
+        "lessonCompleted": "✅ Lecție Completată"
+      },
+      "actions": {
+        "newLesson": "Lecție Nouă",
+        "editLesson": "Editează lecția",
+        "deleteLesson": "Șterge lecția",
+        "captureAndAnalyze": "Captează și Analizează",
+        "viewImages": "Imagini",
+        "captureAndAnalyzeRealtime": "Captează și Analizează în timp real"
+      },
+      "messages": {
+        "lessonUpdated": "Lecție actualizată cu succes",
+        "lessonCreated": "Lecție creată cu succes",
+        "errorSaving": "Eroare la salvarea lecției"
       },
       "directory": {
         "title": "Directorul Lecției",
@@ -464,7 +593,12 @@
         "directoryInfoRetrievalError": "Eroare în obținerea informațiilor despre directoare",
         "noImagesInDirectory": "Nu există imagini în directorul: {{path}}. Încarcă imagini înainte de a începe analiza.",
         "analysisCompletionError": "Eroare {{status}}: Nu s-a putut completa analiza",
-        "attendanceAnalysisError": "Eroare în timpul analizei prezenței:"
+        "attendanceAnalysisError": "Eroare în timpul analizei prezenței:",
+        "loadingImagesError": "Eroare la încărcarea imaginilor: {{status}}",
+        "unknownErrorDuringImageLoad": "Eroare necunoscută în timpul încărcării imaginilor",
+        "errorDuringCaptureAnalysis": "Eroare în timpul capturii și analizei: {{status}}",
+        "unknownErrorDuringCaptureAnalysis": "Eroare necunoscută în timpul capturii și analizei",
+        "invalidServerResponse": "Răspuns invalid de la server"
       },
       "unknownCourse": "Curs necunoscut",
       "noSubject": "Nicio materie",
@@ -476,7 +610,42 @@
       "responseStatus": "Status răspuns: {{status}} {{statusText}}",
       "errorResponse": "Răspuns de eroare:",
       "dataReceived": "Date primite:",
-      "startingAttendanceAnalysis": "Se începe analiza prezenței pentru lecția cu ID: {{lessonId}}"
+      "startingAttendanceAnalysis": "Se începe analiza prezenței pentru lecția cu ID: {{lessonId}}",
+      "images": {
+        "title": "Imagini Lecție",
+        "loading": "Se încarcă imaginile...",
+        "noImagesAvailable": "Nicio imagine disponibilă",
+        "noImagesMessage": "Nu au fost capturate încă imagini pentru această lecție",
+        "captureFirstImage": "Capturează Prima Imagine",
+        "analysisWithContours": "Analiză cu contururi",
+        "upload": "Încărcare",
+        "close": "Închide"
+      },
+      "captureAnalysis": {
+        "captureInProgress": "Captură în curs...",
+        "error": "Eroare",
+        "captureCompleted": "Captură finalizată",
+        "captureAnalysisInProgress": "Captură și analiză în curs",
+        "waitMessage": "Vă rugăm așteptați cât timp camera capturează fotografia și sistemul analizează fețele...",
+        "errorDuringCapture": "Eroare în timpul capturii",
+        "captureSuccessful": "✅ Captură finalizată cu succes",
+        "imageAcquiredMessage": "Imagine achiziționată și analiza de detectare a fețelor finalizată",
+        "facesDetected": "Fețe detectate",
+        "studentsRecognized": "Studenți recunoscuți",
+        "recognizedStudentsList": "Studenți recunoscuți:",
+        "confidence": "încredere",
+        "reportImageWithDetections": "📸 Raport Imagine cu Detecții",
+        "facesDetectedCount": "Fețe detectate: {{count}}",
+        "lessonCompleted": "🎓 Lecție Finalizată",
+        "wait": "Așteptați...",
+        "close": "Închide",
+        "source": "Sursă",
+        "originalCamera": "Camera originală",
+        "withGreenFrames": "Cu cadre verzi",
+        "viewDetailedReport": "Vezi Raport Detaliat",
+        "lessonCompletedMessage": "Această lecție a fost marcată ca finalizată. Nu se mai pot face capturi noi.",
+        "greenFramesIndicateRecognized": "Cadrele verzi indică fețele recunoscute, cele roșii indică fețele neidentificate."
+      }
     },
     "attendance": {
       "title": "Gestionarea Prezenței",

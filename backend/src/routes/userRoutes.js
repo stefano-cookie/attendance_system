@@ -700,6 +700,22 @@ router.post('/courses', authenticate, async (req, res) => {
       });
     }
 
+    // Verifica se esiste già un corso con lo stesso nome
+    const existingCourse = await Course.findOne({
+      where: sequelize.where(
+        sequelize.fn('LOWER', sequelize.fn('TRIM', sequelize.col('name'))),
+        sequelize.fn('LOWER', sequelize.fn('TRIM', name))
+      )
+    });
+
+    if (existingCourse) {
+      return res.status(400).json({
+        success: false,
+        message: `Esiste già un corso con il nome "${name}"`,
+        error: 'Duplicate course name'
+      });
+    }
+
     const newCourse = await Course.create({
       name: name.trim(),
       description: description ? description.trim() : null,
@@ -745,6 +761,27 @@ router.put('/courses/:id', authenticate, async (req, res) => {
         success: false,
         error: 'Corso non trovato'
       });
+    }
+
+    // Se si sta aggiornando il nome, verifica che non sia duplicato
+    if (name !== undefined && name.trim().toLowerCase() !== course.name.toLowerCase()) {
+      const existingCourse = await Course.findOne({
+        where: {
+          id: { [Op.ne]: courseId }, // Escludi il corso corrente
+          [Op.and]: sequelize.where(
+            sequelize.fn('LOWER', sequelize.fn('TRIM', sequelize.col('name'))),
+            sequelize.fn('LOWER', sequelize.fn('TRIM', name))
+          )
+        }
+      });
+
+      if (existingCourse) {
+        return res.status(400).json({
+          success: false,
+          message: `Esiste già un altro corso con il nome "${name}"`,
+          error: 'Duplicate course name'
+        });
+      }
     }
 
     const updateData = {};

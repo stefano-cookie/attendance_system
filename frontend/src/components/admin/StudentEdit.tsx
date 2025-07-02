@@ -2,10 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api, { Student, Course, getCourses } from '../../services/api';
+import { useTranslation } from 'react-i18next';
 
 const StudentEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [student, setStudent] = useState<Student | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -44,7 +46,7 @@ const StudentEdit: React.FC = () => {
         
       } catch (err) {
         console.error('Errore nel caricamento dei dati:', err);
-        setError('Si è verificato un errore nel caricamento dei dati. Riprova più tardi.');
+        setError(t('admin.users.studentEdit.errors.loadingData'));
       } finally {
         setLoading(false);
       }
@@ -59,12 +61,12 @@ const StudentEdit: React.FC = () => {
     setSuccessMessage(null);
     
     if (!id || !name.trim() || !surname.trim() || !email.trim()) {
-      setError('Nome, cognome ed email sono campi obbligatori');
+      setError(t('admin.users.studentEdit.errors.requiredFields'));
       return;
     }
     
     if (!matricola.trim()) {
-      setError('La matricola è obbligatoria');
+      setError(t('admin.users.studentEdit.errors.studentIdRequired'));
       return;
     }
     
@@ -83,13 +85,13 @@ const StudentEdit: React.FC = () => {
       const response = await api.put(`/users/students/${id}`, updatedData);
       console.log('Update response:', response.data);
       
-      setSuccessMessage('Studente aggiornato con successo!');
+      setSuccessMessage(t('admin.users.studentEdit.messages.updateSuccess'));
       setTimeout(() => {
         navigate('/admin/students');
       }, 1500);
     } catch (err: any) {
       console.error('Errore durante l\'aggiornamento dello studente:', err);
-      const errorMessage = err.response?.data?.error || err.response?.data?.message || 'Si è verificato un errore durante l\'aggiornamento. Riprova più tardi.';
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || t('admin.users.studentEdit.errors.updateFailed');
       setError(errorMessage);
     }
   };
@@ -105,12 +107,12 @@ const StudentEdit: React.FC = () => {
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-gray-800">Modifica Studente</h2>
+        <h2 className="text-3xl font-bold text-gray-800">{t('admin.users.studentEdit.title')}</h2>
         <button
           onClick={() => navigate('/admin/students')}
           className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded transition"
         >
-          Torna all'elenco
+          {t('admin.users.studentEdit.backToList')}
         </button>
       </div>
       
@@ -129,20 +131,20 @@ const StudentEdit: React.FC = () => {
       <div className="bg-white rounded-lg shadow-md p-6">
         {student && (
           <div className="bg-blue-50 p-4 rounded-lg mb-6">
-            <h3 className="font-semibold text-blue-800 mb-2">Studente in modifica:</h3>
+            <h3 className="font-semibold text-blue-800 mb-2">{t('admin.users.studentEdit.studentBeingEdited')}:</h3>
             <p className="text-blue-700">{student.name} {student.surname} ({student.matricola})</p>
           </div>
         )}
         
         <form onSubmit={handleSubmit}>
           <p className="text-sm text-gray-600 mb-4">
-            I campi contrassegnati con <span className="text-red-500">*</span> sono obbligatori
+            {t('admin.users.studentEdit.requiredFieldsNote')}
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-gray-700 mb-2" htmlFor="name">
-                Nome <span className="text-red-500">*</span>
+                {t('admin.users.studentEdit.fields.firstName')} <span className="text-red-500">*</span>
               </label>
               <input
                 id="name"
@@ -151,13 +153,13 @@ const StudentEdit: React.FC = () => {
                 onChange={(e) => setName(e.target.value)}
                 className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
-                placeholder="Inserisci il nome"
+                placeholder={t('admin.users.studentEdit.placeholders.firstName')}
               />
             </div>
             
             <div>
               <label className="block text-gray-700 mb-2" htmlFor="surname">
-                Cognome <span className="text-red-500">*</span>
+                {t('admin.users.studentEdit.fields.lastName')} <span className="text-red-500">*</span>
               </label>
               <input
                 id="surname"
@@ -166,13 +168,13 @@ const StudentEdit: React.FC = () => {
                 onChange={(e) => setSurname(e.target.value)}
                 className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
-                placeholder="Inserisci il cognome"
+                placeholder={t('admin.users.studentEdit.placeholders.lastName')}
               />
             </div>
             
             <div>
               <label className="block text-gray-700 mb-2" htmlFor="email">
-                Email <span className="text-red-500">*</span>
+                {t('admin.users.studentEdit.fields.email')} <span className="text-red-500">*</span>
               </label>
               <input
                 id="email"
@@ -181,13 +183,13 @@ const StudentEdit: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
-                placeholder="inserisci.email@esempio.com"
+                placeholder={t('admin.users.studentEdit.placeholders.email')}
               />
             </div>
             
             <div>
               <label className="block text-gray-700 mb-2" htmlFor="matricola">
-                Matricola <span className="text-red-500">*</span>
+                {t('admin.users.studentEdit.fields.studentId')} <span className="text-red-500">*</span>
               </label>
               <input
                 id="matricola"
@@ -196,19 +198,19 @@ const StudentEdit: React.FC = () => {
                 onChange={(e) => setMatricola(e.target.value)}
                 className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
-                placeholder="Es: ABC123456"
+                placeholder={t('admin.users.studentEdit.placeholders.studentId')}
               />
             </div>
             
             <div>
-              <label className="block text-gray-700 mb-2" htmlFor="course">Corso</label>
+              <label className="block text-gray-700 mb-2" htmlFor="course">{t('admin.users.studentEdit.fields.course')}</label>
               <select
                 id="course"
                 value={courseId || ''}
                 onChange={(e) => setCourseId(e.target.value ? parseInt(e.target.value) : null)}
                 className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Seleziona un corso</option>
+                <option value="">{t('admin.users.studentEdit.placeholders.selectCourse')}</option>
                 {courses.map((course) => (
                   <option key={course.id} value={course.id}>
                     {course.name}
@@ -224,13 +226,13 @@ const StudentEdit: React.FC = () => {
               onClick={() => navigate('/admin/students')}
               className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded transition mr-2"
             >
-              Annulla
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition"
             >
-              Salva modifiche
+              {t('admin.users.studentEdit.saveChanges')}
             </button>
           </div>
         </form>

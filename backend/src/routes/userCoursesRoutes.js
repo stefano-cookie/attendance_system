@@ -54,28 +54,33 @@ router.post('/courses', authenticate, async (req, res) => {
     try {
         const { name, description, color, years, is_active } = req.body;
 
+        console.log('🔍 POST /courses - Richiesta ricevuta');
+        console.log('📥 Body completo:', req.body);
+
         if (!name) {
             return res.status(400).json({ message: 'Il nome del corso è obbligatorio' });
         }
 
         console.log('📥 Creazione corso con dati:', { name, description, color, years, is_active });
 
-        // Check for duplicate course name with same years
-        const courseYears = years || 3;
+        // Check for duplicate course name (regardless of years)
+        console.log('🔍 Controllo corsi duplicati per nome:', name);
         const existingCourse = await sequelize.query(`
             SELECT id, name, years FROM "Courses"
-            WHERE LOWER(TRIM(name)) = LOWER(TRIM(:name)) 
-            AND years = :years
+            WHERE LOWER(TRIM(name)) = LOWER(TRIM(:name))
         `, {
-            replacements: { name, years: courseYears },
+            replacements: { name },
             type: QueryTypes.SELECT
         });
+        
+        console.log('🔍 Corsi esistenti trovati:', existingCourse);
 
         if (existingCourse.length > 0) {
+            console.log('❌ CORSO DUPLICATO TROVATO!', existingCourse[0]);
             return res.status(400).json({
                 success: false,
-                message: `Esiste già un corso con il nome "${name}" e durata ${courseYears} anni`,
-                error: 'Duplicate course name and duration',
+                message: `Esiste già un corso con il nome "${name}"`,
+                error: 'Duplicate course name',
                 existing_course: {
                     id: existingCourse[0].id,
                     name: existingCourse[0].name,
@@ -134,23 +139,21 @@ router.put('/courses/:id', authenticate, async (req, res) => {
             return res.status(404).json({ message: 'Corso non trovato' });
         }
 
-        // Check for duplicate course name with same years (excluding current course)
-        const courseYears = years !== undefined ? years : existingCourse.years;
+        // Check for duplicate course name (excluding current course)
         const duplicateCourse = await sequelize.query(`
             SELECT id, name, years FROM "Courses"
-            WHERE LOWER(TRIM(name)) = LOWER(TRIM(:name)) 
-            AND years = :years
+            WHERE LOWER(TRIM(name)) = LOWER(TRIM(:name))
             AND id != :id
         `, {
-            replacements: { name, years: courseYears, id },
+            replacements: { name, id },
             type: QueryTypes.SELECT
         });
 
         if (duplicateCourse.length > 0) {
             return res.status(400).json({
                 success: false,
-                message: `Esiste già un altro corso con il nome "${name}" e durata ${courseYears} anni`,
-                error: 'Duplicate course name and duration',
+                message: `Esiste già un altro corso con il nome "${name}"`,
+                error: 'Duplicate course name',
                 existing_course: {
                     id: duplicateCourse[0].id,
                     name: duplicateCourse[0].name,
