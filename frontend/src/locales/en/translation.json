@@ -483,7 +483,9 @@
           "endTimeRequired": "End time is required",
           "courseRequired": "Course is required",
           "classroomRequired": "Classroom is required",
-          "endTimeAfterStart": "End time must be after start time"
+          "endTimeAfterStart": "End time must be after start time",
+          "classroomConflict": "Classroom {{classroomName}} is already occupied at this time ({{conflictTime}})",
+          "alternativeClassrooms": "Alternative classrooms available: {{alternatives}}"
         }
       },
       "deleteConfirmation": {

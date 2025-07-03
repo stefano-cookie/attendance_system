@@ -483,7 +483,9 @@
           "endTimeRequired": "Ora de sfârșit este obligatorie",
           "courseRequired": "Cursul este obligatoriu",
           "classroomRequired": "Sala este obligatorie",
-          "endTimeAfterStart": "Ora de sfârșit trebuie să fie după ora de început"
+          "endTimeAfterStart": "Ora de sfârșit trebuie să fie după ora de început",
+          "classroomConflict": "Sala {{classroomName}} este deja ocupată la această oră ({{conflictTime}})",
+          "alternativeClassrooms": "Săli alternative disponibile: {{alternatives}}"
         }
       },
       "deleteConfirmation": {

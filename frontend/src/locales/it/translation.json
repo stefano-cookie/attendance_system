@@ -109,7 +109,14 @@
       "actions": {
         "registerStudent": "Registra Studente",
         "manageStudents": "Gestisci Studenti",
-        "attendanceReport": "Report Presenze"
+        "attendanceReport": "Report Presenze",
+        "quickActions": "Azioni Rapide"
+      },
+      "weeklyChart": "Andamento Settimanale",
+      "todayChart": "Oggi",
+      "stats": {
+        "present": "Presenti",
+        "absent": "Assenti"
       },
       "errorLoading": "Errore nel caricamento dei dati"
     },
@@ -483,7 +490,9 @@
           "endTimeRequired": "L'ora di fine è obbligatoria",
           "courseRequired": "Il corso è obbligatorio",
           "classroomRequired": "L'aula è obbligatoria",
-          "endTimeAfterStart": "L'ora di fine deve essere successiva all'ora di inizio"
+          "endTimeAfterStart": "L'ora di fine deve essere successiva all'ora di inizio",
+          "classroomConflict": "L'aula {{classroomName}} è già occupata in questo orario ({{conflictTime}})",
+          "alternativeClassrooms": "Aule alternative disponibili: {{alternatives}}"
         }
       },
       "deleteConfirmation": {
@@ -498,7 +507,13 @@
         "next": "Successivo",
         "hour": "Ora",
         "courseNotSpecified": "Corso non specificato",
-        "completed": "Completata"
+        "completed": "Completata",
+        "viewCalendar": "Vista Calendario",
+        "viewList": "Vista Lista",
+        "weekView": "Vista Settimanale",
+        "emptyTimeSlot": "Slot orario vuoto - clicca per aggiungere lezione",
+        "clickToEdit": "Clicca per modificare",
+        "clickToCreate": "Clicca per creare nuova lezione"
       },
       "viewModes": {
         "calendar": "📅 Calendario",

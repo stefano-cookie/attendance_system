@@ -627,20 +627,20 @@ const LessonsPanel: React.FC = () => {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex justify-center items-center">
-        <div className="text-center bg-white p-8 rounded-2xl shadow-xl">
+      <div className="min-h-screen bg-gray-900 flex justify-center items-center">
+        <div className="text-center bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-          <h3 className="text-xl font-semibold text-gray-700">{t('admin.lessons.loading.title')}</h3>
-          <p className="text-gray-500 mt-2">{t('admin.lessons.loading.subtitle')}</p>
+          <h3 className="text-xl font-semibold text-gray-200">{t('admin.lessons.loading.title')}</h3>
+          <p className="text-gray-400 mt-2">{t('admin.lessons.loading.subtitle')}</p>
         </div>
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gray-900">
       {/* Header */}
-      <div className="bg-white shadow-lg border-b border-gray-200">
+      <div className="bg-gray-800 shadow-lg border-b border-gray-700">
         <div className="container mx-auto px-6 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-4">
@@ -650,8 +650,8 @@ const LessonsPanel: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-800">{t('admin.lessons.title')}</h1>
-                <p className="text-gray-600">{t('admin.lessons.subtitle')}</p>
+                <h1 className="text-3xl font-bold text-white">{t('admin.lessons.title')}</h1>
+                <p className="text-gray-300">{t('admin.lessons.subtitle')}</p>
               </div>
             </div>
             
@@ -659,7 +659,7 @@ const LessonsPanel: React.FC = () => {
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="flex items-center space-x-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors disabled:opacity-50"
+                className="flex items-center space-x-2 bg-gray-700 text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
               >
                 <svg className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -669,7 +669,7 @@ const LessonsPanel: React.FC = () => {
 
               <button
                 onClick={handleAddLesson}
-                className="flex items-center space-x-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-2.5 rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-200 shadow-md"
+                className="flex items-center space-x-2 bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-2.5 rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-200 shadow-md"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
@@ -684,17 +684,17 @@ const LessonsPanel: React.FC = () => {
       <div className="container mx-auto px-6 py-8">
         {/* Messaggi di stato */}
         {info && (
-          <div className="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-lg shadow">
+          <div className="mb-6 bg-green-900/20 border-l-4 border-green-500 p-4 rounded-lg shadow border border-green-800">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <span className="text-green-700 font-medium">{info}</span>
+                <span className="text-green-300 font-medium">{info}</span>
               </div>
               <button
                 onClick={() => setInfo(null)}
-                className="text-green-500 hover:text-green-700"
+                className="text-green-400 hover:text-green-300"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -706,56 +706,56 @@ const LessonsPanel: React.FC = () => {
 
         {/* Statistiche */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+          <div className="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700 hover:shadow-xl transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.lessons.stats.totalLessons')}</p>
-                <p className="text-3xl font-bold text-gray-800">{lessons.length}</p>
+                <p className="text-sm font-medium text-gray-400 mb-1">{t('admin.lessons.stats.totalLessons')}</p>
+                <p className="text-3xl font-bold text-white">{lessons.length}</p>
               </div>
-              <div className="bg-blue-100 p-3 rounded-xl">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-blue-600/20 p-3 rounded-xl">
+                <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
             </div>
           </div>
           
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+          <div className="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700 hover:shadow-xl transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.lessons.stats.today')}</p>
-                <p className="text-3xl font-bold text-gray-800">{todayLessons}</p>
+                <p className="text-sm font-medium text-gray-400 mb-1">{t('admin.lessons.stats.today')}</p>
+                <p className="text-3xl font-bold text-white">{todayLessons}</p>
               </div>
-              <div className="bg-green-100 p-3 rounded-xl">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-green-600/20 p-3 rounded-xl">
+                <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
             </div>
           </div>
           
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+          <div className="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700 hover:shadow-xl transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.lessons.stats.future')}</p>
-                <p className="text-3xl font-bold text-gray-800">{futureLessons}</p>
+                <p className="text-sm font-medium text-gray-400 mb-1">{t('admin.lessons.stats.future')}</p>
+                <p className="text-3xl font-bold text-white">{futureLessons}</p>
               </div>
-              <div className="bg-purple-100 p-3 rounded-xl">
-                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-purple-600/20 p-3 rounded-xl">
+                <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
               </div>
             </div>
           </div>
           
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+          <div className="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700 hover:shadow-xl transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.lessons.stats.completed')}</p>
-                <p className="text-3xl font-bold text-gray-800">{pastLessons}</p>
+                <p className="text-sm font-medium text-gray-400 mb-1">{t('admin.lessons.stats.completed')}</p>
+                <p className="text-3xl font-bold text-white">{pastLessons}</p>
               </div>
-              <div className="bg-orange-100 p-3 rounded-xl">
-                <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-orange-600/20 p-3 rounded-xl">
+                <svg className="w-8 h-8 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
@@ -764,23 +764,23 @@ const LessonsPanel: React.FC = () => {
         </div>
         
         {/* Search e Filtri */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 mb-8">
+        <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 mb-8">
           <div className="p-6">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-indigo-100 p-2 rounded-lg">
-                <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-indigo-600/20 p-2 rounded-lg">
+                <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-800">{t('admin.lessons.search.title')}</h3>
+              <h3 className="text-xl font-semibold text-white">{t('admin.lessons.search.title')}</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">{t('admin.lessons.search.searchLesson')}</label>
+                <label className="block text-sm font-semibold text-gray-300 mb-2">{t('admin.lessons.search.searchLesson')}</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 right-3 flex items-center pl-4 pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd"></path>
                     </svg>
                   </div>
@@ -789,12 +789,12 @@ const LessonsPanel: React.FC = () => {
                     placeholder={t('admin.lessons.search.searchPlaceholder')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full pl-12 pr-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
                   />
                   {searchTerm && (
                     <button
                       onClick={() => setSearchTerm('')}
-                      className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600"
+                      className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-200"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -805,11 +805,11 @@ const LessonsPanel: React.FC = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">{t('admin.lessons.search.filterByCourse')}</label>
+                <label className="block text-sm font-semibold text-gray-300 mb-2">{t('admin.lessons.search.filterByCourse')}</label>
                 <select
                   value={selectedCourseId || ''}
                   onChange={(e) => setSelectedCourseId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 >
                   <option value="">{t('admin.lessons.search.allCourses')}</option>
                   {courses.map(course => (
@@ -824,17 +824,17 @@ const LessonsPanel: React.FC = () => {
         </div>
         
         {error && !info && (
-          <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow">
+          <div className="mb-6 bg-red-900/20 border-l-4 border-red-500 p-4 rounded-lg shadow border border-red-800">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <svg className="w-5 h-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
-                <span className="text-red-700 font-medium">{error}</span>
+                <span className="text-red-300 font-medium">{error}</span>
               </div>
               <button
                 onClick={() => setError(null)}
-                className="text-red-500 hover:text-red-700"
+                className="text-red-400 hover:text-red-300"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -846,13 +846,13 @@ const LessonsPanel: React.FC = () => {
 
         {/* Toggle visualizzazione */}
         <div className="flex justify-center mb-6">
-          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-1">
+          <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-1">
             <button
               onClick={() => setViewMode('calendar')}
               className={`px-6 py-2 rounded-lg font-medium transition-all ${
                 viewMode === 'calendar'
-                  ? 'bg-blue-500 text-white shadow-md'
-                  : 'text-gray-600 hover:text-blue-500'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-300 hover:text-blue-400'
               }`}
             >
               {t('admin.lessons.viewModes.calendar')}
@@ -861,8 +861,8 @@ const LessonsPanel: React.FC = () => {
               onClick={() => setViewMode('list')}
               className={`px-6 py-2 rounded-lg font-medium transition-all ${
                 viewMode === 'list'
-                  ? 'bg-blue-500 text-white shadow-md'
-                  : 'text-gray-600 hover:text-blue-500'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-300 hover:text-blue-400'
               }`}
             >
               {t('admin.lessons.viewModes.list')}
@@ -2035,6 +2035,7 @@ const LessonsPanel: React.FC = () => {
         subjects={subjects}
         classrooms={classrooms}
         teachers={teachers}
+        lessons={lessons}
         defaultDate={defaultDate}
         defaultHour={defaultHour}
       />
