@@ -121,46 +121,36 @@ const Login: React.FC = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute top-20 left-20 w-96 h-96 bg-gradient-to-r from-blue-300 to-cyan-300 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-pulse" />
-        <div className="absolute top-20 right-20 w-96 h-96 bg-gradient-to-r from-purple-300 to-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-pulse" 
-             style={{ animationDelay: '2s' }} />
-        <div className="absolute bottom-20 left-1/2 w-96 h-96 bg-gradient-to-r from-yellow-300 to-orange-300 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-pulse" 
-             style={{ animationDelay: '4s' }} />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Subtle background pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full filter blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full filter blur-3xl animate-pulse" 
+             style={{ animationDelay: '3s' }} />
       </div>
 
       {/* Language Switcher */}
-      <div className="absolute top-4 right-4 z-20">
+      <div className="absolute top-6 right-6 z-20">
         <LanguageSwitcher />
       </div>
 
       {/* Login Card */}
       <div className="relative z-10 w-full max-w-md">
-        <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-blue-500/10 border border-white/20 overflow-hidden">
-          
-          {/* Decorative header gradient */}
-          <div className="absolute top-0 right-0 h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+        <div className="bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-700/50 overflow-hidden">
           
           {/* Header */}
-          <div className="relative p-8 pb-6 text-center">
+          <div className="relative p-8 pb-6 text-center border-b border-gray-700/50">
             {/* Logo/Icon */}
-            <div className="mx-auto mb-6 w-20 h-20 bg-gradient-to-tr from-blue-600 via-purple-600 to-pink-600 rounded-3xl flex items-center justify-center shadow-xl shadow-blue-500/30">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            <div className="mx-auto mb-6 w-16 h-16 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full border-2 border-white animate-pulse flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-              </div>
             </div>
             
-            <h1 className="text-2xl font-black text-gray-900 mb-2">
+            <h1 className="text-2xl font-bold text-white mb-2">
               {t('auth.systemTitle')}
             </h1>
-            <p className="text-gray-600 font-medium">
+            <p className="text-gray-300 font-medium">
               {t('auth.accessPanel')}
             </p>
           </div>
@@ -171,13 +161,13 @@ const Login: React.FC = () => {
               
               {/* Email Field */}
               <div className="space-y-2">
-                <label htmlFor="email" className="block text-sm font-semibold text-gray-700">
+                <label htmlFor="email" className="block text-sm font-semibold text-gray-300">
                   {t('auth.email')}
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                     <svg className={`w-5 h-5 transition-colors duration-200 ${
-                      errors.email ? 'text-red-500' : 'text-gray-400 group-focus-within:text-blue-500'
+                      errors.email ? 'text-red-400' : 'text-gray-400 group-focus-within:text-blue-400'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                     </svg>
@@ -190,17 +180,17 @@ const Login: React.FC = () => {
                     onChange={handleChange}
                     placeholder={t('auth.emailPlaceholder')}
                     className={`
-                      w-full pl-12 pr-4 py-4 bg-gray-50 border rounded-2xl text-gray-900 placeholder-gray-500 
+                      w-full pl-12 pr-4 py-4 bg-gray-700 border rounded-xl text-white placeholder-gray-400 
                       focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200
                       ${errors.email 
-                        ? 'border-red-300 focus:ring-red-500 bg-red-50' 
-                        : 'border-gray-200 focus:ring-blue-500 focus:bg-white hover:border-gray-300'
+                        ? 'border-red-500 focus:ring-red-500/50 bg-red-900/20' 
+                        : 'border-gray-600 focus:ring-blue-500/50 focus:bg-gray-600 hover:border-gray-500'
                       }
                     `}
                   />
                 </div>
                 {errors.email && (
-                  <div className="flex items-center space-x-2 text-red-600">
+                  <div className="flex items-center space-x-2 text-red-400">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
@@ -211,13 +201,13 @@ const Login: React.FC = () => {
               
               {/* Password Field */}
               <div className="space-y-2">
-                <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
+                <label htmlFor="password" className="block text-sm font-semibold text-gray-300">
                   {t('auth.password')}
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                     <svg className={`w-5 h-5 transition-colors duration-200 ${
-                      errors.password ? 'text-red-500' : 'text-gray-400 group-focus-within:text-blue-500'
+                      errors.password ? 'text-red-400' : 'text-gray-400 group-focus-within:text-blue-400'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
@@ -230,18 +220,18 @@ const Login: React.FC = () => {
                     onChange={handleChange}
                     placeholder={t('auth.passwordPlaceholder')}
                     className={`
-                      w-full pl-12 pr-12 py-4 bg-gray-50 border rounded-2xl text-gray-900 placeholder-gray-500 
+                      w-full pl-12 pr-12 py-4 bg-gray-700 border rounded-xl text-white placeholder-gray-400 
                       focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200
                       ${errors.password 
-                        ? 'border-red-300 focus:ring-red-500 bg-red-50' 
-                        : 'border-gray-200 focus:ring-blue-500 focus:bg-white hover:border-gray-300'
+                        ? 'border-red-500 focus:ring-red-500/50 bg-red-900/20' 
+                        : 'border-gray-600 focus:ring-blue-500/50 focus:bg-gray-600 hover:border-gray-500'
                       }
                     `}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-200 transition-colors duration-200"
                     title={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                   >
                     {showPassword ? (
@@ -257,7 +247,7 @@ const Login: React.FC = () => {
                   </button>
                 </div>
                 {errors.password && (
-                  <div className="flex items-center space-x-2 text-red-600">
+                  <div className="flex items-center space-x-2 text-red-400">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
@@ -268,15 +258,15 @@ const Login: React.FC = () => {
               
               {/* Error Alert */}
               {error && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-2xl">
+                <div className="p-4 bg-red-900/20 border border-red-800/50 rounded-xl">
                   <div className="flex items-center space-x-3">
                     <div className="flex-shrink-0">
-                      <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-red-800">{error}</p>
+                      <p className="text-sm font-medium text-red-300">{error}</p>
                     </div>
                   </div>
                 </div>
@@ -287,12 +277,12 @@ const Login: React.FC = () => {
                 type="submit" 
                 disabled={isLoading}
                 className={`
-                  w-full py-4 px-6 rounded-2xl font-bold text-sm transition-all duration-300 transform
+                  w-full py-4 px-6 rounded-xl font-semibold text-sm transition-all duration-200 transform
                   ${isLoading 
-                    ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/25 active:scale-95'
+                    ? 'bg-gray-600 cursor-not-allowed' 
+                    : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:scale-105 hover:shadow-lg active:scale-95'
                   }
-                  text-white shadow-lg
+                  text-white shadow-md
                 `}
               >
                 {isLoading ? (
@@ -312,22 +302,16 @@ const Login: React.FC = () => {
             </form>
             
             {/* Footer */}
-            <div className="mt-8 pt-6 border-t border-gray-200 text-center">
-              <p className="text-xs text-gray-500">
+            <div className="mt-8 pt-6 border-t border-gray-700/50 text-center">
+              <p className="text-xs text-gray-400">
                 {t('auth.systemName')}
               </p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-gray-500 mt-1">
                 {t('auth.version')}
               </p>
             </div>
           </div>
         </div>
-        
-        {/* Floating decorative elements */}
-        <div className="absolute -top-4 -left-4 w-8 h-8 bg-blue-500 rounded-full opacity-20 animate-bounce" style={{ animationDelay: '1s' }} />
-        <div className="absolute -top-2 -right-6 w-6 h-6 bg-purple-500 rounded-full opacity-20 animate-bounce" style={{ animationDelay: '2s' }} />
-        <div className="absolute -bottom-4 -right-2 w-10 h-10 bg-pink-500 rounded-full opacity-20 animate-bounce" style={{ animationDelay: '3s' }} />
-        <div className="absolute -bottom-6 -left-8 w-7 h-7 bg-cyan-500 rounded-full opacity-20 animate-bounce" style={{ animationDelay: '4s' }} />
       </div>
     </div>
   );

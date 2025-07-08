@@ -65,6 +65,39 @@ module.exports = (sequelize) => {
       allowNull: false,
       defaultValue: false,
       field: 'verified_by_teacher'
+    },
+    manual_override: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      field: 'manual_override'
+    },
+    override_reason: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      field: 'override_reason'
+    },
+    arrival_time: {
+      type: DataTypes.TIME,
+      allowNull: true,
+      field: 'arrival_time'
+    },
+    is_late: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      field: 'is_late'
+    },
+    needs_review: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      field: 'needs_review'
+    },
+    review_notes: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      field: 'review_notes'
     }
   }, {
     tableName: 'Attendances',
@@ -72,9 +105,12 @@ module.exports = (sequelize) => {
     underscored: false,
     indexes: [
       {
-        unique: true,
         fields: ['userId', 'lessonId'],
-        name: 'attendance_user_lesson_unique'
+        name: 'attendance_user_lesson_index'
+      },
+      {
+        fields: ['timestamp'],
+        name: 'attendance_timestamp_index'
       }
     ]
   });

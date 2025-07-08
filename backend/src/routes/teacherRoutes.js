@@ -52,6 +52,7 @@ router.get('/dashboard', async (req, res) => {
                     [Op.lt]: tomorrow
                 }
             },
+            attributes: ['id', 'name', 'lesson_date', 'lesson_start', 'lesson_end', 'status', 'is_completed', 'completed_at', 'course_id', 'subject_id', 'classroom_id'],
             include: [
                 { model: Course, as: 'course', attributes: ['id', 'name'] },
                 { model: Classroom, as: 'classroom', attributes: ['id', 'name', 'camera_ip'] },
@@ -108,30 +109,37 @@ router.get('/dashboard', async (req, res) => {
 router.post('/lessons', async (req, res) => {
     try {
         const teacherId = req.user.id;
-        const { name, lesson_date, course_id, subject_id, classroom_id } = req.body;
+        const { name, lesson_date, lesson_start, lesson_end, course_id, subject_id, classroom_id } = req.body;
 
         console.log('📝 Creazione lezione teacher:', { 
             name, 
-            lesson_date, 
+            lesson_date,
+            lesson_start,
+            lesson_end,
             course_id, 
             subject_id,
-            classroom_id, 
+            classroom_id,
             teacherId 
         });
 
-        if (!lesson_date || !course_id || !classroom_id) {
+        if (!lesson_date || !lesson_start || !lesson_end || !course_id || !classroom_id) {
             return res.status(400).json({
                 success: false,
-                error: 'Data, corso e aula sono obbligatori'
+                error: 'Data, orari, corso e aula sono obbligatori'
             });
         }
 
+        // Costruisci l'oggetto Date per lesson_date usando lesson_start
+        const lessonDateTime = new Date(`${lesson_date}T${lesson_start}`);
+        
         const lessonData = {
             name: name || `Lezione ${new Date(lesson_date).toLocaleDateString('it-IT')}`,
-            lesson_date: new Date(lesson_date),
+            lesson_date: lessonDateTime,
+            lesson_start: lesson_start,
+            lesson_end: lesson_end,
             course_id: parseInt(course_id),
             classroom_id: parseInt(classroom_id),
-            teacher_id: teacherId,
+            teacher_id: teacherId, // Sempre il docente loggato
             status: 'draft',
             attendance_mode: 'manual'
         };
@@ -149,46 +157,58 @@ router.post('/lessons', async (req, res) => {
 
         console.log('📋 Dati lezione da creare:', lessonData);
 
-        const lessonDateTime = new Date(lesson_date);
-        const startTime = new Date(lessonDateTime);
-        const endTime = new Date(lessonDateTime);
-        endTime.setMinutes(endTime.getMinutes() + (lessonData.duration_minutes || 90));
+        // Costruisci date/time per controllo conflitti usando i nuovi campi
+        const startTime = new Date(`${lesson_date}T${lesson_start}`);
+        const endTime = new Date(`${lesson_date}T${lesson_end}`);
 
         console.log(`🔍 Checking classroom ${classroom_id} availability for ${startTime.toISOString()} - ${endTime.toISOString()}`);
 
+        // Trova lezioni che si sovrappongono nella stessa aula e stesso giorno
+        const sameDay = lesson_date; // YYYY-MM-DD format
         const conflictingLessons = await Lesson.findAll({
             where: {
                 classroom_id: parseInt(classroom_id),
                 lesson_date: {
-                    [Op.gte]: startTime,
-                    [Op.lt]: endTime
+                    [Op.gte]: new Date(`${sameDay}T00:00:00`),
+                    [Op.lt]: new Date(`${sameDay}T23:59:59`)
                 }
             },
-            attributes: ['id', 'name', 'lesson_date', 'teacher_id'],
+            attributes: ['id', 'name', 'lesson_date', 'lesson_start', 'lesson_end', 'teacher_id'],
             include: [
                 { model: Course, as: 'course', attributes: ['name'] }
             ]
         });
 
-        if (conflictingLessons.length > 0) {
+        // Controlla sovrapposizioni temporali
+        const hasTimeConflict = conflictingLessons.some(existingLesson => {
+            const existingStart = existingLesson.lesson_start 
+                ? new Date(`${sameDay}T${existingLesson.lesson_start}`) 
+                : new Date(existingLesson.lesson_date);
+            const existingEnd = existingLesson.lesson_end 
+                ? new Date(`${sameDay}T${existingLesson.lesson_end}`)
+                : new Date(existingStart.getTime() + 60 * 60 * 1000); // +1 ora di default
+            
+            // Verifica sovrapposizione: (start1 < end2) && (start2 < end1)
+            return (startTime < existingEnd) && (existingStart < endTime);
+        });
+
+        if (hasTimeConflict) {
             const conflict = conflictingLessons[0];
             
             return res.status(409).json({
                 success: false,
                 error: 'Aula non disponibile nell\'orario selezionato',
                 details: {
-                    message: `L'aula è già occupata da una lezione del corso "${conflict.course?.name || 'Corso sconosciuto'}" alle ${conflict.lesson_date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`,
+                    message: `L'aula è già occupata da una lezione del corso "${conflict.course?.name || 'Corso sconosciuto'}" dalle ${conflict.lesson_start || 'N/A'} alle ${conflict.lesson_end || 'N/A'}`,
                     conflicting_lesson: {
                         id: conflict.id,
                         name: conflict.name,
                         date: conflict.lesson_date,
+                        start_time: conflict.lesson_start,
+                        end_time: conflict.lesson_end,
                         course: conflict.course?.name,
                         teacher_id: conflict.teacher_id
-                    },
-                    suggested_times: [
-                        new Date(endTime.getTime() + 15 * 60 * 1000).toISOString(),
-                        new Date(startTime.getTime() - 120 * 60 * 1000).toISOString()
-                    ]
+                    }
                 }
             });
         }
@@ -464,6 +484,7 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
         // Aggiorna stato camera come online dopo scatto riuscito
         await lesson.classroom.update({ camera_status: 'online' });
 
+        // Salviamo sempre l'immagine originale come base, poi la sostituiremo con quella con i riquadri se disponibile
         const savedImage = await LessonImage.create({
             lesson_id: lessonId,
             image_data: captureResult.imageData,
@@ -473,11 +494,19 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
             captured_at: new Date(),
             camera_ip: lesson.classroom.camera_ip,
             camera_method: captureResult.metadata.method,
+            camera_metadata: {
+                capture_source: 'teacher',
+                teacher_id: req.user.id,
+                teacher_name: `${req.user.name} ${req.user.surname || ''}`.trim(),
+                teacher_email: req.user.email,
+                captured_by_role: 'teacher',
+                capture_timestamp: new Date().toISOString()
+            },
             is_analyzed: false,
             processing_status: 'pending'
         });
 
-        console.log(`💾 Immagine salvata: ID ${savedImage.id}`);
+        console.log(`💾 Immagine base salvata: ID ${savedImage.id}`);
 
         let analysisResult = {
             success: false,
@@ -485,7 +514,7 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
             recognized_students: []
         };
         
-        let reportImageId = null;
+        // Non usiamo più reportImageId separato - l'immagine con i riquadri è ora savedImage
 
         try {
             console.log('🔍 Avvio analisi face detection...');
@@ -493,7 +522,7 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
             analysisResult = await faceDetectionService.analyzeImageBlob(
                 captureResult.imageData,
                 lessonId,
-                { debugMode: true }
+                { debugMode: true, imageId: savedImage.id }
             );
 
             console.log(`✅ Analisi completata: ${analysisResult.detected_faces} volti, ${analysisResult.recognized_students?.length || 0} riconosciuti`);
@@ -516,16 +545,13 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
                 console.log(`📂 ReportImagePath: ${analysisResult.reportImagePath}`);
             }
             
+            // Se l'analisi ha generato un'immagine con riquadri, sostituisci quella base
             if (analysisResult.reportImageBlob) {
                 try {
-                    const reportImage = await LessonImage.create({
-                        lesson_id: lessonId,
+                    await savedImage.update({
                         image_data: analysisResult.reportImageBlob,
                         file_size: analysisResult.reportImageBlob.length,
-                        mime_type: 'image/jpeg',
                         source: 'report',
-                        captured_at: new Date(),
-                        camera_ip: lesson.classroom.camera_ip,
                         is_analyzed: true,
                         detected_faces: analysisResult.detected_faces || 0,
                         recognized_faces: analysisResult.recognized_students?.length || 0,
@@ -533,19 +559,34 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
                         analyzed_at: new Date()
                     });
                     
-                    reportImageId = reportImage.id;
-                    console.log(`✅ Immagine report salvata: ID ${reportImage.id}`);
+                    console.log(`✅ Immagine aggiornata con riquadri: ID ${savedImage.id}`);
                 } catch (reportError) {
-                    console.error('❌ Errore salvataggio immagine report:', reportError.message);
-                    console.error('❌ Stack:', reportError.stack);
+                    console.error('❌ Errore aggiornamento immagine con riquadri:', reportError.message);
+                    // Manteniamo l'immagine originale se l'update fallisce
+                    await savedImage.update({
+                        is_analyzed: true,
+                        processing_status: 'completed',
+                        detected_faces: analysisResult.detected_faces || 0,
+                        recognized_faces: analysisResult.recognized_students?.length || 0,
+                        analyzed_at: new Date()
+                    });
                 }
             } else {
-                console.warn('⚠️ Nessuna immagine report da salvare');
+                // Nessuna immagine report - aggiorna solo i metadati
+                await savedImage.update({
+                    is_analyzed: true,
+                    processing_status: 'completed',
+                    detected_faces: analysisResult.detected_faces || 0,
+                    recognized_faces: analysisResult.recognized_students?.length || 0,
+                    analyzed_at: new Date()
+                });
+                console.log(`⚠️ Mantenuta immagine originale: ID ${savedImage.id}`);
             }
 
         } catch (analysisError) {
             console.error('❌ Errore face detection:', analysisError);
             
+            // savedImage esiste sempre ora, aggiorna solo lo stato di errore
             await savedImage.update({
                 is_analyzed: true,
                 processing_status: 'error',
@@ -553,57 +594,66 @@ router.post('/lessons/:id/capture-and-analyze', async (req, res) => {
             });
         }
 
-        try {
-            await Screenshot.create({
-                lessonId: lessonId,
-                image_data: captureResult.imageData,
-                timestamp: new Date(),
-                detectedFaces: analysisResult.detected_faces || 0,
-                source: 'camera_capture'
-            });
-        } catch (e) {
-            console.warn('⚠️ Errore salvataggio screenshot:', e.message);
-        }
+        // Screenshot rimosso - già salvato in LessonImage sopra per evitare duplicati
 
         // Genera record di presenza/assenza per tutti gli studenti
         try {
-            console.log(`📊 Generazione record attendance per lezione ${lessonId}...`);
-            await generateAbsenteeRecords(lesson, analysisResult.recognized_students || []);
+            console.log(`📊 Generazione record attendance per lezione ${lessonId} (fonte: docente)...`);
+            await generateAbsenteeRecords(lesson, analysisResult.recognized_students || [], {
+                source: 'teacher',
+                teacher_id: req.user.id,
+                teacher_name: `${req.user.name} ${req.user.surname || ''}`.trim()
+            });
             console.log(`✅ Record attendance generati per lezione ${lessonId}`);
         } catch (attendanceError) {
             console.error('❌ Errore generazione record attendance:', attendanceError.message);
         }
 
+        // Update last capture time without completing the lesson
+        await lesson.update({
+            last_capture_at: new Date(),
+            status: lesson.status === 'draft' ? 'active' : lesson.status
+        });
+
+        // Check if lesson should be automatically completed based on end time
         let lessonCompleted = false;
-        if (!lesson.is_completed) {
+        if (!lesson.is_completed && lesson.shouldBeCompleted()) {
             try {
-                
                 await lesson.markAsCompleted();
                 lessonCompleted = true;
-                console.log(`✅ Lezione ${lessonId} marcata come completata`);
-                
-                try {
-                    const emailService = require('../services/emailService');
-                    const emailResult = await emailService.sendAttendanceReportToAllStudents(lessonId);
-                    if (emailResult.success) {
-                        console.log(`📧 Email report inviate: ${emailResult.results.sent} successi, ${emailResult.results.failed} fallimenti`);
-                    } else {
-                        console.warn('⚠️ Errore invio email report:', emailResult.error);
-                    }
-                } catch (emailError) {
-                    console.warn('⚠️ Errore servizio email:', emailError.message);
-                }
+                console.log(`✅ Lezione ${lessonId} marcata come completata automaticamente (orario fine raggiunto)`);
             } catch (completionError) {
                 console.warn('⚠️ Errore marcatura completamento:', completionError.message);
             }
         }
 
+        // TEACHER DASHBOARD: Invia sempre email dopo l'analisi
+        // Gli studenti devono essere notificati delle presenze rilevate dal docente
+        console.log(`📧 Invio email presenze da scatto docente (ID: ${req.user.id})`);
+        
+        try {
+            const emailService = require('../services/emailService');
+            const emailResult = await emailService.sendAttendanceReportToAllStudents(lessonId, {
+                source: 'teacher',
+                teacher_id: req.user.id,
+                teacher_name: `${req.user.name} ${req.user.surname || ''}`.trim()
+            });
+            
+            if (emailResult.success) {
+                console.log(`📧 Email presenze inviate: ${emailResult.results.sent} successi, ${emailResult.results.failed} fallimenti`);
+            } else {
+                console.warn('⚠️ Errore invio email presenze:', emailResult.error);
+            }
+        } catch (emailError) {
+            console.warn('⚠️ Errore servizio email:', emailError.message);
+        }
+
         res.json({
             success: true,
-            message: 'Scatto e analisi completati',
+            message: 'Scatto e analisi completati. La lezione rimane in corso.',
             lesson_completed: lessonCompleted,
             image_id: savedImage.id,
-            report_image_id: reportImageId,
+            report_image_id: savedImage.id, // Stessa immagine - con riquadri se disponibili
             analysis: {
                 detected_faces: analysisResult.detected_faces || 0,
                 recognized_students: analysisResult.recognized_students?.length || 0,
@@ -636,17 +686,23 @@ router.get('/lessons/:id/images', async (req, res) => {
             where: { lesson_id: lessonId },
             attributes: [
                 'id', 'source', 'captured_at', 'is_analyzed',
-                'detected_faces', 'recognized_faces', 'camera_ip'
+                'detected_faces', 'recognized_faces', 'camera_ip', 'camera_metadata'
             ],
             order: [['captured_at', 'DESC']]
         });
 
         const baseUrl = `${req.protocol}://${req.get('host')}`;
-        const imagesWithUrls = images.map(img => ({
-            ...img.toJSON(),
-            url: `${baseUrl}/api/images/lesson/${img.id}`,
-            thumbnail_url: `${baseUrl}/api/images/lesson/${img.id}`
-        }));
+        const imagesWithUrls = images.map(img => {
+            const imageData = img.toJSON();
+            return {
+                ...imageData,
+                url: `${baseUrl}/api/images/lesson/${img.id}`,
+                thumbnail_url: `${baseUrl}/api/images/lesson/${img.id}`,
+                capture_source: img.getCaptureSource(),
+                captured_by: img.getCapturedBy(),
+                source_label: img.getCaptureSourceLabel()
+            };
+        });
 
         res.json({
             success: true,
@@ -658,6 +714,35 @@ router.get('/lessons/:id/images', async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Errore caricamento immagini'
+        });
+    }
+});
+
+
+router.get('/lessons', async (req, res) => {
+    try {
+        const teacherId = req.user.id;
+        
+        const lessons = await Lesson.findAll({
+            where: { teacher_id: teacherId },
+            attributes: ['id', 'name', 'lesson_date', 'lesson_start', 'lesson_end', 'course_id', 'subject_id', 'classroom_id', 'teacher_id'],
+            include: [
+                { model: Course, as: 'course', attributes: ['id', 'name'] },
+                { model: Classroom, as: 'classroom', attributes: ['id', 'name'] },
+                { model: Subject, as: 'subject', attributes: ['id', 'name'], required: false }
+            ],
+            order: [['lesson_date', 'DESC']]
+        });
+
+        res.json({
+            success: true,
+            lessons
+        });
+    } catch (error) {
+        console.error('❌ Errore caricamento lezioni:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Errore caricamento lezioni'
         });
     }
 });
@@ -887,9 +972,12 @@ router.post('/lessons/:id/send-student-email/:studentId', async (req, res) => {
 /**
  * Genera record di assenza per studenti non riconosciuti nella face detection
  */
-async function generateAbsenteeRecords(lesson, recognizedStudents) {
+async function generateAbsenteeRecords(lesson, recognizedStudents, sourceInfo = {}) {
     try {
-        console.log(`📝 Generazione record assenze per lezione ${lesson.id}`);
+        const source = sourceInfo.source || 'unknown';
+        const sourceLabel = source === 'teacher' ? '👨‍🏫 Docente' : '👨‍💼 Admin';
+        
+        console.log(`📝 Generazione record assenze per lezione ${lesson.id} (fonte: ${sourceLabel})`);
         
         // Ottieni tutti gli studenti iscritti al corso
         const enrolledStudents = await sequelize.query(`
@@ -930,7 +1018,7 @@ async function generateAbsenteeRecords(lesson, recognizedStudents) {
                     timestamp: new Date()
                 });
                 
-                console.log(`📋 ${isPresent ? '✅ Presente' : '❌ Assente'}: ${student.name} ${student.surname} (ID: ${student.id})`);
+                console.log(`📋 ${isPresent ? '✅ Presente' : '❌ Assente'}: ${student.name} ${student.surname} (ID: ${student.id}) [${sourceLabel}]`);
                 
                 // Aggiungi studenti assenti alla lista per email
                 if (!isPresent) {

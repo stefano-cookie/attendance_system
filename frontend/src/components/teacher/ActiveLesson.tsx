@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import teacherService, { AttendanceReport } from '../../services/teacherService';
 import { sendAttendanceEmails } from '../../services/api';
+import FullscreenLoader from '../common/FullscreenLoader';
 
 const ActiveLesson: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -133,27 +134,33 @@ const ActiveLesson: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <FullscreenLoader 
+        message={t('common.loading')}
+        stages={[
+          'Caricamento lezione...',
+          'Verifica presenze...',
+          'Preparazione interfaccia...'
+        ]}
+        stageDuration={1000}
+      />
     );
   }
 
   if (error && !lesson) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+      <div className="bg-red-900/20 border border-red-800/50 rounded-lg p-6">
         <div className="flex items-center">
-          <svg className="w-6 h-6 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div>
-            <h3 className="text-lg font-medium text-red-800">{t('common.error')}</h3>
-            <p className="text-red-700">{error}</p>
+            <h3 className="text-lg font-medium text-red-300">{t('common.error')}</h3>
+            <p className="text-red-200">{error}</p>
           </div>
         </div>
         <button 
           onClick={() => navigate('/teacher')}
-          className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+          className="mt-4 bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded-lg transition-colors text-sm"
         >
           {t('teacher.lessons.backToDashboard')}
         </button>
@@ -162,16 +169,16 @@ const ActiveLesson: React.FC = () => {
   }
 
   if (!lesson) {
-    return <div>{t('teacher.lessons.lessonNotFound')}</div>;
+    return <div className="text-gray-300">{t('teacher.lessons.lessonNotFound')}</div>;
   }
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{lesson.name}</h1>
-            <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
+            <h1 className="text-2xl font-bold text-white">{lesson.name}</h1>
+            <div className="flex items-center space-x-4 mt-2 text-sm text-gray-300">
               <span className="flex items-center">
                 <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -194,7 +201,7 @@ const ActiveLesson: React.FC = () => {
           </div>
           <button 
             onClick={() => navigate('/teacher')}
-            className="text-gray-600 hover:text-gray-900"
+            className="text-gray-400 hover:text-white transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -204,38 +211,38 @@ const ActiveLesson: React.FC = () => {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-900/20 border border-red-800/50 rounded-lg p-4">
           <div className="flex items-center">
-            <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span className="text-red-700">{error}</span>
+            <span className="text-red-300">{error}</span>
           </div>
         </div>
       )}
 
       {emailSuccess && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="bg-green-900/20 border border-green-600/30 rounded-lg p-4">
           <div className="flex items-center">
-            <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span className="text-green-700">{emailSuccess}</span>
+            <span className="text-green-300">{emailSuccess}</span>
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('teacher.lessons.attendanceControl')}</h2>
+      <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6">
+        <h2 className="text-lg font-semibold text-white mb-4">{t('teacher.lessons.attendanceControl')}</h2>
         <div className="flex items-center space-x-4 flex-wrap gap-4">
           <button 
             onClick={handleCaptureAndAnalyze}
             disabled={capturing || lesson?.is_completed}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 transition-all hover:scale-105"
           >
             {capturing ? (
               <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                 <span>{t('teacher.lessons.analyzing')}</span>
               </>
             ) : (
@@ -251,12 +258,12 @@ const ActiveLesson: React.FC = () => {
 
           {lesson?.is_completed && (
             <div className="w-full space-y-3">
-              <div className="flex items-center justify-center px-4 py-3 bg-green-100 text-green-800 rounded-lg text-sm font-semibold border border-green-200">
-                ✅ {t('teacher.lessons.lessonCompleted') || 'Lezione Completata'}
+              <div className="flex items-center justify-center px-4 py-3 bg-green-600/20 text-green-400 rounded-lg text-sm font-semibold border border-green-600/30">
+                {t('teacher.lessons.captureAnalysis.lessonCompleted') || '✅ Lezione Completata'}
               </div>
               <button 
                 onClick={() => navigate('/teacher')}
-                className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold"
+                className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:scale-105 text-sm font-semibold"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -270,11 +277,11 @@ const ActiveLesson: React.FC = () => {
             <button 
               onClick={handleSendEmails}
               disabled={sendingEmails}
-              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 transition-all hover:scale-105"
             >
               {sendingEmails ? (
                 <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                   <span>Invio email...</span>
                 </>
               ) : (
@@ -291,7 +298,7 @@ const ActiveLesson: React.FC = () => {
           {!lesson?.is_completed && (
             <button 
               onClick={() => navigate(`/teacher/lessons/${id}/images`)}
-              className="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 flex items-center space-x-2"
+              className="bg-gray-700 text-gray-300 px-6 py-3 rounded-lg hover:bg-gray-600 flex items-center space-x-2 transition-all hover:scale-105"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -303,19 +310,19 @@ const ActiveLesson: React.FC = () => {
       </div>
 
       {attendanceReport && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">{t('teacher.attendance.reportTitle')}</h2>
+        <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700">
+          <div className="px-6 py-4 border-b border-gray-600">
+            <h2 className="text-lg font-semibold text-white">{t('teacher.attendance.reportTitle')}</h2>
           </div>
           
           {lesson?.is_completed && reportImageId && (
-            <div className="p-6 border-b border-gray-200">
-              <h3 className="text-md font-semibold text-gray-900 mb-4">Immagine con Riconoscimenti</h3>
+            <div className="p-6 border-b border-gray-600">
+              <h3 className="text-md font-semibold text-white mb-4">Immagine con Riconoscimenti</h3>
               <div className="flex justify-center">
                 <img 
                   src={`http://localhost:4321/api/images/lesson/${reportImageId}`}
                   alt="Report con riconoscimenti facciali"
-                  className="max-w-full h-auto rounded-lg border border-gray-300 shadow-sm"
+                  className="max-w-full h-auto rounded-lg border border-gray-600 shadow-lg"
                   style={{ maxHeight: '400px' }}
                   onError={(e) => {
                     console.error('Errore caricamento immagine report:', e);
@@ -323,29 +330,29 @@ const ActiveLesson: React.FC = () => {
                   }}
                 />
               </div>
-              <p className="text-sm text-gray-600 text-center mt-2">
+              <p className="text-sm text-gray-400 text-center mt-2">
                 I riquadri verdi indicano i volti riconosciuti degli studenti
               </p>
             </div>
           )}
           
-          <div className="p-6 border-b border-gray-200">
+          <div className="p-6 border-b border-gray-600">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="text-center">
-                <p className="text-2xl font-bold text-gray-900">{attendanceReport.attendance.summary.total}</p>
-                <p className="text-sm text-gray-600">{t('teacher.attendance.totalStudents')}</p>
+                <p className="text-2xl font-bold text-white">{attendanceReport.attendance.summary.total}</p>
+                <p className="text-sm text-gray-400">{t('teacher.attendance.totalStudents')}</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-green-600">{attendanceReport.attendance.summary.present}</p>
-                <p className="text-sm text-gray-600">{t('teacher.attendance.present')}</p>
+                <p className="text-2xl font-bold text-green-400">{attendanceReport.attendance.summary.present}</p>
+                <p className="text-sm text-gray-400">{t('teacher.attendance.present')}</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-red-600">{attendanceReport.attendance.summary.absent}</p>
-                <p className="text-sm text-gray-600">{t('teacher.attendance.absent')}</p>
+                <p className="text-2xl font-bold text-red-400">{attendanceReport.attendance.summary.absent}</p>
+                <p className="text-sm text-gray-400">{t('teacher.attendance.absent')}</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-blue-600">{attendanceReport.attendance.summary.percentage}%</p>
-                <p className="text-sm text-gray-600">{t('teacher.attendance.percentage')}</p>
+                <p className="text-2xl font-bold text-blue-400">{attendanceReport.attendance.summary.percentage}%</p>
+                <p className="text-sm text-gray-400">{t('teacher.attendance.percentage')}</p>
               </div>
             </div>
           </div>
@@ -353,29 +360,29 @@ const ActiveLesson: React.FC = () => {
           <div className="p-6">
             {attendanceReport.attendance.students.length === 0 ? (
               <div className="text-center py-8">
-                <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-12 h-12 mx-auto text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                <p className="text-gray-500">{t('teacher.attendance.noStudentsFound')}</p>
+                <p className="text-gray-400">{t('teacher.attendance.noStudentsFound')}</p>
               </div>
             ) : (
               <div className="space-y-2">
                 {attendanceReport.attendance.students.map((student) => (
-                  <div key={student.student_id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                  <div key={student.student_id} className="flex items-center justify-between p-3 border border-gray-600 rounded-lg bg-gray-700/30">
                     <div className="flex items-center space-x-3">
                       <div className={`w-3 h-3 rounded-full ${student.is_present ? 'bg-green-500' : 'bg-red-500'}`}></div>
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-white">
                           {student.student_name} {student.student_surname}
                         </p>
-                        <p className="text-sm text-gray-600">{t('teacher.attendance.studentId')}: {student.matricola}</p>
+                        <p className="text-sm text-gray-400">{t('teacher.attendance.studentId')}: {student.matricola}</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         student.is_present 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
+                          ? 'bg-green-600/20 text-green-400 border border-green-600/30' 
+                          : 'bg-red-600/20 text-red-400 border border-red-600/30'
                       }`}>
                         {student.is_present ? t('teacher.attendance.present') : t('teacher.attendance.absent')}
                       </span>

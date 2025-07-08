@@ -12,6 +12,7 @@ const db = require(path.join(__dirname, 'models/index'));
 
 // Servizi
 const fileAnalysisService = require('./services/fileAnalysisService');
+const lessonScheduler = require('./services/lessonSchedulerService');
 
 // ========================================
 // IMPORTA TUTTE LE ROUTES (COMPLETE!)
@@ -106,7 +107,12 @@ db.sequelize.authenticate()
 })
 .then(() => {
   console.log('✅ Database sincronizzato');
+  
+  // Start lesson scheduler service
+  lessonScheduler.start();
+  
   console.log('🚀 Sistema BLOB pronto al 100%! 🎉');
+  console.log('⏰ Lesson scheduler attivo per auto-completamento lezioni');
   console.log('');
   console.log('💡 ROUTES CORRETTE:');
   console.log('  ✅ /api/users/courses → userCoursesRoutes.js');

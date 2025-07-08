@@ -67,6 +67,17 @@ data/reports/*
 temp/
 backend/temp/
 
+# Documentation and development files
+CLAUDE.md
+*.md.bak
+**/debug_*.py
+**/test_*.py
+**/check_*.py
+**/simulate_*.py
+**/find_*.py
+**/verify_*.py
+requirements_deepface_optimized.txt
+
 # Database
 *.sqlite
 *.sqlite3

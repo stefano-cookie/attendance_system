@@ -85,7 +85,7 @@ router.get('/screenshots', authenticate, isAdmin, async (req, res) => {
         const includeClassroom = includeRelations.includes('classroom');
         
         let query = `
-            SELECT li.id, li.lesson_id, li.captured_at, 
+            SELECT DISTINCT li.id, li.lesson_id, li.captured_at, 
                    li.detected_faces, li.source, li.mime_type, 
                    li.file_size, li.original_filename, li.camera_ip,
                    li.is_analyzed, li.analysis_metadata,
@@ -141,7 +141,16 @@ router.get('/screenshots', authenticate, isAdmin, async (req, res) => {
         
         console.log(`✅ Admin: Trovate ${lessonImages.length} LessonImages`);
         
-        const formattedScreenshots = lessonImages.map(image => {
+        // Rimuovi eventuali duplicati basati su ID (sicurezza aggiuntiva)
+        const uniqueLessonImages = lessonImages.filter((image, index, arr) => 
+            arr.findIndex(i => i.id === image.id) === index
+        );
+        
+        if (uniqueLessonImages.length !== lessonImages.length) {
+            console.warn(`⚠️ Rimossi ${lessonImages.length - uniqueLessonImages.length} duplicati dal risultato SQL`);
+        }
+        
+        const formattedScreenshots = uniqueLessonImages.map(image => {
             const baseUrl = `${req.protocol}://${req.get('host')}`;
             
             const result = {
@@ -288,6 +297,7 @@ router.post('/lessons/:id/capture-and-analyze', authenticate, isAdmin, async (re
 
         console.log(`✅ Scatto completato: ${(captureResult.imageData.length/1024).toFixed(1)}KB`);
 
+        // Salviamo sempre l'immagine originale come base, poi la sostituiremo con quella con i riquadri se disponibile
         const savedImage = await LessonImage.create({
             lesson_id: lessonId,
             image_data: captureResult.imageData,
@@ -297,11 +307,19 @@ router.post('/lessons/:id/capture-and-analyze', authenticate, isAdmin, async (re
             captured_at: new Date(),
             camera_ip: lesson.classroom.camera_ip,
             camera_method: captureResult.metadata.method,
+            camera_metadata: {
+                capture_source: 'admin',
+                admin_id: req.user.id,
+                admin_name: `${req.user.name} ${req.user.surname || ''}`.trim(),
+                admin_email: req.user.email,
+                captured_by_role: 'admin',
+                capture_timestamp: new Date().toISOString()
+            },
             is_analyzed: false,
             processing_status: 'pending'
         });
 
-        console.log(`💾 Immagine salvata: ID ${savedImage.id}`);
+        console.log(`💾 Immagine base salvata: ID ${savedImage.id}`);
 
         let analysisResult = {
             success: false,
@@ -309,13 +327,15 @@ router.post('/lessons/:id/capture-and-analyze', authenticate, isAdmin, async (re
             recognized_students: []
         };
 
+        // Non usiamo più reportImageId separato - l'immagine con i riquadri è ora savedImage
+
         try {
             console.log('🔍 Avvio analisi face detection...');
             
             analysisResult = await faceDetectionService.analyzeImageBlob(
                 captureResult.imageData,
                 lessonId,
-                { debugMode: true }
+                { debugMode: true, imageId: savedImage.id }
             );
 
             console.log(`✅ Analisi completata: ${analysisResult.detected_faces} volti, ${analysisResult.recognized_students?.length || 0} riconosciuti`);
@@ -338,16 +358,13 @@ router.post('/lessons/:id/capture-and-analyze', authenticate, isAdmin, async (re
                 console.log(`📂 ReportImagePath: ${analysisResult.reportImagePath}`);
             }
             
+            // Se l'analisi ha generato un'immagine con riquadri, sostituisci quella base
             if (analysisResult.reportImageBlob) {
                 try {
-                    const reportImage = await LessonImage.create({
-                        lesson_id: lessonId,
+                    await savedImage.update({
                         image_data: analysisResult.reportImageBlob,
                         file_size: analysisResult.reportImageBlob.length,
-                        mime_type: 'image/jpeg',
                         source: 'report',
-                        captured_at: new Date(),
-                        camera_ip: lesson.classroom.camera_ip,
                         is_analyzed: true,
                         detected_faces: analysisResult.detected_faces || 0,
                         recognized_faces: analysisResult.recognized_students?.length || 0,
@@ -355,18 +372,34 @@ router.post('/lessons/:id/capture-and-analyze', authenticate, isAdmin, async (re
                         analyzed_at: new Date()
                     });
                     
-                    console.log(`✅ Immagine report salvata: ID ${reportImage.id}`);
+                    console.log(`✅ Immagine aggiornata con riquadri: ID ${savedImage.id}`);
                 } catch (reportError) {
-                    console.error('❌ Errore salvataggio immagine report:', reportError.message);
-                    console.error('❌ Stack:', reportError.stack);
+                    console.error('❌ Errore aggiornamento immagine con riquadri:', reportError.message);
+                    // Manteniamo l'immagine originale se l'update fallisce
+                    await savedImage.update({
+                        is_analyzed: true,
+                        processing_status: 'completed',
+                        detected_faces: analysisResult.detected_faces || 0,
+                        recognized_faces: analysisResult.recognized_students?.length || 0,
+                        analyzed_at: new Date()
+                    });
                 }
             } else {
-                console.warn('⚠️ Nessuna immagine report da salvare');
+                // Nessuna immagine report - aggiorna solo i metadati
+                await savedImage.update({
+                    is_analyzed: true,
+                    processing_status: 'completed',
+                    detected_faces: analysisResult.detected_faces || 0,
+                    recognized_faces: analysisResult.recognized_students?.length || 0,
+                    analyzed_at: new Date()
+                });
+                console.log(`⚠️ Mantenuta immagine originale: ID ${savedImage.id}`);
             }
 
         } catch (analysisError) {
             console.error('❌ Errore face detection:', analysisError);
             
+            // savedImage esiste sempre ora, aggiorna solo lo stato di errore
             await savedImage.update({
                 is_analyzed: true,
                 processing_status: 'error',
@@ -374,39 +407,36 @@ router.post('/lessons/:id/capture-and-analyze', authenticate, isAdmin, async (re
             });
         }
 
-        try {
-            await Screenshot.create({
-                lessonId: lessonId,
-                image_data: captureResult.imageData,
-                timestamp: new Date(),
-                detectedFaces: analysisResult.detected_faces || 0,
-                source: 'camera_capture'
-            });
-        } catch (e) {
-            console.warn('⚠️ Errore salvataggio screenshot:', e.message);
-        }
+        // Screenshot salvato già in LessonImage sopra - rimuovo duplicato
+
+        // Update last capture time without completing the lesson
+        await lesson.update({
+            last_capture_at: new Date(),
+            status: lesson.status === 'draft' ? 'active' : lesson.status
+        });
 
         let lessonCompleted = false;
-        if (!lesson.is_completed && analysisResult.success) {
+        // Check if lesson should be automatically completed based on end time
+        if (!lesson.is_completed && lesson.shouldBeCompleted()) {
             try {
                 await lesson.markAsCompleted();
                 lessonCompleted = true;
-                console.log(`✅ Lezione ${lessonId} marcata come completata da admin`);
-                
-                try {
-                    const emailService = require('../services/emailService');
-                    const emailResult = await emailService.sendAttendanceReportToAllStudents(lessonId);
-                    if (emailResult.success) {
-                        console.log(`📧 Email report inviate: ${emailResult.results.sent} successi, ${emailResult.results.failed} fallimenti`);
-                    } else {
-                        console.warn('⚠️ Errore invio email report:', emailResult.error);
-                    }
-                } catch (emailError) {
-                    console.warn('⚠️ Errore servizio email:', emailError.message);
-                }
+                console.log(`✅ Lezione ${lessonId} marcata come completata automaticamente (orario fine raggiunto)`);
             } catch (completionError) {
                 console.warn('⚠️ Errore marcatura completamento:', completionError.message);
             }
+        }
+
+        console.log(`📊 Generazione report per controllo amministrativo (senza email)`);
+        
+        try {
+            const emailService = require('../services/emailService');
+            const reportResult = await emailService.generateAttendanceReport(lessonId);
+            if (reportResult.success) {
+                console.log(`📋 Report generato per revisione admin: ${reportResult.summary.presentStudents} presenti, ${reportResult.summary.absentStudents} assenti`);
+            }
+        } catch (reportError) {
+            console.warn('⚠️ Errore generazione report:', reportError.message);
         }
 
         res.json({
@@ -414,6 +444,7 @@ router.post('/lessons/:id/capture-and-analyze', authenticate, isAdmin, async (re
             message: 'Scatto e analisi completati',
             lesson_completed: lessonCompleted,
             image_id: savedImage.id,
+            report_image_id: savedImage.id,
             analysis: {
                 detected_faces: analysisResult.detected_faces || 0,
                 recognized_students: analysisResult.recognized_students?.length || 0,

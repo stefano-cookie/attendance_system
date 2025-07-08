@@ -22,13 +22,15 @@ router.get('/', authenticate, async (req, res) => {
                 a.confidence,
                 a."imageFile",
                 a."screenshotId",
+                a."imageId",
                 u.id as student_id,
                 u.name as student_name,
                 u.surname as student_surname,
                 u.email as student_email,
                 u.matricola as student_matricola,
                 u."courseId" as student_courseId,
-                CASE WHEN u."photoPath" IS NOT NULL THEN true ELSE false END as "student_hasPhoto",
+                u."photoPath" as student_photoPath,
+                CASE WHEN u."photoPath" IS NOT NULL AND LENGTH(u."photoPath") > 0 THEN true ELSE false END as "student_hasPhoto",
                 l.id as lesson_id,
                 l.name as lesson_name,
                 l.lesson_date as lesson_date,
@@ -36,12 +38,15 @@ router.get('/', authenticate, async (req, res) => {
                 c.id as course_id,
                 c.name as course_name,
                 s.id as subject_id,
-                s.name as subject_name
+                s.name as subject_name,
+                li.camera_metadata,
+                li.captured_at as image_captured_at
             FROM "Attendances" a
             LEFT JOIN "Users" u ON a."userId" = u.id
             LEFT JOIN "Lessons" l ON a."lessonId" = l.id
             LEFT JOIN "Courses" c ON l.course_id = c.id
             LEFT JOIN "Subjects" s ON l.subject_id = s.id
+            LEFT JOIN "LessonImages" li ON a."imageId" = li.id
             WHERE 1=1
             AND u.role = 'student'
         `;
@@ -77,6 +82,21 @@ router.get('/', authenticate, async (req, res) => {
         console.log(`Trovate ${attendances.length} presenze`);
         
         const formattedAttendances = attendances.map(record => {
+            // Extract source information from camera metadata
+            let sourceInfo = null;
+            if (record.camera_metadata) {
+                const metadata = record.camera_metadata;
+                sourceInfo = {
+                    capture_source: metadata.capture_source || 'unknown',
+                    captured_by_role: metadata.captured_by_role || metadata.capture_source || 'unknown',
+                    captured_by_name: metadata.teacher_name || metadata.admin_name || null,
+                    captured_by_email: metadata.teacher_email || metadata.admin_email || null,
+                    capture_timestamp: metadata.capture_timestamp || record.image_captured_at || null,
+                    source_label: metadata.capture_source === 'teacher' ? '👨‍🏫 Docente' :
+                                metadata.capture_source === 'admin' ? '👨‍💼 Admin' : '❓ Sconosciuto'
+                };
+            }
+
             return {
                 id: record.id,
                 userId: record.userId,
@@ -86,6 +106,8 @@ router.get('/', authenticate, async (req, res) => {
                 confidence: record.confidence || 0,
                 imageFile: record.imageFile,
                 screenshotId: record.screenshotId,
+                imageId: record.imageId,
+                sourceInfo: sourceInfo,
                 student: record.student_id ? {
                     id: record.student_id,
                     name: record.student_name,
@@ -93,6 +115,7 @@ router.get('/', authenticate, async (req, res) => {
                     email: record.student_email,
                     matricola: record.student_matricola,
                     courseId: record.student_courseId,
+                    photoPath: record.student_photoPath,
                     hasPhoto: record["student_hasPhoto"]
                 } : null,
                 lesson: record.lesson_id ? {
@@ -283,9 +306,13 @@ router.get('/lesson/:lessonId/complete', authenticate, async (req, res) => {
                    a.is_present,
                    a.timestamp,
                    a.confidence,
-                   a."screenshotId"
+                   a."screenshotId",
+                   a."imageId",
+                   li.camera_metadata,
+                   li.captured_at as image_captured_at
             FROM "Users" u
             LEFT JOIN "Attendances" a ON u.id = a."userId" AND a."lessonId" = :lessonId
+            LEFT JOIN "LessonImages" li ON a."imageId" = li.id
             WHERE u."courseId" = :courseId AND u.role = 'student'
             ORDER BY u.surname, u.name
         `, {
@@ -296,35 +323,54 @@ router.get('/lesson/:lessonId/complete', authenticate, async (req, res) => {
             type: QueryTypes.SELECT
         });
         
-        const formattedAttendances = students.map(student => ({
-            id: student.attendance_id || null,
-            userId: student.id,
-            lessonId: parseInt(lessonId),
-            is_present: student.is_present !== null ? student.is_present : false,
-            timestamp: student.timestamp || null,
-            confidence: student.confidence || 0,
-            screenshotId: student.screenshotId || null,
-            student: {
-                id: student.id,
-                name: student.name,
-                surname: student.surname,
-                email: student.email,
-                matricola: student.matricola,
-                hasPhoto: student["hasPhoto"]
-            },
-            lesson: {
-                id: lessonInfo.id,
-                name: lessonInfo.lesson_name,
-                lesson_date: lessonInfo.lesson_date,
-                course: {
-                    id: lessonInfo.course_id,
-                    name: lessonInfo.course_name
-                },
-                subject: {
-                    name: lessonInfo.subject_name
-                }
+        const formattedAttendances = students.map(student => {
+            // Extract source information from camera metadata
+            let sourceInfo = null;
+            if (student.camera_metadata) {
+                const metadata = student.camera_metadata;
+                sourceInfo = {
+                    capture_source: metadata.capture_source || 'unknown',
+                    captured_by_role: metadata.captured_by_role || metadata.capture_source || 'unknown',
+                    captured_by_name: metadata.teacher_name || metadata.admin_name || null,
+                    captured_by_email: metadata.teacher_email || metadata.admin_email || null,
+                    capture_timestamp: metadata.capture_timestamp || student.image_captured_at || null,
+                    source_label: metadata.capture_source === 'teacher' ? '👨‍🏫 Docente' :
+                                metadata.capture_source === 'admin' ? '👨‍💼 Admin' : '❓ Sconosciuto'
+                };
             }
-        }));
+
+            return {
+                id: student.attendance_id || null,
+                userId: student.id,
+                lessonId: parseInt(lessonId),
+                is_present: student.is_present !== null ? student.is_present : false,
+                timestamp: student.timestamp || null,
+                confidence: student.confidence || 0,
+                screenshotId: student.screenshotId || null,
+                imageId: student.imageId || null,
+                sourceInfo: sourceInfo,
+                student: {
+                    id: student.id,
+                    name: student.name,
+                    surname: student.surname,
+                    email: student.email,
+                    matricola: student.matricola,
+                    hasPhoto: student["hasPhoto"]
+                },
+                lesson: {
+                    id: lessonInfo.id,
+                    name: lessonInfo.lesson_name,
+                    lesson_date: lessonInfo.lesson_date,
+                    course: {
+                        id: lessonInfo.course_id,
+                        name: lessonInfo.course_name
+                    },
+                    subject: {
+                        name: lessonInfo.subject_name
+                    }
+                }
+            };
+        });
         
         const totalStudents = students.length;
         const presentStudents = students.filter(s => s.is_present === true).length;
@@ -371,7 +417,7 @@ router.get('/course/:courseId/complete', authenticate, async (req, res) => {
                 u.surname as student_surname,
                 u.matricola,
                 u.email,
-                CASE WHEN u."photoPath" IS NOT NULL THEN true ELSE false END as "student_hasPhoto",
+                CASE WHEN u."photoPath" IS NOT NULL AND LENGTH(u."photoPath") > 0 THEN true ELSE false END as "student_hasPhoto",
                 l.id as lesson_id,
                 l.name as lesson_name,
                 l.lesson_date,

@@ -155,9 +155,9 @@ const StudentRegistration: React.FC = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
       {/* Header */}
-      <div className="bg-white shadow-lg border-b border-gray-200">
+      <div className="bg-gray-800 shadow-lg border-b border-gray-700">
         <div className="container mx-auto px-6 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-4">
@@ -167,15 +167,15 @@ const StudentRegistration: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-800">{t('technician.registration.title')}</h1>
-                <p className="text-gray-600">{t('technician.registration.subtitle')}</p>
+                <h1 className="text-3xl font-bold text-white">{t('technician.registration.title')}</h1>
+                <p className="text-gray-300">{t('technician.registration.subtitle')}</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-3">
               <button
                 onClick={() => navigate('/admin')}
-                className="flex items-center space-x-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+                className="flex items-center space-x-2 bg-gray-700 text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -185,7 +185,7 @@ const StudentRegistration: React.FC = () => {
               
               <button
                 onClick={() => authService.logout()}
-                className="flex items-center space-x-2 bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors"
+                className="flex items-center space-x-2 bg-red-900/20 text-red-400 px-4 py-2 rounded-lg hover:bg-red-900/30 transition-colors border border-red-800"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -202,8 +202,8 @@ const StudentRegistration: React.FC = () => {
         {message.text && (
           <div className={`mb-6 p-4 rounded-xl border-l-4 shadow-lg ${
             message.type === 'success' 
-              ? 'bg-green-50 border-green-500 text-green-800' 
-              : 'bg-red-50 border-red-500 text-red-800'
+              ? 'bg-green-900/20 border-green-500 text-green-400' 
+              : 'bg-red-900/20 border-red-500 text-red-400'
           }`}>
             <div className="flex items-center">
               {message.type === 'success' ? (
@@ -222,99 +222,99 @@ const StudentRegistration: React.FC = () => {
         
         {/* Form principale */}
         <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100">
+          <div className="bg-gray-800 rounded-2xl shadow-xl border border-gray-700">
             <form onSubmit={handleSubmit}>
               {/* Sezione Dati Personali */}
-              <div className="p-8 border-b border-gray-200">
+              <div className="p-8 border-b border-gray-700">
                 <div className="flex items-center mb-6">
-                  <div className="bg-blue-100 p-3 rounded-lg mr-4">
+                  <div className="bg-blue-600/20 p-3 rounded-lg mr-4">
                     <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-800">{t('technician.registration.sections.personalData.title')}</h3>
-                    <p className="text-gray-600">{t('technician.registration.sections.personalData.subtitle')}</p>
+                    <h3 className="text-xl font-semibold text-white">{t('technician.registration.sections.personalData.title')}</h3>
+                    <p className="text-gray-300">{t('technician.registration.sections.personalData.subtitle')}</p>
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       {t('technician.registration.fields.firstName')} *
                     </label>
                     <input
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 border border-gray-600 bg-gray-700 text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
                       placeholder={t('technician.registration.placeholders.firstName')}
                       required
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       {t('technician.registration.fields.lastName')} *
                     </label>
                     <input
                       type="text"
                       value={surname}
                       onChange={(e) => setSurname(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 border border-gray-600 bg-gray-700 text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
                       placeholder={t('technician.registration.placeholders.lastName')}
                       required
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       {t('technician.registration.fields.studentId')} *
                     </label>
                     <input
                       type="text"
                       value={matricola}
                       onChange={(e) => setMatricola(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 border border-gray-600 bg-gray-700 text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
                       placeholder={t('technician.registration.placeholders.studentId')}
                       required
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       {t('technician.registration.fields.email')} *
                     </label>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 border border-gray-600 bg-gray-700 text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
                       placeholder={t('technician.registration.placeholders.email')}
                       required
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       {t('technician.registration.fields.birthDate')} *
                     </label>
                     <input
                       type="date"
                       value={birthDate}
                       onChange={(e) => setBirthDate(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 border border-gray-600 bg-gray-700 text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       {t('technician.registration.fields.course')} *
                     </label>
                     <select
                       value={selectedCourse || ''}
                       onChange={(e) => setSelectedCourse(e.target.value ? parseInt(e.target.value) : null)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 border border-gray-600 bg-gray-700 text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
                     >
                       <option value="">{t('technician.registration.placeholders.selectCourse')}</option>
                       {courses.map(course => (
@@ -328,19 +328,19 @@ const StudentRegistration: React.FC = () => {
               {/* Sezione Foto */}
               <div className="p-8">
                 <div className="flex items-center mb-6">
-                  <div className="bg-purple-100 p-3 rounded-lg mr-4">
+                  <div className="bg-purple-600/20 p-3 rounded-lg mr-4">
                     <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-800">{t('technician.registration.sections.photo.title')} *</h3>
-                    <p className="text-gray-600">{t('technician.registration.sections.photo.subtitle')}</p>
+                    <h3 className="text-xl font-semibold text-white">{t('technician.registration.sections.photo.title')} *</h3>
+                    <p className="text-gray-300">{t('technician.registration.sections.photo.subtitle')}</p>
                   </div>
                 </div>
                 
-                <div className="bg-gray-50 rounded-xl p-6">
+                <div className="bg-gray-700 rounded-xl p-6">
                   {isCapturing ? (
                     <div className="text-center">
                       <div className="relative inline-block rounded-xl overflow-hidden shadow-lg">
@@ -418,14 +418,14 @@ const StudentRegistration: React.FC = () => {
                         </div>
                       ) : (
                         <div className="py-12">
-                          <div className="bg-gray-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6">
-                            <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="bg-gray-600 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6">
+                            <svg className="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                           </div>
-                          <h4 className="text-lg font-medium text-gray-700 mb-2">{t('technician.registration.photo.noPhoto')}</h4>
-                          <p className="text-gray-500 mb-6">{t('technician.registration.photo.activateCamera')}</p>
+                          <h4 className="text-lg font-medium text-white mb-2">{t('technician.registration.photo.noPhoto')}</h4>
+                          <p className="text-gray-300 mb-6">{t('technician.registration.photo.activateCamera')}</p>
                           
                           <button
                             type="button"
@@ -445,9 +445,9 @@ const StudentRegistration: React.FC = () => {
               </div>
               
               {/* Footer con pulsante submit */}
-              <div className="px-8 py-6 bg-gray-50 rounded-b-2xl border-t border-gray-200">
+              <div className="px-8 py-6 bg-gray-700 rounded-b-2xl border-t border-gray-600">
                 <div className="flex flex-col md:flex-row gap-5 items-center justify-between">
-                  <div className="flex items-center text-sm text-gray-600">
+                  <div className="flex items-center text-sm text-gray-300">
                     <svg className="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>

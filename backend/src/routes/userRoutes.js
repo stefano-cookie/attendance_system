@@ -162,14 +162,10 @@ router.get('/students', authenticate, async (req, res) => {
 
 // GET /api/users/students/:id (dettaglio studente)
 router.get('/students/:id', authenticate, async (req, res) => {
-  console.log(`📋 GET /students/${req.params.id} - Caricamento singolo studente`);
-  
   try {
     const studentId = req.params.id;
-    console.log(`🔍 Richiesta dettaglio studente ID: ${studentId}`);
     
     if (req.user.role !== 'admin' && req.user.id !== parseInt(studentId)) {
-      console.log(`❌ Accesso negato: ruolo ${req.user.role}, user ID ${req.user.id}`);
       return res.status(403).json({
         success: false,
         error: 'Non autorizzato'
@@ -194,14 +190,11 @@ router.get('/students/:id', authenticate, async (req, res) => {
     });
 
     if (!student) {
-      console.log(`❌ Studente ${studentId} non trovato nel database`);
       return res.status(404).json({
         success: false,
         error: 'Studente non trovato'
       });
     }
-
-    console.log(`✅ Studente trovato: ${student.name} ${student.surname} (${student.email})`);
     
     const hasPhoto = !!(student.photoPath && student.photoPath.length > 0);
     
@@ -209,8 +202,6 @@ router.get('/students/:id', authenticate, async (req, res) => {
       ...student.toJSON(),
       hasPhoto: hasPhoto
     };
-    
-    console.log(`📤 Invio dati studente:`, responseData);
 
     res.json(responseData);
   } catch (error) {

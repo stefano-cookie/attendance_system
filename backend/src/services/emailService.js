@@ -189,6 +189,95 @@ class EmailService {
   }
 
   /**
+   * Genera report presenze senza inviare email (per controllo amministrativo)
+   */
+  async generateAttendanceReport(lessonId) {
+    try {
+      // Recupera lezione con corso e aula
+      const lesson = await Lesson.findByPk(lessonId, {
+        include: [
+          { model: Course, as: 'course' },
+          { model: Classroom, as: 'classroom' }
+        ]
+      });
+
+      if (!lesson) {
+        return { success: false, error: 'Lezione non trovata' };
+      }
+
+      // Recupera tutti gli studenti del corso con le loro presenze
+      const students = await User.findAll({
+        where: { 
+          courseId: lesson.course_id,
+          role: 'student'
+        },
+        include: [{
+          model: Attendance,
+          as: 'attendances',
+          where: { lessonId: lessonId },
+          required: false
+        }],
+        attributes: ['id', 'name', 'surname', 'email', 'photoPath']
+      });
+
+      const presentStudents = [];
+      const absentStudents = [];
+
+      // Categorizza studenti presenti/assenti
+      for (const student of students) {
+        const hasAttendance = student.attendances && student.attendances.length > 0;
+        const isPresent = hasAttendance && student.attendances.some(att => att.is_present);
+        
+        const studentData = {
+          id: student.id,
+          name: student.name,
+          surname: student.surname,
+          email: student.email,
+          photoPath: student.photoPath,
+          hasPhoto: !!student.photoPath,
+          attendanceRecords: student.attendances || []
+        };
+
+        if (isPresent) {
+          presentStudents.push(studentData);
+        } else {
+          absentStudents.push(studentData);
+        }
+      }
+
+      const summary = {
+        totalStudents: students.length,
+        presentStudents: presentStudents.length,
+        absentStudents: absentStudents.length,
+        attendanceRate: students.length > 0 ? ((presentStudents.length / students.length) * 100).toFixed(1) : 0
+      };
+
+      console.log(`📊 Report generato per lezione ${lessonId}: ${summary.presentStudents} presenti, ${summary.absentStudents} assenti`);
+      
+      return {
+        success: true,
+        lessonInfo: {
+          id: lesson.id,
+          name: lesson.name,
+          date: lesson.lesson_date,
+          course: lesson.course,
+          classroom: lesson.classroom
+        },
+        summary,
+        presentStudents,
+        absentStudents
+      };
+
+    } catch (error) {
+      console.error('❌ Errore generazione report:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
    * Genera HTML per email presenze
    */
   generateAttendanceEmailHTML({ studentName, lessonName, courseName, classroomName, lessonDate, attendanceStatus, confidenceInfo, detectionMethod }) {

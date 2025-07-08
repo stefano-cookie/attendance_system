@@ -1,0 +1,54 @@
+{
+  "models": {
+    "detector": {
+      "backend": "retinaface",
+      "confidence_threshold": 0.9,
+      "target_size": [512, 512],
+      "enforce_detection": false,
+      "align": true,
+      "fallback_backends": []
+    },
+    "recognizer": {
+      "model_name": "Facenet512",
+      "similarity_threshold": 0.25,
+      "distance_metric": "cosine",
+      "normalization": false,
+      "batch_size": 32
+    },
+    "verification": {
+      "enable_double_check": false,
+      "secondary_model": "Facenet",
+      "min_confidence_margin": 0.05
+    }
+  },
+  "performance": {
+    "max_processing_time": 30,
+    "enable_caching": false,
+    "cache_duration": 3600,
+    "cache_max_size": 1000,
+    "enable_gpu": false,
+    "batch_processing": true,
+    "max_batch_size": 50,
+    "memory_limit_mb": 1024
+  },
+  "output": {
+    "save_debug_images": true,
+    "structured_logging": true,
+    "include_confidence_map": true,
+    "include_performance_metrics": true,
+    "report_image_quality": 85,
+    "report_image_max_size": [1920, 1080]
+  },
+  "validation": {
+    "min_face_size": [80, 80],
+    "max_face_size": [500, 500],
+    "min_face_confidence": 0.90,
+    "age_range": [16, 50],
+    "blur_threshold": 100
+  },
+  "fallback": {
+    "enable_fallback": true,
+    "fallback_to_previous_version": true,
+    "fallback_threshold_failures": 3
+  }
+}

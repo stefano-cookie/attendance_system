@@ -1,6 +1,8 @@
 {
   "common": {
     "loading": "Caricamento...",
+    "processing": "Elaborazione...",
+    "finalizing": "Finalizzazione...",
     "error": "Errore",
     "success": "Successo",
     "cancel": "Annulla",
@@ -97,7 +99,9 @@
         "studentsAbsent": "studenti assenti",
         "attendanceRateToday": "Tasso Presenza Oggi",
         "recentAttendance": "Ultime Presenze Rilevate",
-        "attendances": "{{count}} presenze"
+        "attendances": "{{count}} presenze",
+        "present": "Presenti",
+        "absent": "Assenti"
       },
       "attendance": {
         "noRecords": "Nessuna presenza registrata",
@@ -112,12 +116,8 @@
         "attendanceReport": "Report Presenze",
         "quickActions": "Azioni Rapide"
       },
-      "weeklyChart": "Andamento Settimanale",
-      "todayChart": "Oggi",
-      "stats": {
-        "present": "Presenti",
-        "absent": "Assenti"
-      },
+      "weeklyChart": "Andamento Presenze Settimanale",
+      "todayChart": "Distribuzione Presenze Oggi",
       "errorLoading": "Errore nel caricamento dei dati"
     },
     "users": {
@@ -437,6 +437,7 @@
         "editLesson": "Modifica lezione",
         "deleteLesson": "Elimina lezione"
       },
+      "completedLesson": "Lezione Completata",
       "search": {
         "title": "Ricerca e Filtri",
         "searchLesson": "Cerca lezione",
@@ -508,12 +509,13 @@
         "hour": "Ora",
         "courseNotSpecified": "Corso non specificato",
         "completed": "Completata",
+        "addLesson": "Aggiungi Lezione",
+        "clickToEdit": "Clicca per modificare la lezione",
+        "clickToCreate": "Clicca per creare una nuova lezione",
         "viewCalendar": "Vista Calendario",
         "viewList": "Vista Lista",
         "weekView": "Vista Settimanale",
-        "emptyTimeSlot": "Slot orario vuoto - clicca per aggiungere lezione",
-        "clickToEdit": "Clicca per modificare",
-        "clickToCreate": "Clicca per creare nuova lezione"
+        "emptyTimeSlot": "Slot orario vuoto - clicca per aggiungere lezione"
       },
       "viewModes": {
         "calendar": "📅 Calendario",
@@ -521,7 +523,13 @@
       },
       "status": {
         "completed": "Completata",
-        "lessonCompleted": "✅ Lezione Completata"
+        "lessonCompleted": "✅ Lezione Completata",
+        "notStarted": "Non Iniziata",
+        "inProgress": "In Corso",
+        "ended": "Terminata",
+        "unknown": "Sconosciuto",
+        "notStartedYet": "Lezione non ancora iniziata",
+        "lessonEnded": "Lezione terminata"
       },
       "actions": {
         "newLesson": "Nuova Lezione",
@@ -659,7 +667,12 @@
         "withGreenFrames": "Con riquadri verdi",
         "viewDetailedReport": "Visualizza Report Dettagliato",
         "lessonCompletedMessage": "Questa lezione è stata marcata come completata. Non sarà più possibile effettuare nuovi scatti.",
-        "greenFramesIndicateRecognized": "I riquadri verdi indicano i volti riconosciuti, quelli rossi i volti non identificati."
+        "greenFramesIndicateRecognized": "I riquadri verdi indicano i volti riconosciuti, quelli rossi i volti non identificati.",
+        "stages": {
+          "capture": "Cattura in corso...",
+          "analyze": "Analisi volti...",
+          "report": "Generazione report..."
+        }
       }
     },
     "attendance": {
@@ -871,6 +884,7 @@
       "camera": "Camera",
       "detectAttendance": "Rileva Presenze",
       "manageLesson": "Gestisci Lezione",
+      "lessonCompleted": "Lezione Completata",
       "quickActions": "Azioni Rapide",
       "actions": {
         "createLesson": "Crea Lezione",
@@ -925,7 +939,17 @@
       "attendanceControl": "Controllo Presenze",
       "analyzing": "Analizzando...",
       "captureAndAnalyze": "Scatta e Analizza",
-      "viewImages": "Visualizza Immagini"
+      "viewImages": "Visualizza Immagini",
+      "captureAnalysis": {
+        "lessonCompleted": "✅ Lezione Completata"
+      },
+      "status": {
+        "notStarted": "Non Iniziata",
+        "inProgress": "In Corso",
+        "completed": "Completata",
+        "ended": "Terminata",
+        "unknown": "Sconosciuto"
+      }
     },
     "attendance": {
       "title": "Presenze",
@@ -953,6 +977,53 @@
       "registerStudents": "Registra Studenti",
       "capturePhotos": "Cattura Foto",
       "managePhotos": "Gestisci Foto"
+    },
+    "dashboard": {
+      "welcome": "Benvenuto, Tecnico",
+      "subtitle": "Gestisci registrazioni studenti e supporto tecnico",
+      "loading": "Caricamento Dashboard",
+      "loadingSubtext": "Preparazione dei dati in corso...",
+      "errorLoading": "Errore caricamento dashboard",
+      "stats": {
+        "totalStudents": "Studenti Totali",
+        "registeredToday": "Registrati Oggi",
+        "totalCourses": "Corsi Disponibili",
+        "withPhotos": "Con Foto Profilo"
+      },
+      "quickActions": "Azioni Rapide",
+      "actions": {
+        "registerStudent": "Registra Studente",
+        "registerStudentDesc": "Aggiungi un nuovo studente al sistema",
+        "cameraSetup": "Configurazione Camera",
+        "cameraSetupDesc": "Imposta e calibra le telecamere",
+        "systemInfo": "Info Sistema", 
+        "systemInfoDesc": "Stato hardware e software",
+        "documentation": "Documentazione",
+        "documentationDesc": "Guide e manuali tecnici"
+      },
+      "info": {
+        "title": "Linee Guida per la Registrazione",
+        "photoRequired": "Foto profilo obbligatoria per il riconoscimento facciale",
+        "wellLit": "Assicurati che il viso sia ben illuminato",
+        "clearFace": "Viso chiaramente visibile senza ostacoli",
+        "validData": "Verifica che tutti i dati siano corretti"
+      },
+      "help": {
+        "title": "Assistenza Tecnica",
+        "troubleshooting": "Risoluzione Problemi",
+        "troubleshootingDesc": "Soluzioni per problemi comuni",
+        "bestPractices": "Migliori Pratiche",
+        "bestPracticesDesc": "Consigli per registrazioni ottimali"
+      },
+      "recentActivity": "Attività Recente",
+      "activity": {
+        "studentsRegistered": "{{count}} studente registrato",
+        "studentsRegistered_plural": "{{count}} studenti registrati",
+        "today": "oggi",
+        "recent": "Recente",
+        "noActivity": "Nessuna attività oggi",
+        "noActivityDesc": "Non ci sono state registrazioni oggi"
+      }
     },
     "layout": {
       "title": "Registrazione Studenti",

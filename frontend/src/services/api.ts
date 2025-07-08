@@ -92,6 +92,8 @@ export interface Lesson {
   id: number;
   name?: string;
   lesson_date: string;
+  lesson_start?: string;
+  lesson_end?: string;
   classroom_id: number;
   course_id: number;
   subject_id?: number;
@@ -99,8 +101,6 @@ export interface Lesson {
   status?: string;
   is_completed?: boolean;
   completed_at?: string;
-  planned_start_time?: string;
-  planned_end_time?: string;
   course?: Course;
   classroom?: Classroom;
   subject?: Subject;

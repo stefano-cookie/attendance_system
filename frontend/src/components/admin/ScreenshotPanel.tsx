@@ -1,6 +1,5 @@
 // frontend/src/components/admin/ScreenshotPanel.tsx - UI REDESIGN
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 
@@ -42,7 +41,6 @@ interface Filters {
 }
 
 const ScreenshotPanel: React.FC = () => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const [screenshots, setScreenshots] = useState<Screenshot[]>([]);
   const [filteredScreenshots, setFilteredScreenshots] = useState<Screenshot[]>([]);
@@ -74,7 +72,9 @@ const ScreenshotPanel: React.FC = () => {
   }, []);
   
   useEffect(() => {
-    applyFilters();
+    if (screenshots.length > 0) {
+      applyFilters();
+    }
   }, [screenshots, filters]);
   
   const loadInitialData = async () => {
@@ -101,7 +101,13 @@ const ScreenshotPanel: React.FC = () => {
         }
       });
       
-      const screenshotsData = (response.data.screenshots || response.data || []).map((screenshot: Screenshot) => {
+      // Ensure we get a clean array without duplicates
+      const rawScreenshots = response.data.screenshots || response.data || [];
+      const uniqueScreenshots = rawScreenshots.filter((screenshot: any, index: number, arr: any[]) => 
+        arr.findIndex((s: any) => s.id === screenshot.id) === index
+      );
+      
+      const screenshotsData = uniqueScreenshots.map((screenshot: Screenshot) => {
         // Normalizza la struttura dei dati
         const normalizedScreenshot = {
           ...screenshot,
@@ -139,6 +145,15 @@ const ScreenshotPanel: React.FC = () => {
       });
       
       setScreenshots(screenshotsData);
+      
+      // Debug: verifica duplicati 
+      const ids = screenshotsData.map((s: Screenshot) => s.id);
+      const uniqueIds = Array.from(new Set(ids));
+      if (ids.length !== uniqueIds.length) {
+        console.warn(`⚠️ Rilevati ${ids.length - uniqueIds.length} duplicati negli screenshots:`, 
+          ids.filter((id: number, index: number) => ids.indexOf(id) !== index));
+      }
+      
       setError(null);
     } catch (err) {
       console.error('Errore nel caricamento degli screenshots:', err);
@@ -176,7 +191,12 @@ const ScreenshotPanel: React.FC = () => {
   };
   
   const applyFilters = () => {
-    let filtered = [...screenshots];
+    // Ensure no duplicates in the original screenshots array
+    const uniqueScreenshots = screenshots.filter((screenshot, index, arr) => 
+      arr.findIndex(s => s.id === screenshot.id) === index
+    );
+    
+    let filtered = [...uniqueScreenshots];
     
     // Filtra per data (aggiungi ore per includere tutto il giorno)
     if (filters.startDate && filters.endDate) {
@@ -294,20 +314,20 @@ const ScreenshotPanel: React.FC = () => {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex justify-center items-center">
-        <div className="text-center bg-white p-8 rounded-2xl shadow-xl">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-          <h3 className="text-xl font-semibold text-gray-700">{t('admin.screenshots.loading.title')}</h3>
-          <p className="text-gray-500 mt-2">{t('admin.screenshots.loading.subtitle')}</p>
+      <div className="min-h-screen bg-gray-900 flex justify-center items-center">
+        <div className="text-center bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-500 border-t-transparent mx-auto mb-4"></div>
+          <h3 className="text-xl font-semibold text-gray-200">{t('admin.screenshots.loading.title')}</h3>
+          <p className="text-gray-400 mt-2">{t('admin.screenshots.loading.subtitle')}</p>
         </div>
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gray-900">
       {/* Header */}
-      <div className="bg-white shadow-lg border-b border-gray-200">
+      <div className="bg-gray-800 shadow-lg border-b border-gray-700">
         <div className="container mx-auto px-6 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-4">
@@ -317,20 +337,20 @@ const ScreenshotPanel: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-800">{t('admin.screenshots.title')}</h1>
-                <p className="text-gray-600">{t('admin.screenshots.subtitle')}</p>
+                <h1 className="text-3xl font-bold text-white">{t('admin.screenshots.title')}</h1>
+                <p className="text-gray-300">{t('admin.screenshots.subtitle')}</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-3">
-              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+              <span className="bg-purple-600/20 text-purple-300 px-3 py-1 rounded-full text-sm font-medium border border-purple-500/30">
                 {filteredScreenshots.length} {t('admin.screenshots.stats.totalScreenshots')}
               </span>
               
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="flex items-center space-x-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors disabled:opacity-50"
+                className="flex items-center space-x-2 bg-gray-700 text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
               >
                 <svg className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -344,9 +364,9 @@ const ScreenshotPanel: React.FC = () => {
       
       <div className="container mx-auto px-6 py-8">
         {error && (
-          <div className="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow">
+          <div className="mb-6 bg-red-900/20 border-l-4 border-red-500 text-red-300 p-4 rounded-lg shadow border border-red-800">
             <div className="flex items-center">
-              <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-6 h-6 mr-3 text-red-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
               <span className="font-medium">{error}</span>
@@ -355,35 +375,35 @@ const ScreenshotPanel: React.FC = () => {
         )}
         
         {/* Pannello Filtri */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 mb-6">
-          <div className="p-6 border-b border-gray-200">
+        <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 mb-6">
+          <div className="p-6 border-b border-gray-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="bg-indigo-100 p-2 rounded-lg">
-                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-indigo-600/20 p-2 rounded-lg">
+                  <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800">{t('admin.screenshots.filters.title')}</h3>
+                <h3 className="text-xl font-semibold text-white">{t('admin.screenshots.filters.title')}</h3>
               </div>
               
               <div className="flex items-center space-x-4">
                 <button
                   onClick={resetFilters}
-                  className="text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                  className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
                 >
                   {t('admin.screenshots.filters.reset')}
                 </button>
                 
                 {/* Modalità visualizzazione */}
-                <div className="flex flex-col md:flex-row rounded-lg shadow-sm" role="group">
+                <div className="flex flex-col md:flex-row rounded-lg shadow-sm border border-gray-600" role="group">
                   <button
                     type="button"
                     onClick={() => setViewMode('grid')}
-                    className={`px-4 py-2 text-sm font-medium rounded-l-lg border ${
+                    className={`px-4 py-2 text-sm font-medium rounded-l-lg border-r border-gray-600 ${
                       viewMode === 'grid'
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        ? 'bg-purple-600 text-white border-purple-600'
+                        : 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'
                     }`}
                   >
                     <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -394,10 +414,10 @@ const ScreenshotPanel: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setViewMode('list')}
-                    className={`px-4 py-2 text-sm font-medium rounded-r-lg border ${
+                    className={`px-4 py-2 text-sm font-medium rounded-r-lg ${
                       viewMode === 'list'
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        ? 'bg-purple-600 text-white border-purple-600'
+                        : 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'
                     }`}
                   >
                     <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -414,31 +434,31 @@ const ScreenshotPanel: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
               {/* Periodo */}
               <div className="lg:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin.screenshots.filters.period')}</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">{t('admin.screenshots.filters.period')}</label>
                 <div className="flex flex-col md:flex-row">
                   <input
                     type="date"
                     value={filters.startDate}
                     onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
-                  <span className="self-center text-gray-500 px-3">-</span>
+                  <span className="self-center text-gray-400 px-3">-</span>
                   <input
                     type="date"
                     value={filters.endDate}
                     onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 </div>
               </div>
               
               {/* Aula */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin.screenshots.filters.classroom')}</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">{t('admin.screenshots.filters.classroom')}</label>
                 <select
                   value={filters.classroomId || ''}
                   onChange={(e) => handleFilterChange('classroomId', e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
                   <option value="">{t('admin.screenshots.filters.allClassrooms')}</option>
                   {classrooms.map(classroom => (
@@ -449,11 +469,11 @@ const ScreenshotPanel: React.FC = () => {
               
               {/* Lezione */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin.screenshots.filters.lesson')}</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">{t('admin.screenshots.filters.lesson')}</label>
                 <select
                   value={filters.lessonId || ''}
                   onChange={(e) => handleFilterChange('lessonId', e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
                   <option value="">{t('admin.screenshots.filters.allLessons')}</option>
                   {lessons
@@ -467,14 +487,14 @@ const ScreenshotPanel: React.FC = () => {
               
               {/* Volti minimi */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin.screenshots.filters.minFaces')}</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">{t('admin.screenshots.filters.minFaces')}</label>
                 <input
                   type="number"
                   min="0"
                   max="50"
                   value={filters.minFaces}
                   onChange={(e) => handleFilterChange('minFaces', parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-400"
                   placeholder="0"
                 />
               </div>
@@ -483,11 +503,11 @@ const ScreenshotPanel: React.FC = () => {
             {/* Ordinamento */}
             <div className="mt-4 flex justify-end">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin.screenshots.filters.sorting')}</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">{t('admin.screenshots.filters.sorting')}</label>
                 <select
                   value={filters.sortOrder}
                   onChange={(e) => handleFilterChange('sortOrder', e.target.value as 'latest' | 'oldest')}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
                   <option value="latest">{t('admin.screenshots.filters.latestFirst')}</option>
                   <option value="oldest">{t('admin.screenshots.filters.oldestFirst')}</option>
@@ -504,7 +524,7 @@ const ScreenshotPanel: React.FC = () => {
               filteredScreenshots.map((screenshot) => (
                 <div
                   key={screenshot.id}
-                  className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105"
+                  className="bg-gray-800 rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105 border border-gray-700"
                   onClick={() => handleImageClick(screenshot)}
                 >
                   <div className="relative">
@@ -570,10 +590,10 @@ const ScreenshotPanel: React.FC = () => {
                   <div className="p-4">
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex-1">
-                        <p className="text-sm text-gray-500 mb-1">
+                        <p className="text-sm text-gray-400 mb-1">
                           {formatDateTime(screenshot.timestamp)}
                         </p>
-                        <p className="font-medium text-gray-800 truncate">
+                        <p className="font-medium text-white truncate">
                           {screenshot.classroom?.name || screenshot.lesson?.name || t('admin.screenshots.messages.classroomNotSpecified')}
                         </p>
                       </div>
@@ -584,7 +604,7 @@ const ScreenshotPanel: React.FC = () => {
                             e.stopPropagation();
                             handleDownload(screenshot);
                           }}
-                          className="text-green-600 hover:text-green-800 transition-colors p-1"
+                          className="text-green-400 hover:text-green-300 transition-colors p-1"
                           title={t('admin.screenshots.actions.download')}
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -597,7 +617,7 @@ const ScreenshotPanel: React.FC = () => {
                             e.stopPropagation();
                             window.open(screenshot.url || screenshot.path, '_blank');
                           }}
-                          className="text-blue-600 hover:text-blue-800 transition-colors p-1"
+                          className="text-blue-400 hover:text-blue-300 transition-colors p-1"
                           title={t('admin.screenshots.actions.openNewWindow')}
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -607,24 +627,24 @@ const ScreenshotPanel: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-400">
                       {screenshot.lesson?.name || `${t('admin.screenshots.filters.lesson')} ${screenshot.lessonId || t('admin.screenshots.messages.lessonNA')}`}
                     </div>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="col-span-full text-center py-16 bg-white rounded-2xl shadow-lg">
+              <div className="col-span-full text-center py-16 bg-gray-800 rounded-2xl shadow-lg border border-gray-700">
                 <svg className="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <h3 className="text-xl font-medium text-gray-900 mb-2">{t('admin.screenshots.emptyState.noScreenshots')}</h3>
-                <p className="text-gray-500 mb-4">
+                <h3 className="text-xl font-medium text-white mb-2">{t('admin.screenshots.emptyState.noScreenshots')}</h3>
+                <p className="text-gray-400 mb-4">
                   {t('admin.screenshots.emptyState.noScreenshotsDesc')}
                 </p>
                 <button
                   onClick={resetFilters}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
                 >
                   {t('admin.screenshots.emptyState.resetFilters')}
                 </button>
@@ -633,36 +653,36 @@ const ScreenshotPanel: React.FC = () => {
           </div>
         ) : (
           /* Vista Lista */
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div className="bg-gray-800 rounded-2xl shadow-lg overflow-hidden border border-gray-700">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-700">
+                <thead className="bg-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                       {t('admin.screenshots.table.preview')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                       {t('admin.screenshots.table.dateTime')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                       {t('admin.screenshots.table.classroom')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                       {t('admin.screenshots.table.lesson')}
                     </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
                       {t('admin.screenshots.table.faces')}
                     </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
                       {t('admin.screenshots.table.actions')}
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-gray-800 divide-y divide-gray-700">
                   {filteredScreenshots.map((screenshot) => (
                     <tr 
                       key={screenshot.id} 
-                      className="hover:bg-gray-50 transition-colors cursor-pointer"
+                      className="hover:bg-gray-700 transition-colors cursor-pointer"
                       onClick={() => handleImageClick(screenshot)}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -676,17 +696,17 @@ const ScreenshotPanel: React.FC = () => {
                         />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-white">
                           {formatDateTime(screenshot.timestamp)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-white">
                           {screenshot.classroom?.name || 'N/A'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-white">
                           {screenshot.lesson?.name || `${t('admin.screenshots.filters.lesson')} ${screenshot.lessonId || t('admin.screenshots.messages.lessonNA')}`}
                         </div>
                       </td>
@@ -702,7 +722,7 @@ const ScreenshotPanel: React.FC = () => {
                               e.stopPropagation();
                               handleDownload(screenshot);
                             }}
-                            className="text-green-600 hover:text-green-900 transition-colors p-1"
+                            className="text-green-400 hover:text-green-300 transition-colors p-1"
                             title={t('admin.screenshots.actions.download')}
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -715,7 +735,7 @@ const ScreenshotPanel: React.FC = () => {
                               e.stopPropagation();
                               window.open(screenshot.url || screenshot.path, '_blank');
                             }}
-                            className="text-blue-600 hover:text-blue-900 transition-colors p-1"
+                            className="text-blue-400 hover:text-blue-300 transition-colors p-1"
                             title={t('admin.screenshots.actions.openNewWindow')}
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -768,51 +788,51 @@ const ScreenshotPanel: React.FC = () => {
                 </button>
               </div>
               
-              <div className="bg-white rounded-2xl overflow-hidden shadow-2xl">
+              <div className="bg-gray-800 rounded-2xl overflow-hidden shadow-2xl border border-gray-700">
                 <img
                   src={selectedImage.url || selectedImage.path}
                   alt={`Screenshot ${selectedImage.id}`}
                   className="w-full h-auto max-h-[70vh] object-contain"
                 />
                 
-                <div className="p-6 bg-gradient-to-r from-gray-50 to-gray-100">
+                <div className="p-6 bg-gradient-to-r from-gray-700 to-gray-800">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                     <div className="text-center">
-                      <div className="bg-blue-100 rounded-full p-3 w-16 h-16 flex items-center justify-center mx-auto mb-2">
-                        <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="bg-blue-600/20 rounded-full p-3 w-16 h-16 flex items-center justify-center mx-auto mb-2">
+                        <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
-                      <p className="text-sm font-medium text-gray-600">{t('admin.screenshots.modal.dateTime')}</p>
-                      <p className="text-lg font-bold text-gray-800">{formatDateTime(selectedImage.timestamp)}</p>
+                      <p className="text-sm font-medium text-gray-300">{t('admin.screenshots.modal.dateTime')}</p>
+                      <p className="text-lg font-bold text-white">{formatDateTime(selectedImage.timestamp)}</p>
                     </div>
                     
                     <div className="text-center">
-                      <div className="bg-green-100 rounded-full p-3 w-16 h-16 flex items-center justify-center mx-auto mb-2">
-                        <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="bg-green-600/20 rounded-full p-3 w-16 h-16 flex items-center justify-center mx-auto mb-2">
+                        <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
                       </div>
-                      <p className="text-sm font-medium text-gray-600">{t('admin.screenshots.modal.classroom')}</p>
-                      <p className="text-lg font-bold text-gray-800">{selectedImage.classroom?.name || 'N/A'}</p>
+                      <p className="text-sm font-medium text-gray-300">{t('admin.screenshots.modal.classroom')}</p>
+                      <p className="text-lg font-bold text-white">{selectedImage.classroom?.name || 'N/A'}</p>
                     </div>
                     
                     <div className="text-center">
-                      <div className="bg-purple-100 rounded-full p-3 w-16 h-16 flex items-center justify-center mx-auto mb-2">
-                        <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="bg-purple-600/20 rounded-full p-3 w-16 h-16 flex items-center justify-center mx-auto mb-2">
+                        <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                         </svg>
                       </div>
-                      <p className="text-sm font-medium text-gray-600">{t('admin.screenshots.modal.lesson')}</p>
-                      <p className="text-lg font-bold text-gray-800">{selectedImage.lesson?.name || `${t('admin.screenshots.filters.lesson')} ${selectedImage.lessonId || t('admin.screenshots.messages.lessonNA')}`}</p>
+                      <p className="text-sm font-medium text-gray-300">{t('admin.screenshots.modal.lesson')}</p>
+                      <p className="text-lg font-bold text-white">{selectedImage.lesson?.name || `${t('admin.screenshots.filters.lesson')} ${selectedImage.lessonId || t('admin.screenshots.messages.lessonNA')}`}</p>
                     </div>
                     
                     <div className="text-center">
                       <div className={`rounded-full p-3 w-16 h-16 flex items-center justify-center mx-auto mb-2 text-white ${getFacesColor(selectedImage.detectedFaces || 0).replace('bg-', 'bg-')}`}>
                         <span className="text-2xl font-bold">{selectedImage.detectedFaces || 0}</span>
                       </div>
-                      <p className="text-sm font-medium text-gray-600">{t('admin.screenshots.modal.facesDetected')}</p>
-                      <p className="text-sm text-gray-500">{t('admin.screenshots.modal.inAnalyzedFrame')}</p>
+                      <p className="text-sm font-medium text-gray-300">{t('admin.screenshots.modal.facesDetected')}</p>
+                      <p className="text-sm text-gray-400">{t('admin.screenshots.modal.inAnalyzedFrame')}</p>
                     </div>
                   </div>
                 </div>

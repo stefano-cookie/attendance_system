@@ -44,6 +44,8 @@ export interface Subject {
 export interface CreateLessonData {
   name?: string;
   lesson_date: string;
+  lesson_start: string;
+  lesson_end: string;
   course_id: number;
   subject_id?: number;
   classroom_id: number;
@@ -110,6 +112,11 @@ class TeacherService {
     const params = courseId ? { course_id: courseId } : {};
     const response = await api.get('/teacher/subjects', { params });
     return response.data.subjects;
+  }
+
+  async getLessons() {
+    const response = await api.get('/teacher/lessons');
+    return response.data.lessons;
   }
 
   async createLesson(lessonData: CreateLessonData) {

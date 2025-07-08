@@ -43,20 +43,20 @@ const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
         <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
         
         {/* Modal panel */}
-        <div className="relative inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div className="relative inline-block align-bottom bg-gray-800 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-700">
           {/* Header */}
-          <div className="bg-white px-6 pt-6 pb-0">
+          <div className="bg-gray-800 px-6 pt-6 pb-0">
             <div className="flex items-start">
               {/* Icon */}
-              <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-900/20 sm:mx-0 sm:h-10 sm:w-10">
+                <svg className="h-6 w-6 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
               
               {/* Content */}
               <div className="mt-0 ml-4 text-left flex-1">
-                <h3 className="text-lg leading-6 font-semibold text-gray-900" id="modal-title">
+                <h3 className="text-lg leading-6 font-semibold text-white" id="modal-title">
                   {title}
                 </h3>
               </div>
@@ -65,7 +65,7 @@ const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
               <div className="ml-3 h-7 flex items-center">
                 <button
                   type="button"
-                  className="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  className="bg-gray-700 rounded-md text-gray-400 hover:text-gray-300 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 p-1 transition-colors"
                   onClick={onClose}
                   disabled={isDeleting}
                 >
@@ -79,11 +79,11 @@ const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
           </div>
           
           {/* Body */}
-          <div className="bg-white px-6 py-5">
+          <div className="bg-gray-800 px-6 py-5">
             <div className="sm:ml-10">
               {/* Main message */}
               <div className="mt-2">
-                <p className="text-sm text-gray-500 leading-relaxed">
+                <p className="text-sm text-gray-300 leading-relaxed">
                   {t('common.confirmDeleteModal.confirmMessage', { itemType: itemType.toLowerCase(), itemName })}
                 </p>
               </div>
@@ -91,7 +91,7 @@ const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
               {/* Description */}
               {description && (
                 <div className="mt-3">
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-400">
                     {description}
                   </p>
                 </div>
@@ -99,7 +99,7 @@ const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
               
               {/* Additional warning */}
               {additionalWarning && (
-                <div className="mt-4 p-3 bg-red-50 border-l-4 border-red-400 rounded-r-md">
+                <div className="mt-4 p-3 bg-red-900/20 border-l-4 border-red-500 rounded-r-md">
                   <div className="flex">
                     <div className="flex-shrink-0">
                       <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -107,7 +107,7 @@ const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
                       </svg>
                     </div>
                     <div className="ml-3">
-                      <p className="text-sm font-medium text-red-800">
+                      <p className="text-sm font-medium text-red-300">
                         {additionalWarning}
                       </p>
                     </div>
@@ -117,7 +117,7 @@ const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
               
               {/* Final warning */}
               <div className="mt-4">
-                <p className="text-sm font-medium text-red-600">
+                <p className="text-sm font-medium text-red-400">
                   {t('common.confirmDeleteModal.cannotBeUndone')}
                 </p>
               </div>
@@ -125,7 +125,7 @@ const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
           </div>
           
           {/* Footer */}
-          <div className="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse sm:px-6">
+          <div className="bg-gray-700 border-t border-gray-600 px-6 py-4 sm:flex sm:flex-row-reverse sm:px-6">
             <button
               type="button"
               className="w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -151,7 +151,7 @@ const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
             </button>
             <button
               type="button"
-              className="mt-3 w-full inline-flex justify-center items-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 transition-colors"
+              className="mt-3 w-full inline-flex justify-center items-center rounded-md border border-gray-600 shadow-sm px-4 py-2 bg-gray-800 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 transition-colors"
               onClick={onClose}
               disabled={isDeleting}
             >

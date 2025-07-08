@@ -10,8 +10,19 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     lesson_date: {
-      type: DataTypes.DATE,
-      allowNull: false
+      type: DataTypes.DATEONLY,
+      allowNull: false,
+      comment: 'Data della lezione (solo giorno, senza orario)'
+    },
+    lesson_start: {
+      type: DataTypes.TIME,
+      allowNull: true,
+      comment: 'Orario di inizio lezione'
+    },
+    lesson_end: {
+      type: DataTypes.TIME,
+      allowNull: true,
+      comment: 'Orario di fine lezione'
     },
     
     course_id: {
@@ -88,14 +99,6 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     },
     
-    planned_start_time: {
-      type: DataTypes.DATE,
-      allowNull: true
-    },
-    planned_end_time: {
-      type: DataTypes.DATE,
-      allowNull: true
-    }
   }, {
     tableName: 'Lessons',
     timestamps: true,
@@ -156,13 +159,16 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   Lesson.prototype.getDuration = function() {
-    if (this.planned_start_time && this.planned_end_time) {
-      return Math.round((new Date(this.planned_end_time) - new Date(this.planned_start_time)) / (1000 * 60));
+    if (this.lesson_start && this.lesson_end) {
+      // Convert TIME strings to dates for calculation
+      const startTime = new Date(`1970-01-01T${this.lesson_start}Z`);
+      const endTime = new Date(`1970-01-01T${this.lesson_end}Z`);
+      return Math.round((endTime - startTime) / (1000 * 60));
     }
     if (this.started_at && this.ended_at) {
       return Math.round((new Date(this.ended_at) - new Date(this.started_at)) / (1000 * 60));
     }
-    return this.duration_minutes || 90;
+    return 60; // Default to 60 minutes instead of 90
   };
 
   Lesson.prototype.updateAttendanceStats = async function(attendanceData) {
@@ -174,6 +180,27 @@ module.exports = (sequelize, DataTypes) => {
       total_students_expected: total,
       attendance_percentage: percentage
     });
+  };
+
+  Lesson.prototype.shouldBeCompleted = function() {
+    // Check if lesson should be automatically completed based on end time
+    if (this.is_completed) {
+      return false; // Already completed
+    }
+
+    if (!this.lesson_date || !this.lesson_end) {
+      return false; // Missing required data
+    }
+
+    // Create datetime from lesson_date and lesson_end
+    const lessonDate = new Date(this.lesson_date);
+    const [hours, minutes, seconds] = this.lesson_end.split(':');
+    const lessonEndDateTime = new Date(lessonDate);
+    lessonEndDateTime.setHours(parseInt(hours), parseInt(minutes), parseInt(seconds || 0));
+
+    // Compare with current time
+    const now = new Date();
+    return now >= lessonEndDateTime;
   };
 
   Lesson.associate = function(models) {

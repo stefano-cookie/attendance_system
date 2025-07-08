@@ -139,6 +139,45 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
   };
+
+  // Instance methods for capture source information
+  LessonImage.prototype.getCaptureSource = function() {
+    if (!this.camera_metadata) return 'unknown';
+    return this.camera_metadata.capture_source || 'unknown';
+  };
+
+  LessonImage.prototype.getCapturedBy = function() {
+    if (!this.camera_metadata) return null;
+    
+    const metadata = this.camera_metadata;
+    if (metadata.capture_source === 'teacher') {
+      return {
+        role: 'teacher',
+        id: metadata.teacher_id,
+        name: metadata.teacher_name,
+        email: metadata.teacher_email,
+        timestamp: metadata.capture_timestamp
+      };
+    } else if (metadata.capture_source === 'admin') {
+      return {
+        role: 'admin', 
+        id: metadata.admin_id,
+        name: metadata.admin_name,
+        email: metadata.admin_email,
+        timestamp: metadata.capture_timestamp
+      };
+    }
+    return null;
+  };
+
+  LessonImage.prototype.getCaptureSourceLabel = function() {
+    const source = this.getCaptureSource();
+    switch (source) {
+      case 'teacher': return '👨‍🏫 Docente';
+      case 'admin': return '👨‍💼 Admin';
+      default: return '❓ Sconosciuto';
+    }
+  };
   
   return LessonImage;
 };

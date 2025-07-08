@@ -113,27 +113,26 @@ class ImageStorageService {
             const models = this._getModels();
             const { Screenshot } = models;
 
-            if (!Screenshot) {
-                throw new Error('Modello Screenshot non disponibile');
-            }
 
             if (!Buffer.isBuffer(imageBuffer)) {
                 throw new Error('imageBuffer deve essere un Buffer');
             }
 
-            const screenshot = await Screenshot.create({
-                lessonId: lessonId,
+            const { LessonImage } = require('../models');
+            const lessonImage = await LessonImage.create({
+                lesson_id: lessonId,
                 image_data: imageBuffer,
                 source: source,
-                timestamp: new Date(),
+                captured_at: new Date(),
                 file_size: imageBuffer.length,
                 mime_type: metadata.mime_type || 'image/jpeg',
                 original_filename: metadata.original_filename || null,
-                detectedFaces: metadata.detectedFaces || 0
+                processing_status: 'pending',
+                is_analyzed: false
             });
             
-            console.log(`✅ Screenshot salvato nel database: ID ${screenshot.id}, Size: ${(imageBuffer.length / 1024).toFixed(1)}KB`);
-            return screenshot.id;
+            console.log(`✅ LessonImage salvato nel database: ID ${lessonImage.id}, Size: ${(imageBuffer.length / 1024).toFixed(1)}KB`);
+            return lessonImage.id;
         } catch (error) {
             console.error('❌ Errore salvataggio screenshot:', error);
             throw error;

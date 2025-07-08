@@ -97,7 +97,9 @@
         "studentsAbsent": "students absent",
         "attendanceRateToday": "Attendance Rate Today",
         "recentAttendance": "Recent Detected Attendances",
-        "attendances": "{{count}} attendances"
+        "attendances": "{{count}} attendances",
+        "present": "Present",
+        "absent": "Absent"
       },
       "attendance": {
         "noRecords": "No attendance recorded",
@@ -109,8 +111,11 @@
       "actions": {
         "registerStudent": "Register Student",
         "manageStudents": "Manage Students",
-        "attendanceReport": "Attendance Report"
+        "attendanceReport": "Attendance Report",
+        "quickActions": "Quick Actions"
       },
+      "weeklyChart": "Weekly Attendance Trend",
+      "todayChart": "Today's Attendance Distribution",
       "errorLoading": "Error loading dashboard data"
     },
     "users": {
@@ -500,7 +505,10 @@
         "next": "Next",
         "hour": "Hour",
         "courseNotSpecified": "Course not specified",
-        "completed": "Completed"
+        "completed": "Completed",
+        "addLesson": "Add Lesson",
+        "clickToEdit": "Click to edit lesson",
+        "clickToCreate": "Click to create new lesson"
       },
       "viewModes": {
         "calendar": "📅 Calendar",
@@ -508,7 +516,13 @@
       },
       "status": {
         "completed": "Completed",
-        "lessonCompleted": "✅ Lesson Completed"
+        "lessonCompleted": "✅ Lesson Completed",
+        "notStarted": "Not Started",
+        "inProgress": "In Progress",
+        "ended": "Ended",
+        "unknown": "Unknown",
+        "notStartedYet": "Lesson not started yet",
+        "lessonEnded": "Lesson ended"
       },
       "actions": {
         "newLesson": "New Lesson",
@@ -912,7 +926,17 @@
       "attendanceControl": "Attendance Control",
       "analyzing": "Analyzing...",
       "captureAndAnalyze": "Capture and Analyze",
-      "viewImages": "View Images"
+      "viewImages": "View Images",
+      "captureAnalysis": {
+        "lessonCompleted": "✅ Lesson Completed"
+      },
+      "status": {
+        "notStarted": "Not Started",
+        "inProgress": "In Progress",
+        "completed": "Completed",
+        "ended": "Ended",
+        "unknown": "Unknown"
+      }
     },
     "attendance": {
       "title": "Attendance",

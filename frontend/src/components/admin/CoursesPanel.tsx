@@ -298,20 +298,20 @@ const CoursesPanel: React.FC = () => {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex justify-center items-center">
-        <div className="text-center bg-white p-8 rounded-2xl shadow-xl">
+      <div className="min-h-screen bg-gray-900 flex justify-center items-center">
+        <div className="text-center bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-          <h3 className="text-xl font-semibold text-gray-700">{t('admin.courses.loading')}</h3>
-          <p className="text-gray-500 mt-2">{t('admin.courses.loadingSubtext')}</p>
+          <h3 className="text-xl font-semibold text-gray-300">{t('admin.courses.loading')}</h3>
+          <p className="text-gray-400 mt-2">{t('admin.courses.loadingSubtext')}</p>
         </div>
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gray-900">
       {/* Header */}
-      <div className="bg-white shadow-lg border-b border-gray-200">
+      <div className="bg-gray-800 shadow-lg border-b border-gray-700">
         <div className="container mx-auto px-6 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-4">
@@ -321,8 +321,8 @@ const CoursesPanel: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-800">{t('admin.courses.title')}</h1>
-                <p className="text-gray-600">{t('admin.courses.subtitle')}</p>
+                <h1 className="text-3xl font-bold text-white">{t('admin.courses.title')}</h1>
+                <p className="text-gray-400">{t('admin.courses.subtitle')}</p>
               </div>
             </div>
             
@@ -330,7 +330,7 @@ const CoursesPanel: React.FC = () => {
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="flex items-center space-x-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors disabled:opacity-50"
+                className="flex items-center space-x-2 bg-gray-700 text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
               >
                 <svg className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -355,56 +355,56 @@ const CoursesPanel: React.FC = () => {
       <div className="container mx-auto px-6 py-8">
         {/* Statistiche */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+          <div className="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700 hover:shadow-xl transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.courses.totalCourses')}</p>
-                <p className="text-3xl font-bold text-gray-800">{courses.length}</p>
+                <p className="text-sm font-medium text-gray-400 mb-1">{t('admin.courses.totalCourses')}</p>
+                <p className="text-3xl font-bold text-white">{courses.length}</p>
               </div>
-              <div className="bg-blue-100 p-3 rounded-xl">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-blue-900 p-3 rounded-xl">
+                <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
               </div>
             </div>
           </div>
           
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+          <div className="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700 hover:shadow-xl transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.courses.searchResults')}</p>
-                <p className="text-3xl font-bold text-gray-800">{filteredCourses.length}</p>
+                <p className="text-sm font-medium text-gray-400 mb-1">{t('admin.courses.searchResults')}</p>
+                <p className="text-3xl font-bold text-white">{filteredCourses.length}</p>
               </div>
-              <div className="bg-green-100 p-3 rounded-xl">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-green-900 p-3 rounded-xl">
+                <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
             </div>
           </div>
           
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+          <div className="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700 hover:shadow-xl transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.courses.associatedSubjects')}</p>
-                <p className="text-3xl font-bold text-gray-800">{totalSubjectsAssigned}</p>
+                <p className="text-sm font-medium text-gray-400 mb-1">{t('admin.courses.associatedSubjects')}</p>
+                <p className="text-3xl font-bold text-white">{totalSubjectsAssigned}</p>
               </div>
-              <div className="bg-purple-100 p-3 rounded-xl">
-                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-purple-900 p-3 rounded-xl">
+                <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
             </div>
           </div>
           
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+          <div className="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700 hover:shadow-xl transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">{t('admin.courses.availableSubjects')}</p>
-                <p className="text-3xl font-bold text-gray-800">{subjectsWithoutCourse}</p>
+                <p className="text-sm font-medium text-gray-400 mb-1">{t('admin.courses.availableSubjects')}</p>
+                <p className="text-3xl font-bold text-white">{subjectsWithoutCourse}</p>
               </div>
-              <div className="bg-orange-100 p-3 rounded-xl">
-                <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-orange-900 p-3 rounded-xl">
+                <svg className="w-8 h-8 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
@@ -413,19 +413,19 @@ const CoursesPanel: React.FC = () => {
         </div>
         
         {/* Search */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 mb-8">
+        <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 mb-8">
           <div className="p-6">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="bg-indigo-100 p-2 rounded-lg">
-                <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-indigo-900 p-2 rounded-lg">
+                <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-800">{t('admin.courses.searchCourses')}</h3>
+              <h3 className="text-xl font-semibold text-white">{t('admin.courses.searchCourses')}</h3>
             </div>
             
             <div className="max-w-md">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">{t('admin.courses.searchCourse')}</label>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">{t('admin.courses.searchCourse')}</label>
               <div className="relative">
                 <div className="absolute inset-y-0 right-3 flex items-center pl-4 pointer-events-none">
                   <svg className="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
@@ -437,12 +437,12 @@ const CoursesPanel: React.FC = () => {
                   placeholder={t('admin.courses.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full pl-12 pr-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
                 />
                 {searchTerm && (
                   <button
                     onClick={() => setSearchTerm('')}
-                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600"
+                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-300"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -455,29 +455,29 @@ const CoursesPanel: React.FC = () => {
         </div>
         
         {error && (
-          <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow">
+          <div className="mb-6 bg-red-900/20 border-l-4 border-red-500 p-4 rounded-lg shadow">
             <div className="flex items-center">
-              <svg className="w-5 h-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
-              <span className="text-red-700 font-medium">{error}</span>
+              <span className="text-red-300 font-medium">{error}</span>
             </div>
           </div>
         )}
         
         {/* Lista corsi */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
-          <div className="p-6 border-b border-gray-200">
+        <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700">
+          <div className="p-6 border-b border-gray-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="bg-indigo-100 p-2 rounded-lg">
-                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-indigo-900 p-2 rounded-lg">
+                  <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800">{t('admin.courses.courseCatalog')}</h3>
+                <h3 className="text-xl font-semibold text-white">{t('admin.courses.courseCatalog')}</h3>
               </div>
-              <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-medium">
+              <span className="bg-gray-700 text-gray-300 px-3 py-1 rounded-full text-sm font-medium">
                 {t('admin.courses.courseCount', { count: filteredCourses.length })}
               </span>
             </div>
@@ -493,18 +493,18 @@ const CoursesPanel: React.FC = () => {
                   return (
                     <div
                       key={course.id}
-                      className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl hover:scale-105 transition-all duration-300"
+                      className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-2xl shadow-lg border border-gray-600 overflow-hidden hover:shadow-xl hover:scale-105 transition-all duration-300"
                       style={{ borderLeft: `5px solid ${courseColor}` }}
                     >
                       <div className="flex flex-col h-full">
                         {/* Header */}
-                        <div className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                        <div className="p-6 bg-gradient-to-r from-gray-700 to-gray-600 border-b border-gray-600">
                           <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-lg font-bold text-gray-800 truncate pr-2">{course.name}</h3>
+                            <h3 className="text-lg font-bold text-white truncate pr-2">{course.name}</h3>
                             <div className="flex space-x-2">
                               <button
                                 onClick={() => handleEditCourse(course)}
-                                className="p-2 bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200 transition-colors"
+                                className="p-2 bg-indigo-900 text-indigo-400 rounded-lg hover:bg-indigo-800 transition-colors"
                                 title={t('admin.courses.editCourse')}
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -513,7 +513,7 @@ const CoursesPanel: React.FC = () => {
                               </button>
                               <button
                                 onClick={() => handleDeleteConfirmation(course)}
-                                className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                                className="p-2 bg-red-900 text-red-400 rounded-lg hover:bg-red-800 transition-colors"
                                 title={t('admin.courses.deleteCourse')}
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -524,7 +524,7 @@ const CoursesPanel: React.FC = () => {
                           </div>
                           
                           {course.description && (
-                            <p className="text-sm text-gray-600 mb-3">{course.description}</p>
+                            <p className="text-sm text-gray-300 mb-3">{course.description}</p>
                           )}
                           
                           {/* Course badge */}
@@ -545,11 +545,11 @@ const CoursesPanel: React.FC = () => {
                         {/* Content */}
                         <div className="p-6 flex-grow">
                           <div className="flex items-center justify-between mb-3">
-                            <span className="text-sm font-medium text-gray-600">{t('admin.courses.associatedSubjects')}</span>
+                            <span className="text-sm font-medium text-gray-300">{t('admin.courses.associatedSubjects')}</span>
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                               courseSubjects.length > 0 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-gray-100 text-gray-600'
+                                ? 'bg-green-900 text-green-400' 
+                                : 'bg-gray-700 text-gray-400'
                             }`}>
                               {courseSubjects.length}
                             </span>
@@ -558,7 +558,7 @@ const CoursesPanel: React.FC = () => {
                           {courseSubjects.length > 0 ? (
                             <div className="space-y-2 max-h-24 overflow-y-auto">
                               {courseSubjects.map(subject => (
-                                <div key={subject.id} className="flex items-center text-sm text-gray-600">
+                                <div key={subject.id} className="flex items-center text-sm text-gray-300">
                                   <div
                                     className="w-2 h-2 rounded-full mr-2 flex-shrink-0"
                                     style={{ backgroundColor: courseColor }}
@@ -569,13 +569,13 @@ const CoursesPanel: React.FC = () => {
                             </div>
                           ) : (
                             <div className="text-center py-4">
-                              <svg className="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="mx-auto h-8 w-8 text-gray-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                               </svg>
-                              <p className="text-xs text-gray-400 mb-2">{t('admin.courses.noSubjectsAssociated')}</p>
+                              <p className="text-xs text-gray-500 mb-2">{t('admin.courses.noSubjectsAssociated')}</p>
                               <button
                                 onClick={() => handleEditCourse(course)}
-                                className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                                className="text-xs text-blue-400 hover:text-blue-300 font-medium"
                               >
                                 {t('admin.courses.addSubjects')}
                               </button>
@@ -589,13 +589,13 @@ const CoursesPanel: React.FC = () => {
               </div>
             ) : (
               <div className="text-center py-16">
-                <div className="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+                <div className="bg-gray-700 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('admin.courses.noCoursesFound')}</h3>
-                <p className="text-gray-500 mb-8">
+                <h3 className="text-xl font-semibold text-white mb-2">{t('admin.courses.noCoursesFound')}</h3>
+                <p className="text-gray-400 mb-8">
                   {searchTerm 
                     ? t('admin.courses.noSearchResults') 
                     : t('admin.courses.noCoursesInSystem')
@@ -605,7 +605,7 @@ const CoursesPanel: React.FC = () => {
                   {searchTerm && (
                     <button
                       onClick={() => setSearchTerm('')}
-                      className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                      className="inline-flex items-center px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors"
                     >
                       {t('admin.courses.clearSearch')}
                     </button>
@@ -634,8 +634,8 @@ const CoursesPanel: React.FC = () => {
             
             <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
             
-            <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="bg-white px-6 pt-6 pb-4 sm:p-8">
+            <div className="inline-block align-bottom bg-gray-800 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-gray-800 px-6 pt-6 pb-4 sm:p-8">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center space-x-3">
                     <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-3 rounded-xl">
@@ -643,13 +643,13 @@ const CoursesPanel: React.FC = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                       </svg>
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-900">
+                    <h3 className="text-2xl font-bold text-white">
                       {isEditing ? t('admin.courses.editCourse') : t('admin.courses.newCourse')}
                     </h3>
                   </div>
                   <button
                     onClick={handleCloseForm}
-                    className="p-2 bg-gray-100 text-gray-500 rounded-lg hover:bg-gray-200 transition-colors"
+                    className="p-2 bg-gray-700 text-gray-400 rounded-lg hover:bg-gray-600 transition-colors"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -659,7 +659,7 @@ const CoursesPanel: React.FC = () => {
                 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label htmlFor="name" className="block text-sm font-semibold text-gray-300 mb-2">
                       {t('admin.courses.courseName')} *
                     </label>
                     <input
@@ -670,12 +670,12 @@ const CoursesPanel: React.FC = () => {
                       onChange={handleInputChange}
                       required
                       placeholder={t('admin.courses.courseNamePlaceholder')}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
                     />
                   </div>
                   
                   <div>
-                    <label htmlFor="description" className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label htmlFor="description" className="block text-sm font-semibold text-gray-300 mb-2">
                       {t('admin.courses.description')} ({t('admin.courses.optional')})
                     </label>
                     <textarea
@@ -685,13 +685,13 @@ const CoursesPanel: React.FC = () => {
                       onChange={handleInputChange}
                       rows={3}
                       placeholder={t('admin.courses.descriptionPlaceholder')}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
                     />
                   </div>
                   
                   {/* ✅ NUOVO CAMPO COLORE */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    <label className="block text-sm font-semibold text-gray-300 mb-3">
                       {t('admin.courses.courseColor')}
                     </label>
                     <div className="space-y-4">
@@ -711,7 +711,7 @@ const CoursesPanel: React.FC = () => {
                             value={formColor}
                             onChange={handleInputChange}
                             name="color"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400"
                             placeholder="#3498db"
                           />
                         </div>
@@ -719,7 +719,7 @@ const CoursesPanel: React.FC = () => {
                       
                       {/* Predefined Colors */}
                       <div>
-                        <p className="text-xs text-gray-500 mb-2">{t('admin.courses.predefinedColors')}:</p>
+                        <p className="text-xs text-gray-400 mb-2">{t('admin.courses.predefinedColors')}:</p>
                         <div className="grid grid-cols-5 gap-2">
                           {predefinedColors.map((color) => (
                             <button
@@ -737,7 +737,7 @@ const CoursesPanel: React.FC = () => {
                       </div>
                       
                       {/* Preview */}
-                      <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg">
                         <div
                           className="w-4 h-4 rounded-full"
                           style={{ backgroundColor: formColor }}
@@ -754,14 +754,14 @@ const CoursesPanel: React.FC = () => {
                   
                   {/* Years field */}
                   <div>
-                    <label htmlFor="years" className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label htmlFor="years" className="block text-sm font-semibold text-gray-300 mb-2">
                       {t('admin.courses.duration')} *
                     </label>
                     <select
                       id="years"
                       value={formYears}
                       onChange={(e) => setFormYears(Number(e.target.value))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       required
                     >
                       <option value={1}>1 {t('admin.courses.year')}</option>
@@ -781,62 +781,62 @@ const CoursesPanel: React.FC = () => {
                         onChange={(e) => setFormIsActive(e.target.checked)}
                         className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-3"
                       />
-                      <span className="text-sm font-semibold text-gray-700">
+                      <span className="text-sm font-semibold text-gray-300">
                         {t('admin.courses.isActive')}
                       </span>
                     </label>
-                    <p className="text-xs text-gray-500 mt-1 ml-8">
+                    <p className="text-xs text-gray-400 mt-1 ml-8">
                       {t('admin.courses.isActiveDescription')}
                     </p>
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">
                       {t('admin.courses.subjectsToAssociate')} ({selectedSubjects.length} {t('admin.courses.selected')})
                     </label>
                     {availableSubjects.length > 0 ? (
-                      <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3 bg-gray-50">
+                      <div className="max-h-48 overflow-y-auto border border-gray-600 rounded-lg p-3 bg-gray-700">
                         <div className="space-y-2">
                           {availableSubjects.map(subject => (
-                            <label key={subject.id} className="flex items-center p-2 hover:bg-white rounded-lg cursor-pointer transition-colors">
+                            <label key={subject.id} className="flex items-center p-2 hover:bg-gray-600 rounded-lg cursor-pointer transition-colors">
                               <input
                                 type="checkbox"
                                 checked={selectedSubjects.includes(subject.id)}
                                 onChange={() => toggleSubjectSelection(subject.id)}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-500 rounded bg-gray-600"
                               />
-                              <span className="ml-3 text-sm text-gray-700">{subject.name}</span>
+                              <span className="ml-3 text-sm text-gray-300">{subject.name}</span>
                             </label>
                           ))}
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center py-6 bg-gray-50 rounded-lg border border-gray-200">
-                        <svg className="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="text-center py-6 bg-gray-700 rounded-lg border border-gray-600">
+                        <svg className="mx-auto h-8 w-8 text-gray-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        <p className="text-sm text-gray-500 mb-1">{t('admin.courses.noSubjectsAvailable')}</p>
-                        <p className="text-xs text-gray-400">{t('admin.courses.createSubjectsFirst')}</p>
+                        <p className="text-sm text-gray-400 mb-1">{t('admin.courses.noSubjectsAvailable')}</p>
+                        <p className="text-xs text-gray-500">{t('admin.courses.createSubjectsFirst')}</p>
                       </div>
                     )}
                   </div>
                   
                   {error && (
-                    <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+                    <div className="bg-red-900/20 border-l-4 border-red-500 p-4 rounded-lg">
                       <div className="flex items-center">
-                        <svg className="w-5 h-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                         </svg>
-                        <span className="text-red-700 font-medium">{error}</span>
+                        <span className="text-red-300 font-medium">{error}</span>
                       </div>
                     </div>
                   )}
                   
-                  <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                  <div className="flex justify-end space-x-3 pt-6 border-t border-gray-600">
                     <button
                       type="button"
                       onClick={handleCloseForm}
-                      className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                      className="px-6 py-3 border border-gray-600 rounded-lg text-gray-300 font-medium hover:bg-gray-700 transition-colors"
                     >
                       {t('common.cancel')}
                     </button>

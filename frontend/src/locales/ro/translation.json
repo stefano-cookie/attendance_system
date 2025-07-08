@@ -109,8 +109,11 @@
       "actions": {
         "registerStudent": "Înregistrează Student",
         "manageStudents": "Gestionează Studenți",
-        "attendanceReport": "Raport Prezențe"
+        "attendanceReport": "Raport Prezențe",
+        "quickActions": "Acțiuni Rapide"
       },
+      "weeklyChart": "Tendința Prezențelor Săptămânale",
+      "todayChart": "Distribuția Prezențelor de Astăzi",
       "errorLoading": "Eroare la încărcarea datelor"
     },
     "users": {
@@ -500,7 +503,10 @@
         "next": "Următor",
         "hour": "Oră",
         "courseNotSpecified": "Curs nespecificat",
-        "completed": "Completat"
+        "completed": "Completat",
+        "addLesson": "Adaugă Lecție",
+        "clickToEdit": "Faceți clic pentru a edita lecția",
+        "clickToCreate": "Faceți clic pentru a crea o lecție nouă"
       },
       "viewModes": {
         "calendar": "📅 Calendar",
@@ -508,7 +514,13 @@
       },
       "status": {
         "completed": "Completat",
-        "lessonCompleted": "✅ Lecție Completată"
+        "lessonCompleted": "✅ Lecție Completată",
+        "notStarted": "Nu A Început",
+        "inProgress": "În Desfășurare",
+        "ended": "Terminat",
+        "unknown": "Necunoscut",
+        "notStartedYet": "Lecția nu a început încă",
+        "lessonEnded": "Lecția s-a terminat"
       },
       "actions": {
         "newLesson": "Lecție Nouă",
@@ -912,7 +924,17 @@
       "attendanceControl": "Control Prezență",
       "analyzing": "Se analizează...",
       "captureAndAnalyze": "Capturează și Analizează",
-      "viewImages": "Vezi Imaginile"
+      "viewImages": "Vezi Imaginile",
+      "captureAnalysis": {
+        "lessonCompleted": "✅ Lecție Completată"
+      },
+      "status": {
+        "notStarted": "Nu a Început",
+        "inProgress": "În Curs",
+        "completed": "Completată",
+        "ended": "Terminată",
+        "unknown": "Necunoscut"
+      }
     },
     "attendance": {
       "title": "Prezență",

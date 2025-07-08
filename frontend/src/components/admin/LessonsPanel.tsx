@@ -7,16 +7,12 @@ import {
   getClassrooms,
   createLesson, 
   updateLesson, 
-  deleteLesson,
   getTeachers
 } from '../../services/api';
 import type { Lesson, Course, Subject, Classroom, User } from '../../services/api';
 import LessonsCalendar from './LessonsCalendar';
 import LessonModal from './LessonModal';
 
-interface ExtendedLesson extends Lesson {
-  teacher_id?: number;
-}
 
 const LessonsPanel: React.FC = () => {
   const { t } = useTranslation();
@@ -38,19 +34,6 @@ const LessonsPanel: React.FC = () => {
   const [defaultHour, setDefaultHour] = useState<number>(9);
   
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
-  const [lessonToDelete, setLessonToDelete] = useState<Lesson | null>(null);
-  const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([]);
-  const [currentLesson, setCurrentLesson] = useState<Partial<ExtendedLesson>>({
-    id: undefined,
-    name: '',
-    lesson_date: new Date().toISOString().split('T')[0] + 'T09:00',
-    classroom_id: 0,
-    course_id: 0,
-    subject_id: undefined,
-    teacher_id: undefined
-  });
   
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [analysisResult, setAnalysisResult] = useState<any | null>(null);
@@ -58,6 +41,7 @@ const LessonsPanel: React.FC = () => {
   const [lessonToAnalyze, setLessonToAnalyze] = useState<Lesson | null>(null);
   
   const [isCaptureAnalyzing, setIsCaptureAnalyzing] = useState<boolean>(false);
+  const [currentCaptureStage, setCurrentCaptureStage] = useState<number>(0);
   const [captureAnalysisResult, setCaptureAnalysisResult] = useState<any | null>(null);
   const [isCaptureAnalysisModalOpen, setIsCaptureAnalysisModalOpen] = useState<boolean>(false);
   
@@ -114,15 +98,6 @@ const LessonsPanel: React.FC = () => {
       setClassrooms(classroomsData);
       setTeachers(teachersData || []);
       
-      setCurrentLesson(prev => ({
-        ...prev,
-        course_id: coursesData[0].id,
-        classroom_id: classroomsData[0].id
-      }));
-  
-      setFilteredSubjects(
-        subjectsData.filter((subject: Subject) => subject.course_id === coursesData[0].id)
-      );
     } catch (err) {
       console.error(t('admin.lessons.errors.dataLoadingError'), err);
       setError(t('admin.lessons.errors.unableToLoadData'));
@@ -149,6 +124,7 @@ const LessonsPanel: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [info]);
+
   
   const filteredLessons = lessons.filter(lesson => {
     const matchesSearch = lesson.name 
@@ -164,6 +140,11 @@ const LessonsPanel: React.FC = () => {
   };
   
   const getCourseColor = (courseId: number): string => {
+    const course = courses.find(c => c.id === courseId);
+    if (course && course.color) {
+      return course.color;
+    }
+    // Fallback colors if course color is not available
     const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
     return colors[courseId % colors.length];
   };
@@ -181,13 +162,81 @@ const LessonsPanel: React.FC = () => {
   
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toLocaleString('it-IT', {
+    return date.toLocaleDateString('it-IT', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      year: 'numeric'
     });
+  };
+
+  // Lesson state management functions
+  const getLessonTiming = (lesson: Lesson) => {
+    const now = new Date();
+    
+    // Use lesson_start and lesson_end if available, otherwise use default times
+    const startTime = lesson.lesson_start ? 
+      new Date(`${lesson.lesson_date}T${lesson.lesson_start}`) : 
+      new Date(`${lesson.lesson_date}T09:00:00`); // Default start time
+    
+    const endTime = lesson.lesson_end ? 
+      new Date(`${lesson.lesson_date}T${lesson.lesson_end}`) : 
+      new Date(`${lesson.lesson_date}T10:00:00`); // Default end time (1 hour later)
+    
+    return { startTime, endTime, now };
+  };
+
+  const getLessonStatus = (lesson: Lesson) => {
+    // Check if lesson is manually completed
+    if (lesson.is_completed || lesson.status === 'completed') {
+      return 'completed';
+    }
+    
+    const { startTime, endTime, now } = getLessonTiming(lesson);
+    
+    if (now < startTime) {
+      return 'not_started';
+    } else if (now >= startTime && now <= endTime) {
+      return 'in_progress';
+    } else {
+      return 'ended'; // Time has passed but not manually completed
+    }
+  };
+
+  const canCapturePhotos = (lesson: Lesson) => {
+    const status = getLessonStatus(lesson);
+    return status === 'in_progress';
+  };
+
+  const getLessonStatusText = (lesson: Lesson) => {
+    const status = getLessonStatus(lesson);
+    switch (status) {
+      case 'not_started':
+        return t('admin.lessons.status.notStarted');
+      case 'in_progress':
+        return t('admin.lessons.status.inProgress');
+      case 'completed':
+        return t('admin.lessons.status.completed');
+      case 'ended':
+        return t('admin.lessons.status.ended');
+      default:
+        return t('admin.lessons.status.unknown');
+    }
+  };
+
+  const getLessonStatusColor = (lesson: Lesson) => {
+    const status = getLessonStatus(lesson);
+    switch (status) {
+      case 'not_started':
+        return 'text-gray-600 bg-gray-100';
+      case 'in_progress':
+        return 'text-green-700 bg-green-100';
+      case 'completed':
+        return 'text-blue-700 bg-blue-100';
+      case 'ended':
+        return 'text-orange-700 bg-orange-100';
+      default:
+        return 'text-gray-600 bg-gray-100';
+    }
   };
 
   const handleLessonClick = (lesson: Lesson) => {
@@ -202,13 +251,141 @@ const LessonsPanel: React.FC = () => {
     setIsLessonModalOpen(true);
   };
 
+  // Funzione per verificare sovrapposizioni in aula
+  const checkClassroomOverlap = (lessonData: any) => {
+    if (!lessonData.lesson_start || !lessonData.lesson_end) {
+      return []; // Se non ci sono orari definiti, non può esserci conflitto
+    }
+
+    const lessonStart = new Date(`${lessonData.lesson_date}T${lessonData.lesson_start}`);
+    const lessonEnd = new Date(`${lessonData.lesson_date}T${lessonData.lesson_end}`);
+    
+    const overlappingLessons = lessons.filter(existingLesson => {
+      // Salta la lezione corrente se stiamo modificando
+      if (lessonData.id && existingLesson.id === lessonData.id) {
+        return false;
+      }
+      
+      // Controlla solo la stessa aula
+      if (existingLesson.classroom_id !== lessonData.classroom_id) {
+        return false;
+      }
+
+      // Controlla solo lezioni dello stesso giorno
+      const existingDate = new Date(existingLesson.lesson_date).toISOString().split('T')[0];
+      const newLessonDate = new Date(lessonData.lesson_date).toISOString().split('T')[0];
+      if (existingDate !== newLessonDate) {
+        return false;
+      }
+      
+      // Usa lesson_start e lesson_end se disponibili, altrimenti usa tempi di default
+      const existingStart = existingLesson.lesson_start 
+        ? new Date(`${existingDate}T${existingLesson.lesson_start}`)
+        : new Date(`${existingDate}T09:00:00`);
+      
+      const existingEnd = existingLesson.lesson_end 
+        ? new Date(`${existingDate}T${existingLesson.lesson_end}`)
+        : new Date(`${existingDate}T10:00:00`);
+      
+      // Verifica sovrapposizione temporale
+      return (
+        (lessonStart < existingEnd && lessonEnd > existingStart)
+      );
+    });
+    
+    return overlappingLessons;
+  };
+  
+  // Funzione per trovare aule disponibili
+  const findAvailableClassrooms = (lessonData: any) => {
+    if (!lessonData.lesson_start || !lessonData.lesson_end) {
+      return classrooms; // Se non ci sono orari, tutte le aule sono disponibili
+    }
+
+    const lessonStart = new Date(`${lessonData.lesson_date}T${lessonData.lesson_start}`);
+    const lessonEnd = new Date(`${lessonData.lesson_date}T${lessonData.lesson_end}`);
+    
+    return classrooms.filter(classroom => {
+      const classroomLessons = lessons.filter(lesson => {
+        const lessonDate = new Date(lesson.lesson_date).toISOString().split('T')[0];
+        const targetDate = new Date(lessonData.lesson_date).toISOString().split('T')[0];
+        
+        return lesson.classroom_id === classroom.id &&
+               lessonDate === targetDate &&
+               (!lessonData.id || lesson.id !== lessonData.id);
+      });
+      
+      return !classroomLessons.some(existingLesson => {
+        const lessonDateStr = new Date(lessonData.lesson_date).toISOString().split('T')[0];
+        const existingStart = existingLesson.lesson_start 
+          ? new Date(`${lessonDateStr}T${existingLesson.lesson_start}`)
+          : new Date(`${lessonDateStr}T09:00:00`);
+        
+        const existingEnd = existingLesson.lesson_end 
+          ? new Date(`${lessonDateStr}T${existingLesson.lesson_end}`)
+          : new Date(`${lessonDateStr}T10:00:00`);
+        
+        return (lessonStart < existingEnd && lessonEnd > existingStart);
+      });
+    });
+  };
+
   const handleSaveLesson = async (lessonData: any) => {
     try {
-      if (lessonData.id) {
-        await updateLesson(lessonData.id, lessonData);
+      // Assicurati che lesson_date contenga solo la data (YYYY-MM-DD)
+      let processedLessonData = { ...lessonData };
+      
+      if (lessonData.lesson_date) {
+        // Assicurati che lesson_date sia in formato YYYY-MM-DD senza orario
+        const dateOnly = new Date(lessonData.lesson_date).toISOString().split('T')[0];
+        processedLessonData.lesson_date = dateOnly;
+        
+        console.log('🕐 Processing lesson data:', {
+          original_date: lessonData.lesson_date,
+          lesson_start: lessonData.lesson_start,
+          lesson_end: lessonData.lesson_end,
+          processed_date: processedLessonData.lesson_date
+        });
+      }
+      
+      // Verifica sovrapposizioni in aula
+      const overlappingLessons = checkClassroomOverlap(processedLessonData);
+      
+      if (overlappingLessons.length > 0) {
+        const classroomName = classrooms.find(c => c.id === processedLessonData.classroom_id)?.name || 'Sconosciuta';
+        const overlappingLesson = overlappingLessons[0];
+        const overlappingDate = new Date(overlappingLesson.lesson_date).toLocaleDateString('it-IT', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+        const overlappingTime = overlappingLesson.lesson_start && overlappingLesson.lesson_end 
+          ? `${overlappingLesson.lesson_start} - ${overlappingLesson.lesson_end}`
+          : 'orario non specificato';
+        
+        // Trova aule disponibili
+        const availableClassrooms = findAvailableClassrooms(processedLessonData);
+        
+        let errorMessage = `⚠️ Conflitto in aula "${classroomName}"! Esiste già la lezione "${overlappingLesson.name}" il ${overlappingDate} dalle ${overlappingTime}.`;
+        
+        if (availableClassrooms.length > 0) {
+          const availableNames = availableClassrooms.slice(0, 3).map(c => c.name).join(', ');
+          errorMessage += ` Aule disponibili: ${availableNames}${availableClassrooms.length > 3 ? ` e altre ${availableClassrooms.length - 3}...` : ''}`;
+        } else {
+          errorMessage += ` Nessuna aula disponibile in questo orario.`;
+        }
+        
+        setError(errorMessage);
+        return;
+      }
+      
+      console.log('💾 Saving lesson data:', processedLessonData);
+      
+      if (processedLessonData.id) {
+        await updateLesson(processedLessonData.id, processedLessonData);
         setInfo(t('admin.lessons.messages.lessonUpdated'));
       } else {
-        await createLesson(lessonData);
+        await createLesson(processedLessonData);
         setInfo(t('admin.lessons.messages.lessonCreated'));
       }
       await fetchData();
@@ -227,43 +404,16 @@ const LessonsPanel: React.FC = () => {
   };
   
   const handleAddLesson = () => {
-    setCurrentLesson({
-      id: undefined,
-      name: '',
-      lesson_date: new Date().toISOString().split('T')[0] + 'T09:00',
-      classroom_id: classrooms.length > 0 ? classrooms[0].id : 0,
-      course_id: courses.length > 0 ? courses[0].id : 0,
-      subject_id: undefined
-    });
-    
-    if (courses.length > 0) {
-      setFilteredSubjects(
-        subjects.filter(subject => subject.course_id === courses[0].id)
-      );
-    }
-    
-    setIsEditing(false);
+    setSelectedLesson(null);
+    setDefaultDate(undefined);
+    setDefaultHour(9);
     setIsFormOpen(true);
   };
   
   const handleEditLesson = (lesson: Lesson) => {
-    const date = new Date(lesson.lesson_date);
-    const formattedDate = date.toISOString().substring(0, 16);
-    
-    setCurrentLesson({
-      id: lesson.id,
-      name: lesson.name || '',
-      lesson_date: formattedDate,
-      classroom_id: lesson.classroom_id,
-      course_id: lesson.course_id,
-      subject_id: lesson.subject_id
-    });
-    
-    setFilteredSubjects(
-      subjects.filter(subject => subject.course_id === lesson.course_id)
-    );
-    
-    setIsEditing(true);
+    setSelectedLesson(lesson);
+    setDefaultDate(undefined);
+    setDefaultHour(9);
     setIsFormOpen(true);
   };
   
@@ -272,80 +422,6 @@ const LessonsPanel: React.FC = () => {
     setError(null);
   };
   
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    
-    if (name === 'course_id') {
-      const courseId = parseInt(value, 10);
-      setFilteredSubjects(
-        subjects.filter(subject => subject.course_id === courseId)
-      );
-      setCurrentLesson({
-        ...currentLesson,
-        course_id: courseId,
-        subject_id: undefined
-      });
-    } else {
-      setCurrentLesson({
-        ...currentLesson,
-        [name]: name === 'classroom_id' || name === 'subject_id' 
-          ? (value ? parseInt(value, 10) : undefined) 
-          : value
-      });
-    }
-  };
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      if (!currentLesson.lesson_date || !currentLesson.classroom_id || !currentLesson.course_id) {
-        setError(t('admin.lessons.errors.requiredFields'));
-        return;
-      }
-      
-      const formattedLesson = {
-        ...currentLesson,
-        lesson_date: new Date(currentLesson.lesson_date).toISOString()
-      };
-      
-      console.log(t('admin.lessons.sendingLessonData'), formattedLesson);
-      
-      if (isEditing && currentLesson.id !== undefined) {
-        await updateLesson(currentLesson.id, formattedLesson);
-        setInfo(t('admin.lessons.messages.lessonUpdated'));
-      } else {
-        await createLesson(formattedLesson);
-        setInfo(t('admin.lessons.messages.lessonCreated'));
-      }
-      
-      await fetchData();
-      handleCloseForm();
-    } catch (err) {
-      console.error(t('admin.lessons.errors.savingError'), err);
-      setError(t('admin.lessons.errors.lessonSavingError'));
-    }
-  };
-  
-  const handleDeleteConfirmation = (lesson: Lesson) => {
-    setLessonToDelete(lesson);
-    setIsDeleteModalOpen(true);
-  };
-  
-  const handleDeleteLesson = async () => {
-    if (!lessonToDelete) return;
-    
-    try {
-      await deleteLesson(lessonToDelete.id);
-      await fetchData();
-      setIsDeleteModalOpen(false);
-      setLessonToDelete(null);
-      setInfo(t('admin.lessons.messages.lessonDeleted'));
-    } catch (err) {
-      console.error(t('admin.lessons.errors.deletionError'), err);
-      setError(t('admin.lessons.errors.lessonDeletionError'));
-    }
-  };
   
   const handleViewImages = async (lesson: Lesson) => {
     try {
@@ -390,6 +466,7 @@ const LessonsPanel: React.FC = () => {
   const handleCaptureAndAnalyze = async (lesson: Lesson) => {
     try {
       setIsCaptureAnalyzing(true);
+      setCurrentCaptureStage(0); // Start with capture phase
       setCaptureAnalysisResult(null);
       setError(null);
       setLessonToAnalyze(lesson);
@@ -402,8 +479,16 @@ const LessonsPanel: React.FC = () => {
       if (!token) {
         setError(t('admin.lessons.errors.authTokenMissing'));
         setIsCaptureAnalyzing(false);
+        setCurrentCaptureStage(0);
         return;
       }
+      
+      // Stage 1: Capture (blue)
+      setCurrentCaptureStage(0);
+      await new Promise(resolve => setTimeout(resolve, 800)); // Minimum time to show capture stage
+      
+      // Stage 2: Analysis (yellow) - start request
+      setCurrentCaptureStage(1);
       
       const response = await fetch(`${backendUrl}/api/admin/lessons/${lesson.id}/capture-and-analyze`, {
         method: 'POST',
@@ -413,6 +498,9 @@ const LessonsPanel: React.FC = () => {
           'Accept': 'application/json'
         }
       });
+      
+      // Stage 3: Report generation (green)
+      setCurrentCaptureStage(2);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -430,9 +518,8 @@ const LessonsPanel: React.FC = () => {
         }
         setInfo(message);
         
-        if (data.lesson_completed) {
-          fetchData(); // Ricarica la lista delle lezioni
-        }
+        // Sempre ricarica i dati dopo uno scatto di successo
+        fetchData(); // Ricarica la lista delle lezioni
       } catch (jsonError) {
         console.error(`❌ ${t('admin.lessons.errors.jsonParsingError')}`, jsonError);
         throw new Error(t('admin.lessons.errors.invalidServerResponse'));
@@ -446,6 +533,7 @@ const LessonsPanel: React.FC = () => {
       }
     } finally {
       setIsCaptureAnalyzing(false);
+      setCurrentCaptureStage(0); // Reset stage
     }
   };
 
@@ -614,15 +702,15 @@ const LessonsPanel: React.FC = () => {
   }).length;
 
   const futureLessons = lessons.filter(lesson => {
-    const now = new Date();
-    const lessonDate = new Date(lesson.lesson_date);
-    return lessonDate > now;
+    const today = new Date().toISOString().split('T')[0];
+    const lessonDate = new Date(lesson.lesson_date).toISOString().split('T')[0];
+    return lessonDate > today;
   }).length;
 
   const pastLessons = lessons.filter(lesson => {
-    const now = new Date();
-    const lessonDate = new Date(lesson.lesson_date);
-    return lessonDate < now;
+    const today = new Date().toISOString().split('T')[0];
+    const lessonDate = new Date(lesson.lesson_date).toISOString().split('T')[0];
+    return lessonDate < today;
   }).length;
   
   if (loading) {
@@ -763,8 +851,9 @@ const LessonsPanel: React.FC = () => {
           </div>
         </div>
         
-        {/* Search e Filtri */}
-        <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 mb-8">
+        {/* Search e Filtri - Solo in modalità lista */}
+        {viewMode === 'list' && (
+          <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 mb-8">
           <div className="p-6">
             <div className="flex items-center space-x-3 mb-6">
               <div className="bg-indigo-600/20 p-2 rounded-lg">
@@ -822,6 +911,7 @@ const LessonsPanel: React.FC = () => {
             </div>
           </div>
         </div>
+        )}
         
         {error && !info && (
           <div className="mb-6 bg-red-900/20 border-l-4 border-red-500 p-4 rounded-lg shadow border border-red-800">
@@ -884,18 +974,18 @@ const LessonsPanel: React.FC = () => {
       
         {/* Lista lezioni */}
         {viewMode === 'list' && (
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
-          <div className="p-6 border-b border-gray-200">
+          <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700">
+          <div className="p-6 border-b border-gray-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="bg-indigo-100 p-2 rounded-lg">
-                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-indigo-600/20 p-2 rounded-lg">
+                  <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800">{t('admin.lessons.list.title')}</h3>
+                <h3 className="text-xl font-semibold text-white">{t('admin.lessons.list.title')}</h3>
               </div>
-              <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-medium">
+              <span className="bg-gray-700 text-gray-300 px-3 py-1 rounded-full text-sm font-medium">
                 {t('admin.lessons.list.lessonCount', { count: filteredLessons.length })}
               </span>
             </div>
@@ -907,17 +997,22 @@ const LessonsPanel: React.FC = () => {
                 {filteredLessons.map(lesson => (
                   <div
                     key={lesson.id}
-                    className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl hover:scale-105 transition-all duration-300"
-                    style={{ borderTop: `4px solid ${getCourseColor(lesson.course_id)}` }}
+                    className="bg-gradient-to-br from-gray-800 to-gray-750 rounded-2xl shadow-lg border border-gray-700 overflow-hidden hover:shadow-xl hover:scale-105 transition-all duration-300 relative"
+                    style={{ borderLeft: `5px solid ${getCourseColor(lesson.course_id)}` }}
                   >
                     {/* Header della card */}
-                    <div className="p-6 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+                    <div 
+                      className="p-6 border-b border-gray-600 relative"
+                      style={{
+                        background: `linear-gradient(135deg, ${getCourseColor(lesson.course_id)}15 0%, rgba(55, 65, 81, 1) 100%)`
+                      }}
+                    >
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-lg font-bold text-gray-800 leading-tight">
+                        <h3 className="text-lg font-bold text-white leading-tight">
                           {lesson.name || t('admin.lessons.list.lessonOfDate', { date: formatDate(lesson.lesson_date) })}
                         </h3>
                         {lesson.is_completed && (
-                          <div className="flex items-center space-x-1 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold">
+                          <div className="flex items-center space-x-1 bg-green-900/30 text-green-400 px-2 py-1 rounded-full text-xs font-semibold border border-green-800">
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
@@ -926,15 +1021,29 @@ const LessonsPanel: React.FC = () => {
                         )}
                       </div>
                       
-                      {/* Corso prominente */}
-                      <div className="flex items-center space-x-2">
-                        <div
-                          className="w-4 h-4 rounded-full"
-                          style={{ backgroundColor: getCourseColor(lesson.course_id) }}
-                        ></div>
-                        <span className="text-sm font-semibold text-gray-700">
-                          {getCourseName(lesson.course_id)}
-                        </span>
+                      {/* Corso prominente e stato */}
+                      <div className="flex items-center justify-between">
+                        <div 
+                          className="flex items-center space-x-2 px-3 py-1 rounded-full border"
+                          style={{
+                            backgroundColor: `${getCourseColor(lesson.course_id)}20`,
+                            borderColor: `${getCourseColor(lesson.course_id)}40`
+                          }}
+                        >
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: getCourseColor(lesson.course_id) }}
+                          ></div>
+                          <span 
+                            className="text-sm font-semibold"
+                            style={{ color: getCourseColor(lesson.course_id) }}
+                          >
+                            {getCourseName(lesson.course_id)}
+                          </span>
+                        </div>
+                        <div className={`px-3 py-1 rounded-full text-xs font-medium ${getLessonStatusColor(lesson)}`}>
+                          {getLessonStatusText(lesson)}
+                        </div>
                       </div>
                     </div>
 
@@ -942,37 +1051,45 @@ const LessonsPanel: React.FC = () => {
                     <div className="p-6">
                       {/* Informazioni in griglia 2x2 */}
                       <div className="flex flex-col md:grid md:grid-cols-2 gap-4 mb-6">
-                        <div className="flex items-center p-3 bg-orange-50 rounded-lg">
-                          <svg className="w-5 h-5 text-orange-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex items-center p-3 bg-orange-600/10 rounded-lg border border-orange-800/30">
+                          <svg className="w-5 h-5 text-orange-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                           </svg>
                           <div className="min-w-0">
-                            <p className="text-xs font-medium text-gray-600 mb-1">{t('admin.lessons.list.classroom')}</p>
-                            <p className="text-sm text-orange-700 font-semibold">
+                            <p className="text-xs font-medium text-gray-400 mb-1">{t('admin.lessons.list.classroom')}</p>
+                            <p className="text-sm text-orange-300 font-semibold">
                               {getClassroomName(lesson.classroom_id)}
                             </p>
                           </div>
                         </div>                    
-                        <div className="flex items-center p-3 bg-purple-50 rounded-lg">
-                          <svg className="w-5 h-5 text-purple-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex items-center p-3 bg-purple-600/10 rounded-lg border border-purple-800/30">
+                          <svg className="w-5 h-5 text-purple-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
                           <div className="min-w-0">
-                            <p className="text-xs font-medium text-gray-600 mb-1">{t('admin.lessons.list.subject')}</p>
-                            <p className="text-sm text-purple-700 font-semibold truncate">
+                            <p className="text-xs font-medium text-gray-400 mb-1">{t('admin.lessons.list.subject')}</p>
+                            <p className="text-sm text-purple-300 font-semibold truncate">
                               {getSubjectName(lesson.subject_id)}
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center p-3 bg-blue-50 rounded-lg col-span-2">
-                          <svg className="w-5 h-5 text-blue-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex items-center p-3 bg-blue-600/10 rounded-lg col-span-2 border border-blue-800/30">
+                          <svg className="w-5 h-5 text-blue-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          <div className="min-w-0">
-                            <p className="text-xs font-medium text-gray-600 mb-1">{t('admin.lessons.list.dateTime')}</p>
-                            <p className="text-sm text-blue-700 font-semibold truncate">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-medium text-gray-400 mb-1">{t('admin.lessons.list.dateTime')}</p>
+                            <p className="text-sm text-blue-300 font-semibold truncate">
                               {formatDate(lesson.lesson_date)}
                             </p>
+                            {(() => {
+                              const { startTime, endTime } = getLessonTiming(lesson);
+                              return (
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {startTime.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })} - {endTime.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              );
+                            })()}
                           </div>
                         </div>
                       </div>
@@ -981,16 +1098,16 @@ const LessonsPanel: React.FC = () => {
                       <div className="space-y-3">
                         {/* Azione principale */}
                         {lesson.is_completed ? (
-                          <div className="w-full flex items-center justify-center px-4 py-3 bg-gray-400 text-white rounded-lg text-sm font-semibold opacity-75">
+                          <div className="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-gray-300 rounded-lg text-sm font-semibold opacity-75">
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                             {t('admin.lessons.status.lessonCompleted')}
                           </div>
-                        ) : (
+                        ) : canCapturePhotos(lesson) ? (
                           <button
                             onClick={() => handleCaptureAndAnalyze(lesson)}
-                            className="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-200 text-sm font-semibold"
+                            className="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-200 text-sm font-semibold"
                             title={t('admin.lessons.actions.captureAndAnalyzeRealtime')}
                           >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -999,13 +1116,22 @@ const LessonsPanel: React.FC = () => {
                             </svg>
                             Scatta e Analizza
                           </button>
+                        ) : (
+                          <div className="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-gray-400 rounded-lg text-sm font-semibold opacity-75">
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {getLessonStatus(lesson) === 'not_started' 
+                              ? t('admin.lessons.status.notStartedYet') 
+                              : t('admin.lessons.status.lessonEnded')}
+                          </div>
                         )}
                         
                         {/* Azioni secondarie */}
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-2 gap-3">
                           <button
                             onClick={() => handleViewImages(lesson)}
-                            className="flex items-center justify-center px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
+                            className="flex items-center justify-center px-3 py-2 bg-green-600/20 text-green-400 rounded-lg hover:bg-green-600/30 transition-colors text-sm font-medium border border-green-800/30"
                             title="Visualizza immagini con riquadri"
                           >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1015,25 +1141,19 @@ const LessonsPanel: React.FC = () => {
                           </button>
                           
                           <button
-                            onClick={() => handleEditLesson(lesson)}
-                            className="flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
-                            title={t('admin.lessons.actions.editLesson')}
+                            onClick={() => !lesson.is_completed && handleEditLesson(lesson)}
+                            disabled={lesson.is_completed}
+                            className={`flex items-center justify-center px-3 py-2 rounded-lg transition-colors text-sm font-medium border ${
+                              lesson.is_completed
+                                ? 'bg-gray-700/50 text-gray-500 border-gray-700/50 cursor-not-allowed'
+                                : 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border-blue-800/30'
+                            }`}
+                            title={lesson.is_completed ? t('admin.lessons.errors.cannotEditCompletedLesson') : t('admin.lessons.actions.editLesson')}
                           >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                            {t('common.edit')}
-                          </button>
-                          
-                          <button
-                            onClick={() => handleDeleteConfirmation(lesson)}
-                            className="flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
-                            title={t('admin.lessons.actions.deleteLesson')}
-                          >
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            {t('common.delete')}
+                            {lesson.is_completed ? t('admin.lessons.completedLesson') : t('common.edit')}
                           </button>
                         </div>
                       </div>
@@ -1043,7 +1163,7 @@ const LessonsPanel: React.FC = () => {
               </div>
             ) : (
               <div className="text-center py-16">
-                <div className="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+                <div className="bg-gray-700 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
@@ -1084,231 +1204,20 @@ const LessonsPanel: React.FC = () => {
         )}
       
       {/* Modal Form Lezione */}
-      {isFormOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity backdrop-blur-sm"></div>
-            
-            <div className="relative bg-white rounded-2xl shadow-2xl transform transition-all sm:max-w-lg sm:w-full">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-3 rounded-xl">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900">
-                      {isEditing ? t('admin.lessons.form.editTitle') : t('admin.lessons.form.newTitle')}
-                    </h3>
-                  </div>
-                  <button
-                    onClick={handleCloseForm}
-                    className="p-2 bg-gray-100 text-gray-500 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-                
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
-                      {t('admin.lessons.form.nameLabel')}
-                    </label>
-                    <input
-                      type="text"
-                      id="name"
-                      name="name"
-                      value={currentLesson.name || ''}
-                      onChange={handleInputChange}
-                      placeholder={t('admin.lessons.form.namePlaceholder')}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="lesson_date" className="block text-sm font-semibold text-gray-700 mb-2">
-                      {t('admin.lessons.form.dateTimeLabel')}
-                    </label>
-                    <input
-                      type="datetime-local"
-                      id="lesson_date"
-                      name="lesson_date"
-                      value={currentLesson.lesson_date}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="course_id" className="block text-sm font-semibold text-gray-700 mb-2">
-                      {t('admin.lessons.form.courseLabel')}
-                    </label>
-                    <select
-                      id="course_id"
-                      name="course_id"
-                      value={currentLesson.course_id || ''}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    >
-                      <option value="">{t('admin.lessons.form.selectCourse')}</option>
-                      {courses.map(course => (
-                        <option key={course.id} value={course.id}>
-                          {course.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="subject_id" className="block text-sm font-semibold text-gray-700 mb-2">
-                      {t('admin.lessons.form.subjectLabel')}
-                    </label>
-                    <select
-                      id="subject_id"
-                      name="subject_id"
-                      value={currentLesson.subject_id || ''}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    >
-                      <option value="">{t('admin.lessons.form.selectSubject')}</option>
-                      {filteredSubjects.map(subject => (
-                        <option key={subject.id} value={subject.id}>
-                          {subject.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="classroom_id" className="block text-sm font-semibold text-gray-700 mb-2">
-                      {t('admin.lessons.form.classroomLabel')}
-                    </label>
-                    <select
-                      id="classroom_id"
-                      name="classroom_id"
-                      value={currentLesson.classroom_id || ''}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    >
-                      <option value="">{t('admin.lessons.form.selectClassroom')}</option>
-                      {classrooms.map(classroom => (
-                        <option key={classroom.id} value={classroom.id}>
-                          {classroom.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="teacher_id" className="block text-sm font-semibold text-gray-700 mb-2">
-                      Docente
-                    </label>
-                    <select
-                      id="teacher_id"
-                      name="teacher_id"
-                      value={currentLesson.teacher_id || ''}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    >
-                      <option value="">Seleziona un docente</option>
-                      {teachers.map(teacher => (
-                        <option key={teacher.id} value={teacher.id}>
-                          {teacher.name} {teacher.surname}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  {error && (
-                    <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
-                      <div className="flex items-center">
-                        <svg className="w-5 h-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                        </svg>
-                        <span className="text-red-700 font-medium">{error}</span>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-                    <button
-                      type="button"
-                      onClick={handleCloseForm}
-                      className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-                    >
-                      {t('common.cancel')}
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200"
-                    >
-                      {isEditing ? t('admin.lessons.form.updateLesson') : t('admin.lessons.form.createLesson')}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <LessonModal
+        isOpen={isFormOpen}
+        onClose={handleCloseForm}
+        onSave={handleSaveLesson}
+        lesson={selectedLesson}
+        courses={courses}
+        subjects={subjects}
+        classrooms={classrooms}
+        teachers={teachers}
+        lessons={lessons}
+        defaultDate={defaultDate}
+        defaultHour={defaultHour}
+      />
       
-      {/* Modal eliminazione */}
-      {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity backdrop-blur-sm"></div>
-            
-            <div className="relative bg-white rounded-2xl shadow-2xl transform transition-all sm:max-w-lg sm:w-full">
-              <div className="p-6">
-                <div className="sm:flex sm:items-start">
-                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-16 w-16 rounded-full bg-red-100 sm:mx-0 sm:h-12 sm:w-12">
-                    <svg className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                  </div>
-                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                    <h3 className="text-xl leading-6 font-bold text-gray-900 mb-2">
-                      {t('admin.lessons.deleteConfirmation.title')}
-                    </h3>
-                    <div className="mt-4">
-                      <p className="text-sm text-gray-600 leading-relaxed">
-                        {t('admin.lessons.deleteConfirmation.message', {
-                          lessonName: lessonToDelete?.name || t('admin.lessons.list.lessonOfDate', {
-                            date: lessonToDelete ? formatDate(lessonToDelete.lesson_date) : ''
-                          })
-                        })}
-                      </p>
-                      <p className="text-sm text-red-600 mt-3 font-medium">
-                        {t('admin.lessons.deleteConfirmation.warning')}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse sm:gap-3">
-                <button
-                  onClick={handleDeleteLesson}
-                  className="w-full inline-flex justify-center rounded-lg border border-transparent shadow-lg px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-base font-semibold text-white hover:shadow-xl hover:scale-105 transition-all duration-200 sm:w-auto sm:text-sm"
-                >
-                  {t('admin.lessons.deleteConfirmation.deleteButton')}
-                </button>
-                <button
-                  onClick={() => setIsDeleteModalOpen(false)}
-                  className="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-6 py-3 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors sm:mt-0 sm:w-auto sm:text-sm"
-                >
-                  {t('common.cancel')}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Modal Directory */}
       {isDirectoryModalOpen && directoryInfo && directoryInfo.directories && (
@@ -1684,24 +1593,24 @@ const LessonsPanel: React.FC = () => {
       {isImagesModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity backdrop-blur-sm"></div>
+            <div className="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity backdrop-blur-sm"></div>
             
-            <div className="relative bg-white rounded-2xl shadow-2xl transform transition-all sm:max-w-6xl sm:w-full max-h-screen overflow-y-auto">
+            <div className="relative bg-gray-800 rounded-2xl shadow-2xl transform transition-all sm:max-w-6xl sm:w-full max-h-screen overflow-y-auto border border-gray-700">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center space-x-3">
-                    <div className="bg-green-100 p-3 rounded-xl">
-                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="bg-green-600/20 p-3 rounded-xl">
+                      <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-900">
+                    <h3 className="text-2xl font-bold text-white">
                       {t('admin.lessons.images.title')}
                     </h3>
                   </div>
                   <button
                     onClick={() => setIsImagesModalOpen(false)}
-                    className="p-2 bg-gray-100 text-gray-500 rounded-lg hover:bg-gray-200 transition-colors"
+                    className="p-2 bg-gray-700 text-gray-400 rounded-lg hover:bg-gray-600 hover:text-gray-200 transition-colors"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1713,13 +1622,13 @@ const LessonsPanel: React.FC = () => {
                   {loadingImages ? (
                     <div className="text-center py-8">
                       <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-500 border-t-transparent mx-auto mb-4"></div>
-                      <h3 className="text-lg font-semibold text-gray-700 mb-2">{t('admin.lessons.images.loading')}</h3>
+                      <h3 className="text-lg font-semibold text-gray-200 mb-2">{t('admin.lessons.images.loading')}</h3>
                     </div>
                   ) : lessonImages.length > 0 ? (
                     <div>
                       <div className="mb-4 flex items-center justify-between">
-                        <p className="text-gray-600">{lessonImages.length} immagini trovate</p>
-                        <div className="flex items-center space-x-4 text-sm">
+                        <p className="text-gray-300">{lessonImages.length} immagini trovate</p>
+                        <div className="flex items-center space-x-4 text-sm text-gray-300">
                           <div className="flex items-center">
                             <div className="w-3 h-3 bg-blue-500 rounded mr-2"></div>
                             <span>Originali</span>
@@ -1739,8 +1648,8 @@ const LessonsPanel: React.FC = () => {
                             return new Date(b.captured_at).getTime() - new Date(a.captured_at).getTime();
                           })
                           .map((image, index) => (
-                          <div key={image.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                            <div className="aspect-video bg-gray-100 relative">
+                          <div key={image.id} className="border border-gray-600 rounded-lg overflow-hidden hover:shadow-xl hover:border-gray-500 transition-all bg-gray-700">
+                            <div className="aspect-video bg-gray-600 relative">
                               <img 
                                 src={image.url} 
                                 alt={`Immagine ${index + 1}`}
@@ -1753,19 +1662,19 @@ const LessonsPanel: React.FC = () => {
                             
                             <div className="p-4">
                               <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-gray-900">
+                                <span className="text-sm font-medium text-gray-200">
                                   {new Date(image.captured_at).toLocaleString('it-IT')}
                                 </span>
                                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                   image.is_analyzed 
-                                    ? 'bg-green-100 text-green-800' 
-                                    : 'bg-yellow-100 text-yellow-800'
+                                    ? 'bg-green-900/30 text-green-300 border border-green-500/30' 
+                                    : 'bg-yellow-900/30 text-yellow-300 border border-yellow-500/30'
                                 }`}>
                                   {image.is_analyzed ? 'Analizzata' : 'In attesa'}
                                 </span>
                               </div>
                               
-                              <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+                              <div className="flex items-center justify-between text-sm text-gray-300 mb-2">
                                 <span className="flex items-center">
                                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -1780,14 +1689,14 @@ const LessonsPanel: React.FC = () => {
                                 </span>
                               </div>
                               
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-gray-400">
                                 {t('admin.lessons.captureAnalysis.source')}: {image.source === 'camera' ? t('admin.lessons.captureAnalysis.originalCamera') : 
                                         image.source === 'face_detection_report' ? t('admin.lessons.images.analysisWithContours') : t('admin.lessons.images.upload')}
                                 {image.camera_ip && ` • ${image.camera_ip}`}
                               </div>
                               
                               {image.source === 'face_detection_report' && (
-                                <div className="mt-2 inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                                <div className="mt-2 inline-flex items-center px-2 py-1 bg-green-900/30 text-green-300 text-xs rounded-full border border-green-500/30">
                                   <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                   </svg>
@@ -1801,32 +1710,41 @@ const LessonsPanel: React.FC = () => {
                     </div>
                   ) : (
                     <div className="text-center py-12">
-                      <div className="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+                      <div className="bg-gray-700 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
                         <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                       </div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('admin.lessons.images.noImagesAvailable')}</h3>
-                      <p className="text-gray-600 mb-6">{t('admin.lessons.images.noImagesMessage')}</p>
+                      <h3 className="text-xl font-semibold text-gray-200 mb-2">{t('admin.lessons.images.noImagesAvailable')}</h3>
+                      <p className="text-gray-300 mb-6">{t('admin.lessons.images.noImagesMessage')}</p>
                       <button 
                         onClick={() => {
                           setIsImagesModalOpen(false);
-                          if (lessonToAnalyze) {
+                          if (lessonToAnalyze && canCapturePhotos(lessonToAnalyze)) {
                             handleCaptureAndAnalyze(lessonToAnalyze);
                           }
                         }}
-                        className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700"
+                        disabled={!lessonToAnalyze || !canCapturePhotos(lessonToAnalyze)}
+                        className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                          lessonToAnalyze && canCapturePhotos(lessonToAnalyze)
+                            ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                            : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                        }`}
                       >
-                        {t('admin.lessons.images.captureFirstImage')}
+                        {lessonToAnalyze && canCapturePhotos(lessonToAnalyze) 
+                          ? t('admin.lessons.images.captureFirstImage')
+                          : (getLessonStatus(lessonToAnalyze!) === 'not_started' 
+                              ? t('admin.lessons.status.notStartedYet')
+                              : t('admin.lessons.status.lessonEnded'))}
                       </button>
                     </div>
                   )}
                 </div>
                 
-                <div className="flex justify-end mt-6 pt-4 border-t border-gray-200">
+                <div className="flex justify-end mt-6 pt-4 border-t border-gray-600">
                   <button
                     onClick={() => setIsImagesModalOpen(false)}
-                    className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                    className="px-6 py-3 border border-gray-600 rounded-lg text-gray-300 font-medium hover:bg-gray-700 hover:text-white transition-colors"
                   >
                     {t('admin.lessons.images.close')}
                   </button>
@@ -1841,37 +1759,37 @@ const LessonsPanel: React.FC = () => {
       {isCaptureAnalysisModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity backdrop-blur-sm"></div>
+            <div className="fixed inset-0 bg-gray-900 bg-opacity-80 transition-opacity backdrop-blur-sm"></div>
             
-            <div className="relative bg-white rounded-2xl shadow-2xl transform transition-all sm:max-w-2xl sm:w-full">
+            <div className="relative bg-gray-800 rounded-2xl shadow-2xl transform transition-all sm:max-w-2xl sm:w-full border border-gray-700">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center space-x-3">
                     <div className={`p-3 rounded-xl ${
-                      isCaptureAnalyzing ? 'bg-emerald-100' : error ? 'bg-red-100' : 'bg-green-100'
+                      isCaptureAnalyzing ? 'bg-emerald-900/20 border border-emerald-500/30' : error ? 'bg-red-900/20 border border-red-500/30' : 'bg-green-900/20 border border-green-500/30'
                     }`}>
                       {isCaptureAnalyzing ? (
-                        <svg className="w-6 h-6 text-emerald-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-6 h-6 text-emerald-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                         </svg>
                       ) : error ? (
-                        <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                       ) : (
-                        <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                       )}
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-900">
+                    <h3 className="text-2xl font-bold text-white">
                       {isCaptureAnalyzing ? t('admin.lessons.captureAnalysis.captureInProgress') : error ? t('admin.lessons.captureAnalysis.error') : t('admin.lessons.captureAnalysis.captureCompleted')}
                     </h3>
                   </div>
                   <button
                     onClick={() => setIsCaptureAnalysisModalOpen(false)}
                     disabled={isCaptureAnalyzing}
-                    className="p-2 bg-gray-100 text-gray-500 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                    className="p-2 bg-gray-700 text-gray-400 rounded-lg hover:bg-gray-600 hover:text-white transition-colors disabled:opacity-50"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1881,49 +1799,111 @@ const LessonsPanel: React.FC = () => {
                 
                 <div className="space-y-6">
                   {isCaptureAnalyzing ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent mx-auto mb-4"></div>
-                      <h3 className="text-lg font-semibold text-gray-700 mb-2">{t('admin.lessons.captureAnalysis.captureAnalysisInProgress')}</h3>
-                      <p className="text-gray-600">
+                    <div className="text-center py-12">
+                      <div className="relative mb-8">
+                        <div className={`animate-spin rounded-full h-16 w-16 border-4 border-t-transparent mx-auto transition-all duration-700 ${
+                          currentCaptureStage === 0 ? 'border-blue-500' :
+                          currentCaptureStage === 1 ? 'border-yellow-500' : 
+                          'border-green-500'
+                        }`}></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <svg className={`w-6 h-6 animate-pulse transition-all duration-700 ${
+                            currentCaptureStage === 0 ? 'text-blue-400' :
+                            currentCaptureStage === 1 ? 'text-yellow-400' :
+                            'text-green-400'
+                          }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                          </svg>
+                        </div>
+                      </div>
+                      <h3 className="text-xl font-semibold text-white mb-3">
+                        {currentCaptureStage === 0 ? t('admin.lessons.captureAnalysis.stages.capture') || 'Cattura in corso...' :
+                         currentCaptureStage === 1 ? t('admin.lessons.captureAnalysis.stages.analyze') || 'Analisi volti...' :
+                         t('admin.lessons.captureAnalysis.stages.report') || 'Generazione report...'}
+                      </h3>
+                      <div className="w-full bg-gray-700 rounded-full h-2 mb-4 max-w-xs mx-auto">
+                        <div className={`h-2 rounded-full transition-all duration-700 ${
+                          currentCaptureStage === 0 ? 'bg-blue-500 w-1/3' :
+                          currentCaptureStage === 1 ? 'bg-yellow-500 w-2/3' :
+                          'bg-green-500 w-full'
+                        }`}></div>
+                      </div>
+                      <p className="text-gray-300 max-w-md mx-auto">
                         {t('admin.lessons.captureAnalysis.waitMessage')}
                       </p>
+                      <div className="mt-6 grid grid-cols-3 gap-4 max-w-md mx-auto">
+                        <div className={`rounded-lg p-3 text-center transition-all duration-500 ${
+                          currentCaptureStage >= 0 ? 'bg-blue-600/20' : 'bg-gray-700'
+                        }`}>
+                          <div className={`w-2 h-2 rounded-full mx-auto mb-2 transition-all duration-500 ${
+                            currentCaptureStage >= 0 ? 'bg-blue-400 animate-pulse' : 'bg-gray-500'
+                          }`}></div>
+                          <p className="text-xs text-gray-400">Cattura</p>
+                        </div>
+                        <div className={`rounded-lg p-3 text-center transition-all duration-500 ${
+                          currentCaptureStage >= 1 ? 'bg-yellow-600/20' : 'bg-gray-700'
+                        }`}>
+                          <div className={`w-2 h-2 rounded-full mx-auto mb-2 transition-all duration-500 ${
+                            currentCaptureStage >= 1 ? 'bg-yellow-400 animate-pulse' : 'bg-gray-500'
+                          }`}></div>
+                          <p className="text-xs text-gray-400">Analisi</p>
+                        </div>
+                        <div className={`rounded-lg p-3 text-center transition-all duration-500 ${
+                          currentCaptureStage >= 2 ? 'bg-green-600/20' : 'bg-gray-700'
+                        }`}>
+                          <div className={`w-2 h-2 rounded-full mx-auto mb-2 transition-all duration-500 ${
+                            currentCaptureStage >= 2 ? 'bg-green-400 animate-pulse' : 'bg-gray-500'
+                          }`}></div>
+                          <p className="text-xs text-gray-400">Report</p>
+                        </div>
+                      </div>
                     </div>
                   ) : error ? (
-                    <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
-                      <h3 className="text-lg font-medium text-red-800 mb-2">{t('admin.lessons.captureAnalysis.errorDuringCapture')}</h3>
-                      <p className="text-red-700">{error}</p>
+                    <div className="bg-red-900/20 border-l-4 border-red-500 p-6 rounded-lg">
+                      <div className="flex items-center mb-3">
+                        <svg className="w-6 h-6 text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <h3 className="text-lg font-medium text-red-300">{t('admin.lessons.captureAnalysis.errorDuringCapture')}</h3>
+                      </div>
+                      <p className="text-red-400 ml-9">{error}</p>
                     </div>
                   ) : captureAnalysisResult ? (
-                    <div className="space-y-4">
-                      <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
-                        <h3 className="text-lg font-medium text-green-800 mb-2">{t('admin.lessons.captureAnalysis.captureSuccessful')}</h3>
-                        <p className="text-green-700">{t('admin.lessons.captureAnalysis.imageAcquiredMessage')}</p>
+                    <div className="space-y-6">
+                      <div className="bg-green-900/20 border-l-4 border-green-500 p-6 rounded-lg">
+                        <div className="flex items-center mb-3">
+                          <svg className="w-6 h-6 text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <h3 className="text-lg font-medium text-green-300">{t('admin.lessons.captureAnalysis.captureSuccessful')}</h3>
+                        </div>
+                        <p className="text-green-400 ml-9">{t('admin.lessons.captureAnalysis.imageAcquiredMessage')}</p>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
-                          <div className="text-2xl font-bold text-blue-600">
+                      <div className="grid grid-cols-2 gap-6">
+                        <div className="bg-gray-700 border border-gray-600 rounded-lg p-6 text-center">
+                          <div className="text-3xl font-bold text-blue-400 mb-2">
                             {captureAnalysisResult.analysis.detected_faces}
                           </div>
-                          <div className="text-sm text-gray-600">{t('admin.lessons.captureAnalysis.facesDetected')}</div>
+                          <div className="text-sm text-gray-300">{t('admin.lessons.captureAnalysis.facesDetected')}</div>
                         </div>
                         
-                        <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
-                          <div className="text-2xl font-bold text-green-600">
+                        <div className="bg-gray-700 border border-gray-600 rounded-lg p-6 text-center">
+                          <div className="text-3xl font-bold text-green-400 mb-2">
                             {captureAnalysisResult.analysis.recognized_students}
                           </div>
-                          <div className="text-sm text-gray-600">{t('admin.lessons.captureAnalysis.studentsRecognized')}</div>
+                          <div className="text-sm text-gray-300">{t('admin.lessons.captureAnalysis.studentsRecognized')}</div>
                         </div>
                       </div>
                       
                       {captureAnalysisResult.analysis.students && captureAnalysisResult.analysis.students.length > 0 && (
-                        <div className="bg-white border border-gray-200 rounded-lg p-4">
-                          <h4 className="font-semibold mb-3">{t('admin.lessons.captureAnalysis.recognizedStudentsList')}</h4>
-                          <div className="space-y-2">
+                        <div className="bg-gray-700 border border-gray-600 rounded-lg p-6">
+                          <h4 className="font-semibold mb-4 text-white">{t('admin.lessons.captureAnalysis.recognizedStudentsList')}</h4>
+                          <div className="space-y-3">
                             {captureAnalysisResult.analysis.students.map((student: any, index: number) => (
-                              <div key={index} className="flex items-center justify-between p-2 bg-green-50 rounded">
-                                <span className="font-medium">{student.name} {student.surname}</span>
-                                <span className="text-sm text-green-600">
+                              <div key={index} className="flex items-center justify-between p-3 bg-green-900/20 border border-green-500/30 rounded-lg">
+                                <span className="font-medium text-white">{student.name} {student.surname}</span>
+                                <span className="text-sm text-green-400 bg-green-900/30 px-2 py-1 rounded">
                                   {Math.round(student.confidence * 100)}% {t('admin.lessons.captureAnalysis.confidence')}
                                 </span>
                               </div>
@@ -1933,12 +1913,12 @@ const LessonsPanel: React.FC = () => {
                       )}
                       
                       {/* Mostra l'immagine del report se disponibile */}
-                      {captureAnalysisResult.image_id && (
-                        <div className="bg-white border border-gray-200 rounded-lg p-4">
-                          <h4 className="font-semibold mb-3 text-gray-900">{t('admin.lessons.captureAnalysis.reportImageWithDetections')}</h4>
-                          <div className="relative bg-gray-50 rounded-lg overflow-hidden">
+                      {captureAnalysisResult.report_image_id && (
+                        <div className="bg-gray-700 border border-gray-600 rounded-lg p-6">
+                          <h4 className="font-semibold mb-4 text-white">{t('admin.lessons.captureAnalysis.reportImageWithDetections')}</h4>
+                          <div className="relative bg-gray-800 rounded-lg overflow-hidden border border-gray-600">
                             <img 
-                              src={`http://localhost:4321/api/images/lesson/${captureAnalysisResult.image_id}`}
+                              src={`http://localhost:4321/api/images/lesson/${captureAnalysisResult.report_image_id}`}
                               alt="Report con volti rilevati"
                               className="w-full h-auto max-h-96 object-contain"
                               onError={(e) => {
@@ -1950,38 +1930,66 @@ const LessonsPanel: React.FC = () => {
                               {t('admin.lessons.captureAnalysis.facesDetectedCount', { count: captureAnalysisResult.analysis.detected_faces })}
                             </div>
                           </div>
-                          <p className="text-sm text-gray-600 mt-2">
+                          <p className="text-sm text-gray-400 mt-3">
                             {t('admin.lessons.captureAnalysis.greenFramesIndicateRecognized')}
                           </p>
                         </div>
                       )}
                       
                       {captureAnalysisResult.lesson_completed && (
-                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-lg">
-                          <h4 className="font-semibold text-amber-800 mb-2">{t('admin.lessons.captureAnalysis.lessonCompleted')}</h4>
-                          <p className="text-amber-700">
+                        <div className="bg-amber-900/20 border-l-4 border-amber-500 p-6 rounded-lg">
+                          <div className="flex items-center mb-3">
+                            <svg className="w-6 h-6 text-amber-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <h4 className="font-semibold text-amber-300">{t('admin.lessons.captureAnalysis.lessonCompleted')}</h4>
+                          </div>
+                          <p className="text-amber-400 ml-9">
                             {t('admin.lessons.captureAnalysis.lessonCompletedMessage')}
                           </p>
                         </div>
                       )}
                       
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <h4 className="font-semibold mb-2 text-blue-900">📸 Dettagli tecnici</h4>
-                        <div className="text-sm text-blue-800 space-y-1">
-                          <p>• Metodo camera: {captureAnalysisResult.camera.method}</p>
-                          <p>• Dimensione file: {Math.round(captureAnalysisResult.camera.file_size / 1024)} KB</p>
-                          <p>• ID immagine: {captureAnalysisResult.image_id}</p>
+                      <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-6">
+                        <h4 className="font-semibold mb-4 text-blue-300 flex items-center">
+                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Dettagli tecnici
+                        </h4>
+                        <div className="text-sm text-blue-400 space-y-2">
+                          <div className="flex items-center justify-between p-2 bg-blue-900/20 rounded">
+                            <span>Metodo camera:</span>
+                            <span className="font-mono">{captureAnalysisResult.camera.method}</span>
+                          </div>
+                          <div className="flex items-center justify-between p-2 bg-blue-900/20 rounded">
+                            <span>Dimensione file:</span>
+                            <span className="font-mono">{Math.round(captureAnalysisResult.camera.file_size / 1024)} KB</span>
+                          </div>
+                          <div className="flex items-center justify-between p-2 bg-blue-900/20 rounded">
+                            <span>ID immagine:</span>
+                            <span className="font-mono">{captureAnalysisResult.image_id}</span>
+                          </div>
+                          {captureAnalysisResult.report_image_id && (
+                            <div className="flex items-center justify-between p-2 bg-blue-900/20 rounded">
+                              <span>ID report:</span>
+                              <span className="font-mono">{captureAnalysisResult.report_image_id}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center py-8">
-                      <p className="text-gray-600">Nessun dato disponibile</p>
+                    <div className="text-center py-12">
+                      <svg className="w-12 h-12 text-gray-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <p className="text-gray-400">Nessun dato disponibile</p>
                     </div>
                   )}
                 </div>
                 
-                <div className="flex justify-between mt-6 pt-4 border-t border-gray-200">
+                <div className="flex justify-between mt-8 pt-6 border-t border-gray-600">
                   <div className="flex space-x-3">
                     {captureAnalysisResult && !isCaptureAnalyzing && captureAnalysisResult.lesson_completed && (
                       <button

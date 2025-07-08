@@ -66,9 +66,9 @@ router.get('/', authenticate, async (req, res) => {
         const userId = req.user.id;
         
         let query = `
-            SELECT l.id, l.name, l.lesson_date, l.course_id, l.subject_id, l.classroom_id, l.teacher_id,
+            SELECT l.id, l.name, l.lesson_date, l.lesson_start, l.lesson_end, l.course_id, l.subject_id, l.classroom_id, l.teacher_id,
                    l.is_completed, l.completed_at,
-                   c.name as course_name,
+                   c.name as course_name, c.color as course_color,
                    s.name as subject_name,
                    cl.name as classroom_name
             FROM "Lessons" l
@@ -118,6 +118,8 @@ router.get('/', authenticate, async (req, res) => {
             id: lesson.id,
             name: lesson.name,
             lesson_date: lesson.lesson_date,
+            lesson_start: lesson.lesson_start,
+            lesson_end: lesson.lesson_end,
             course_id: lesson.course_id,
             subject_id: lesson.subject_id,
             classroom_id: lesson.classroom_id,
@@ -326,10 +328,10 @@ router.get('/:id', authenticate, async (req, res) => {
 
 router.post('/', authenticate, async (req, res) => {
     try {
-        const { name, lesson_date, course_id, subject_id, classroom_id, teacher_id, planned_start_time, planned_end_time } = req.body;
+        const { name, lesson_date, course_id, subject_id, classroom_id, teacher_id, lesson_start, lesson_end } = req.body;
         
         console.log('POST /lessons - Dati ricevuti:', { 
-            name, lesson_date, course_id, subject_id, classroom_id, teacher_id, planned_start_time, planned_end_time 
+            name, lesson_date, course_id, subject_id, classroom_id, teacher_id, lesson_start, lesson_end 
         });
         
         if (!name || !lesson_date || !course_id || !subject_id) {
@@ -341,44 +343,29 @@ router.post('/', authenticate, async (req, res) => {
         const { Lesson, Course, Subject, Classroom } = require('../models');
         const { Op } = require('sequelize');
         
-        if (classroom_id) {
-            let startTime, endTime;
-            
-            if (planned_start_time && planned_end_time) {
-                const lessonDate = new Date(lesson_date).toISOString().split('T')[0];
-                startTime = new Date(`${lessonDate}T${planned_start_time}`);
-                endTime = new Date(`${lessonDate}T${planned_end_time}`);
-            } else {
-                const lessonDateTime = new Date(lesson_date);
-                startTime = new Date(lessonDateTime);
-                endTime = new Date(lessonDateTime);
-                endTime.setMinutes(endTime.getMinutes() + 90);
-            }
-
-            console.log(`🔍 Checking classroom ${classroom_id} availability for ${startTime.toISOString()} - ${endTime.toISOString()}`);
+        if (classroom_id && lesson_start && lesson_end) {
+            console.log(`🔍 Checking classroom ${classroom_id} availability for ${lesson_date} ${lesson_start} - ${lesson_end}`);
 
             const conflictingLessons = await Lesson.findAll({
                 where: {
                     classroom_id: parseInt(classroom_id),
-                    [Op.or]: [
+                    lesson_date: lesson_date,
+                    [Op.and]: [
                         {
-                            planned_start_time: {
-                                [Op.lt]: endTime
-                            },
-                            planned_end_time: {
-                                [Op.gt]: startTime
-                            }
-                        },
-                        {
-                            planned_start_time: null,
-                            lesson_date: {
-                                [Op.gte]: startTime,
-                                [Op.lt]: endTime
-                            }
+                            [Op.or]: [
+                                {
+                                    lesson_start: {
+                                        [Op.lt]: lesson_end
+                                    },
+                                    lesson_end: {
+                                        [Op.gt]: lesson_start
+                                    }
+                                }
+                            ]
                         }
                     ]
                 },
-                attributes: ['id', 'name', 'lesson_date', 'planned_start_time', 'planned_end_time'],
+                attributes: ['id', 'name', 'lesson_date', 'lesson_start', 'lesson_end'],
                 include: [
                     { model: Course, as: 'course', attributes: ['name'] }
                 ]
@@ -390,11 +377,13 @@ router.post('/', authenticate, async (req, res) => {
                 return res.status(409).json({
                     success: false,
                     message: 'Aula non disponibile nell\'orario selezionato',
-                    error: `L'aula è già occupata da una lezione del corso "${conflict.course?.name || 'Corso sconosciuto'}" alle ${conflict.lesson_date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`,
+                    error: `L'aula è già occupata da una lezione del corso "${conflict.course?.name || 'Corso sconosciuto'}" dalle ${conflict.lesson_start} alle ${conflict.lesson_end}`,
                     conflicting_lesson: {
                         id: conflict.id,
                         name: conflict.name,
                         date: conflict.lesson_date,
+                        start_time: conflict.lesson_start,
+                        end_time: conflict.lesson_end,
                         course: conflict.course?.name
                     }
                 });
@@ -409,14 +398,10 @@ router.post('/', authenticate, async (req, res) => {
             course_id,
             subject_id,
             classroom_id: classroom_id || null,
-            teacher_id: teacher_id || null
+            teacher_id: teacher_id || null,
+            lesson_start,
+            lesson_end
         };
-
-        if (planned_start_time && planned_end_time) {
-            const lessonDate = new Date(lesson_date).toISOString().split('T')[0];
-            lessonData.planned_start_time = new Date(`${lessonDate}T${planned_start_time}`);
-            lessonData.planned_end_time = new Date(`${lessonDate}T${planned_end_time}`);
-        }
 
         const newLesson = await Lesson.create(lessonData);
         
@@ -498,10 +483,10 @@ router.post('/', authenticate, async (req, res) => {
 router.put('/:id', authenticate, async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, lesson_date, course_id, subject_id, classroom_id } = req.body;
+        const { name, lesson_date, course_id, subject_id, classroom_id, lesson_start, lesson_end, teacher_id } = req.body;
         
         console.log('PUT /lessons/:id - Dati ricevuti:', { 
-            id, name, lesson_date, course_id, subject_id, classroom_id 
+            id, name, lesson_date, course_id, subject_id, classroom_id, lesson_start, lesson_end, teacher_id 
         });
         
         const { Lesson, Course, Subject, Classroom } = require('../models');
@@ -511,13 +496,24 @@ router.put('/:id', authenticate, async (req, res) => {
         if (!existingLesson) {
             return res.status(404).json({ message: 'Lezione non trovata' });
         }
+
+        // Prevent editing of completed lessons
+        if (existingLesson.is_completed) {
+            return res.status(403).json({ 
+                message: 'Impossibile modificare una lezione completata',
+                error: 'LESSON_COMPLETED_EDIT_FORBIDDEN'
+            });
+        }
         
         await existingLesson.update({
             name, 
             lesson_date, 
             course_id, 
             subject_id, 
-            classroom_id: classroom_id || null
+            classroom_id: classroom_id || null,
+            lesson_start,
+            lesson_end,
+            teacher_id: teacher_id || null
         });
         
         console.log(`✅ Lezione ${id} aggiornata con successo`);
@@ -549,6 +545,9 @@ router.put('/:id', authenticate, async (req, res) => {
             course_id: updatedLesson.course_id,
             subject_id: updatedLesson.subject_id,
             classroom_id: updatedLesson.classroom_id,
+            lesson_start: updatedLesson.lesson_start,
+            lesson_end: updatedLesson.lesson_end,
+            teacher_id: updatedLesson.teacher_id,
             course: updatedLesson.course,
             subject: updatedLesson.subject,
             classroom: updatedLesson.classroom,
@@ -571,7 +570,7 @@ router.delete('/:id', authenticate, async (req, res) => {
         const { id } = req.params;
         
         const [lesson] = await sequelize.query(`
-            SELECT id FROM "Lessons" WHERE id = :id
+            SELECT id, is_completed FROM "Lessons" WHERE id = :id
         `, {
             replacements: { id },
             type: QueryTypes.SELECT
@@ -579,6 +578,14 @@ router.delete('/:id', authenticate, async (req, res) => {
         
         if (!lesson) {
             return res.status(404).json({ message: 'Lezione non trovata' });
+        }
+
+        // Prevent deletion of completed lessons
+        if (lesson.is_completed) {
+            return res.status(403).json({ 
+                message: 'Impossibile eliminare una lezione completata',
+                error: 'LESSON_COMPLETED_DELETE_FORBIDDEN'
+            });
         }
         
         console.log(`🗑️ Preservando dati correlati per lezione ${id}...`);
